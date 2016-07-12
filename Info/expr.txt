@@ -1,0 +1,31 @@
+f1 = { '/'; '*' }
+f2 = { =, <, >, !, <>, <=, >=, =<, => }
+AND
+OR
+
+
+a * b + c -> (+ c (* a b))
+a + b * c -> (+ a (* b c))
+
+a f1 b f2 c -> (f2 c (f1 a b))
+a f2 b f1 c -> (f2 a (f1 b c))
+
+a AND b OR c -> (OR c (AND a b))
+a OR b AND c -> (OR a (AND b c))
+
+expr f2 expr
+
+
+* + = & |
+op { + = }
+a * b op c -> (op c (* a b))
+a op b * c -> (op a (* b c))
+
+a + b = c -> (= c (+ a b))
+a = b + c -> (= a (+ b c))
+op2 { & | }
+a = b op2 c -> (op2 c (= a b))
+a op2 b = c -> (op2 a (= b c))
+
+a & b | c -> (| c (& a b))
+a | b & c -> (| a (& b c))

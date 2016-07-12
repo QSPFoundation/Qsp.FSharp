@@ -1,0 +1,225 @@
+﻿{   
+module QSLexer
+open System
+open QSParser   
+open Microsoft.FSharp.Text.Lexing
+//
+let keywords =   
+    [   
+        "end", END;
+        "and", AND;   
+        "or", OR; "else", ELSE; "elseif", ELSEIF; "if", IF; "act", ACT;
+        "set", SET; "let", LET; "no", NO; "obj", OBJ; "mod", MOD;
+    ] |> Map.ofList
+
+let ops =   
+    [
+        "+=",   EQP; "=+", EQP;
+        "-=", EQM; "=-", EQM; // x =-7 -> x = x - 7 или x = -7 ?
+        "++", INC; "--", DECR;
+        "=",    EQ;
+        "<",    LT;
+        "<=",   LE; "=<",   LE;
+        ">",    GT;
+        ">=",   GE; "=>",   GE; // точно есть
+        "!",    NEQ; "<>", NEQ;
+        "{",    LBRACE;
+        "}",    RBRACE;
+        "[",    LBRACK;
+        "]",    RBRACK;
+        "(",    LPAREN;
+        ")",    RPAREN;
+        "*",    TIMES;
+        "/",    DIVIDE;
+        "+",    PLUS;
+        "-",    MINUS;
+        
+    ] |> Map.ofList
+
+let brace_depth = ref 0
+let comment_depth = ref 0
+
+let in_pattern () = !brace_depth = 0 && !comment_depth = 0
+
+exception Lexical_error of string * string * int * int
+
+let string_buff = new System.Text.StringBuilder(256)
+
+let reset_string_buffer () = string_buff.Clear() |> ignore
+
+let store_string_char (c:char []) = string_buff.Append(c) |> ignore
+let store_string_chars (s:string) = string_buff.Append(s) |> ignore
+
+let get_stored_string () = string_buff.ToString() //Buffer.contents string_buff
+
+let char_for_backslash = function
+    | 'n' -> '\010'
+    | 'r' -> '\013'
+    | 'b' -> '\008'
+    | 't' -> '\009'
+    | c   -> c
+
+let raise_lexical_error (lexbuf:LexBuffer<_>) msg =
+    let p = lexbuf.StartPos in
+    raise (Lexical_error (msg,
+                        p.pos_fname,
+                        p.pos_lnum,
+                        p.pos_cnum - p.pos_bol + 1))
+
+let handle_lexical_error fn (lexbuf:LexBuffer<_>) =
+    let p = lexbuf.StartPos in
+    let line = p.pos_lnum
+    let column = p.pos_cnum - p.pos_bol + 1
+    let file = p.pos_fname
+    try fn lexbuf
+    with Lexical_error (msg, "", 0, 0) -> raise(Lexical_error(msg, file, line, column))
+
+let warning (lexbuf:LexBuffer<_>) msg =
+    let p = lexbuf.StartPos in
+    Printf.eprintf "ocamllex warning:\nFile \"%s\", line %d, character %d: %s.\n" p.pos_fname p.pos_lnum (p.pos_cnum - p.pos_bol + 1) msg;
+    //flush stderr
+
+let inline decimal_code  c d u =
+    100 * (int c - 48) + 10 * (int d - 48) + (int u - 48)
+
+let char_for_hexadecimal_code d u =
+    let d1 = int d in
+    let val1 = if d1 >= 97 then d1 - 87
+                else if d1 >= 65 then d1 - 55
+                else d1 - 48
+    in
+    let d2 = int u in
+    let val2 = if d2 >= 97 then d2 - 87
+                else if d2 >= 65 then d2 - 55
+                else d2 - 48
+    in
+    int (val1 * 16 + val2)
+
+let incr_loc (lexbuf:LexBuffer<_>) delta =
+    //let pos = lexbuf
+    (*
+	let incr_loc lexbuf delta =
+	  let pos = lexbuf.Lexing.lex_curr_p in
+	  lexbuf.Lexing.lex_curr_p <- { pos with
+		Lexing.pos_lnum = pos.Lexing.pos_lnum + 1;
+		Lexing.pos_bol = pos.Lexing.pos_cnum - delta;
+	  }*)
+    let pos = lexbuf.StartPos
+    printfn "curr %d" pos.pos_lnum
+    lexbuf.StartPos <- { pos with Lexing.pos_lnum = pos.pos_lnum + 1; Lexing.pos_bol = pos.pos_cnum - delta; }
+    printfn "CURR %d" lexbuf.StartPos.pos_lnum
+
+let update_loc (lexbuf:LexBuffer<_>) opt_file line =
+    let pos = lexbuf.StartPos
+    let new_file = match opt_file with
+                    | None -> pos.pos_fname
+                    | Some f -> f
+    lexbuf.StartPos <- { pos with Lexing.pos_fname = new_file; Lexing.pos_lnum = line; Lexing.pos_bol = pos.pos_cnum; }
+let decr (lexbuf:LexBuffer<_>) a =
+    let pos = lexbuf.StartPos
+    lexbuf.StartPos <- { pos with Lexing.pos_cnum = pos.pos_cnum - Array.length a; }
+
+let comment = ref true
+let newlineL (lexbuf:LexBuffer<_>) = lexbuf.EndPos <- lexbuf.EndPos.NextLine
+let newlinen (lexbuf:LexBuffer<_>) = lexbuf.Lexeme |> Array.sumBy(function '\r' | '\n' -> 1 | _ -> 0) |> fun x -> x / 2 |> fun x -> for i = 1 to x do newlineL lexbuf
+}
+
+let char        = ['a'-'z' 'A'-'Z' 'а'-'я' 'А'-'Я']
+let digit       = ['0'-'9']
+//let int         = '-'?digit+ // 1 - 1 -> [Int 1; Int -1]
+let int         = digit+
+//let float       = '-'?digit+ '.' digit+
+let float       = digit+ '.' digit+
+//let identifier  = char (char|digit|['-' '_' '.'])* // ловит "chars--"
+let identifier  = char (char|digit|['_' '.']|('-'(char|digit)+))* // ловит "chars--"
+let whitespace  = [' ' '\t']
+let newline     = "\r\n" | '\n' //"\n\r" | '\n' | '\r'
+let operator = "!" | "(" | ")" | "*" | "+" | "++" | "+=" | "-" | "--" | "-=" | "/" | "<" | "<=" | "<>" | "=" | "=+" | "=-" | "=<" | "=>" | ">" | ">=" | "[" | "]" | "{" | "}"
+let backslash_escapes = ['\\' '\'' '"' 'n' 't' 'b' 'r' ' ']
+
+
+rule tokenize = parse
+| '!'                          { if !comment then
+                                     comment := false; reset_string_buffer(); handle_lexical_error comm lexbuf; COMMENT(get_stored_string())
+                                 else NEQ }
+| whitespace                   { tokenize lexbuf }
+| newline(newline|whitespace)* { comment := true; newlinen lexbuf; NEWLINE }
+| int                          { comment := false; INT(Int32.Parse(LexBuffer<_>.LexemeString lexbuf)) }
+| float                        { comment := false; FLOAT(Double.Parse(LexBuffer<_>.LexemeString lexbuf)) }
+//| '$'			               { comment := false; DOLLAR }
+| '&'			               { comment := true; AMP }
+| '#' [^'\r''\n']+             { comment := false;
+                                 let join sep (xs:seq<char>) = System.String.Join(sep, xs)
+                                 let r = lexbuf.Lexeme |> Seq.skip 2 |> join "" |> STARTLOC
+                                 //printfn "%A" r;
+                                 r}
+| '\''                         { comment := false; reset_string_buffer(); handle_lexical_error string lexbuf; TSTRING(get_stored_string())  }
+| '"'                          { comment := false; reset_string_buffer(); handle_lexical_error string2 lexbuf; TSTRING(get_stored_string())  }
+| ','			               { comment := false; COMMA }
+| operator                     { comment := false; ops.[LexBuffer<_>.LexemeString lexbuf] }
+| identifier                   { comment := false;
+                                 match keywords.TryFind((LexBuffer<_>.LexemeString lexbuf).ToLower()) with   
+                                 | Some(token) -> token
+                                 | None -> ID(LexBuffer<_>.LexemeString lexbuf) }
+| '$' identifier               { comment := false; ID(LexBuffer<_>.LexemeString lexbuf) }
+//| "--- " identifier " ---------------------------------" { comment := true; ENDLOC }
+| "--- " [^'\r''\n']+           { comment := true; ENDLOC }
+| ':'			               { comment := false; COLON }
+| eof                          { EOF }
+| _ 			               { failwith "tokenize error" }
+(*
+and nl = parse
+| newline { newlineL lexbuf; nl lexbuf }
+| whitespace { nl lexbuf }
+| _ { decr lexbuf [|1..10|]; () } *)
+
+and comm = parse
+| '\'' { handle_lexical_error string lexbuf; comm lexbuf  }
+| '"' { handle_lexical_error string2 lexbuf; comm lexbuf }
+| '{' { handle_lexical_error stringBrace lexbuf; comm lexbuf }
+//| newline { decr lexbuf lexbuf.Lexeme; () }
+//| eof { printfn "eof"; decr lexbuf lexbuf.Lexeme; () }
+| [^'\n''\r'] { store_string_char lexbuf.Lexeme; comm lexbuf }
+| '\r' { newlineL lexbuf; () }
+
+and stringBrace = parse
+   | '}' { () }
+   | '\\' backslash_escapes
+    { store_string_char [| char_for_backslash lexbuf.Lexeme.[1] |]; stringBrace lexbuf }
+  | eof
+    { raise(Lexical_error("unterminated string", "", 0, 0)) }
+  | newline { newlineL lexbuf; stringBrace lexbuf }
+  | _
+    { store_string_char lexbuf.Lexeme; stringBrace lexbuf }
+
+and string = parse
+   | "''" { store_string_char lexbuf.Lexeme; string lexbuf }
+   | '\'' { () }
+   | '\\' backslash_escapes
+    { store_string_char [| char_for_backslash lexbuf.Lexeme.[1] |]; string lexbuf }
+  | eof
+    { raise(Lexical_error("unterminated string", "", 0, 0)) }
+  | newline { newlineL lexbuf; string lexbuf }
+  | _
+    { store_string_char lexbuf.Lexeme; string lexbuf }
+
+and string2 = parse
+   | "\"\"" { store_string_char lexbuf.Lexeme; string2 lexbuf }
+   | '"' { () }
+   | '\\' backslash_escapes
+    { store_string_char [| char_for_backslash lexbuf.Lexeme.[1] |]; string2 lexbuf }
+  | eof
+    { raise(Lexical_error("unterminated string", "", 0, 0)) }
+  | newline { newlineL lexbuf; string2 lexbuf }
+  | _
+    { store_string_char lexbuf.Lexeme; string2 lexbuf }
+(*
+and location = parse
+	| newline { newlineL lexbuf; string lexbuf }
+	| whitespace { location lexbuf }
+	| '#' identifier { reset_string_buffer(); store_string_char lexbuf.Lexeme; handle_lexical_error locCounter lexbuf; LOCATIONRAW(get_stored_string()) }
+	| _ { failwithf "перед началом локации обнаружено это %A" lexbuf.Lexeme }
+and locCounter = parse
+	| "--- " identifier " ---------------------------------" { store_string_char lexbuf.Lexeme }
+	| eof { raise(Lexical_error("конец файла наступил раньше чем конец локации", "", 0, 0)) }
+	| _ { store_string_char lexbuf.Lexeme; locCounter lexbuf } *)

@@ -1,0 +1,228 @@
+﻿%{   
+open QS
+
+let except str =  failwithf "%s" str
+let exceptP (p:Parsing.IParseState) str = 
+    let p = p.ParserLocalStore.["LexBuffer"] :?> Microsoft.FSharp.Text.Lexing.LexBuffer<char>
+    
+    printfn "%A" p.Lexeme
+    printfn "%A" p.StartPos
+    printfn "%A" p.EndPos
+
+    failwithf "%s" str
+
+let parse_error_rich = Some (fun (ctxt: Microsoft.FSharp.Text.Parsing.ParseErrorContext<_>) -> 
+    let p =
+        ctxt.ParseState.ParserLocalStore.["LexBuffer"] :?> Microsoft.FSharp.Text.Lexing.LexBuffer<char>
+        //|> unbox
+    printfn "%A" ctxt.CurrentToken
+    printfn "%A" p.Lexeme
+    printfn "%A" p.StartPos
+    printfn "%A" p.EndPos
+    printfn "start col: %d" p.StartPos.Column
+    printfn "%A" (p.StartPos.AbsoluteOffset, ctxt.CurrentToken))
+
+%}
+  
+%token <string> ID COMMENT TSTRING
+%token <int> INT   
+%token <float> FLOAT
+%token <string> STARTLOC
+%token ENDLOC
+//%token 
+
+%token PLUS MINUS TIMES DIVIDE
+%token EQ GT GE LT LE // =, >, >=, <, <=
+%token MOD
+%token AND OR
+%token COMMA
+%token AMP // &
+%token LBRACE RBRACE // { }
+%token LBRACK RBRACK // [ ]
+%token LPAREN RPAREN // ( )
+%token NO OBJ
+
+%token EOF
+
+%token SHARP
+%token DOLLAR
+
+%token IF ACT
+%token COLON ELSE ELSEIF
+%token NEWLINE
+%token END
+%token SET LET
+%token EQP EQM INC DECR // += -= ++ --
+%token NEQ // ! | <>
+
+// associativity and precedences
+// очередность [%left; %left; ...] влияет! Чем ниже - тем приоритетнее операция.
+
+%left OR
+%left AND
+%right NO
+%left EQ GT GE LT LE NEQ
+%right OBJ
+%left PLUS MINUS
+%left MOD
+%left TIMES DIVIDE
+%left NEWLINE
+%nonassoc RPAREN
+%nonassoc LPAREN
+%left COMMA
+%left COLON
+%left AMP
+
+//%nonassoc NEWLINE
+
+// start   
+%start start parseStatements
+%type <QS.Location list> start
+%type <QS.Statements list> parseStatements
+//%type <QS.Statements list> start
+
+%%
+start:
+    //|  {  { Location.Name = ""; Location.Statements = [] } }
+	| error { except "blah-blah" }
+	| EOF { [] }
+    | NEWLINE start { $2 }
+    | loc start { $1::$2 }
+
+parseStatements:
+    | NEWLINE parseStatements { $2 }
+	| EOF { [] }
+	| statements { $1 }
+
+loc:
+	| error { except "error in loc" }
+    | STARTLOC NEWLINE 
+          statements
+      ENDLOC { Location($1, $3) }
+    //| { exceptP parseState "начало локации не найдено" }
+
+end_:
+    | { failwithf "отсутствует end" }
+    | END { }
+
+elseif:
+    | ELSEIF expr COLON NEWLINE statements { [If($2, $5, [])] }
+    | ELSEIF expr COLON NEWLINE statements elseif { [If($2, $5, $6)] }
+	| ELSEIF expr COLON NEWLINE statements ELSE NEWLINE statements { [If($2, $5, $8)] }
+
+
+statements:
+    | { [] }
+	| error { except "statements" }
+    | states NEWLINE statements { $1@$3 }
+    | assertOp EQ LBRACE NEWLINE statements RBRACE NEWLINE statements  { AssertCode($1, $5) :: $8 }
+    | COMMENT NEWLINE statements { Comment $1::$3 }
+    | COLON ID NEWLINE statements { Sign $2::$4 }
+
+	| ACT seq_ COLON states NEWLINE statements { Act($2, $4)::$6 }
+    | ACT seq_ COLON IF expr COLON states NEWLINE statements { Act($2, [If($5, $7, [])])::$9 }
+	| ACT seq_ COLON ACT seq_ COLON states NEWLINE statements { Act($2, [Act($5, $7)])::$9 }
+	| ACT seq_ COLON NEWLINE statements END NEWLINE statements { Act($2, $5)::$8 }
+
+    | IF expr COLON states NEWLINE statements { If($2, $4, [])::$6 }
+	| IF expr COLON IF expr COLON states NEWLINE statements { If($2, [If($5, $7, [])], [])::$9 }
+	| IF expr COLON ACT seq_ COLON states NEWLINE statements { If($2, [Act($5, $7)], [])::$9 }
+    | IF expr COLON NEWLINE statements END NEWLINE statements { If($2, $5, [])::$8 }
+
+	| IF expr COLON states ELSE states NEWLINE statements { If($2, $4, $6)::$8 }
+    | IF expr COLON NEWLINE statements ELSE NEWLINE statements END NEWLINE statements { If($2, $5, $8)::$11 }
+	| IF expr COLON NEWLINE statements elseif END NEWLINE statements { If($2, $5, $6)::$9 }
+	//| ID seq_ COLON states NEWLINE statements { Constr($1, $2, $4)::$6 }
+    //| ID seq_ COLON ID seq_ COLON states NEWLINE statements { Constr($1, $2, [Constr($4, $5, $7)])::$9 }
+    //| ID seq_ COLON states ELSE states NEWLINE statements { Constr($1, $2, $4 @ $6)::$8 }
+	//| ID seq_ COLON NEWLINE statements END NEWLINE statements { Constr($1, $2, $5)::$8 }
+	//| IF expr COLON NEWLINE statements ELSEIF expr COLON NEWLINE statements END NEWLINE statements { If($2, $5, [If($7, $10, [])])::$13 }
+	//| ELSEIF expr COLON NEWLINE statements { [If($2, $5, [])] }
+    //| ID seq_ COLON NEWLINE statements ELSE NEWLINE statements END NEWLINE statements { Constr($1, $2, $5 @ $8)::$11 }
+    
+states: 
+	| state AMP ACT seq_ COLON states { $1::[Act($4, $6)] }
+    | state AMP states { $1 :: $3 }
+    | state AMP COMMENT { $1::[Comment $3] }
+    | state { [$1] }
+
+id:
+    | ID { $1 }
+    | TIMES ID { "*" + $2 }
+temp:
+	| id { Func($1, []) }
+	| id LPAREN RPAREN { Func($1, []) }
+	| id LPAREN expr COMMA seq_ RPAREN { Func($1, $3::$5) }
+	| TSTRING { Val(value.String $1) }
+
+state:
+    | assertOp EQ expr { Assert( $1, $3 ) } 
+	| assertOp EQ ID val_ { Assert( $1, Func($3, [Val $4]) ) } // st_1 = input 'Введите сумму'
+	| assertOp EQP expr { Assert( $1, Expr(Plus, $1, $3) ) }
+	| assertOp EQM expr { Assert( $1, Expr(Minus, $1, $3) ) }
+    /*
+    Общий вид вызова оператора
+        имя_оператора аргумент1, аргумент2, ...
+    или
+        имя_оператора (аргумент1, аргумент2, ...) */
+    //id f(v)
+    //id v, v2
+    //*pl 'Яблок' + яблоко
+    //*pl 'Груш' + груша
+	| temp { ExprS $1 }
+	| temp PLUS expr { ExprS( Expr(Plus, $1, $3) ) }
+	| id seq_ { FuncS($1, $2) }
+
+ass:
+	| id { Var $1 }
+    | SET id { Var $2 }
+    | LET id { Var $2 }	
+
+assertOp:
+    //| id { Var $1 }
+    //| id LBRACK seq_ RBRACK { Func("idx", (Var $1)::$3) }
+	| ass { $1 }
+	| ass LBRACK seq_ RBRACK { Func("idx", $1::$3) }
+
+seq_:
+    | expr COMMA seq_ { $1 :: $3 }
+    | expr { [$1] }
+    //| { [] }
+
+seqval:
+    | val_ COMMA seqval { (Val $1)::$3 }
+    | val_ { [Val $1] }
+    //| { [] }
+
+expr:
+    | val_ { Val $1 }
+    | ID { Var $1 }
+    | ID LPAREN RPAREN        { Func($1, []) }
+    | ID LPAREN seq_ RPAREN   { Func($1, $3) }
+    | ID LBRACK seq_ RBRACK   { Func("idx", (Var $1)::$3) }
+    
+	| NO expr { UnarExpr(No, $2) }  //if ((a+b)/c)=45+54 or (b<5 or c>45) and no obj 'лопата' and $f=$vvv+'RRRRR':p 'OK' & goto 'Next'
+	| OBJ expr { UnarExpr(Obj, $2) }
+
+    | LPAREN expr RPAREN      { $2 }
+    
+    | expr PLUS expr          { Expr.Expr(Plus, $1, $3) } 
+    | expr MINUS expr         { Expr.Expr(Minus, $1, $3) } 
+    | MINUS INT %prec MINUS   { Val(Int -$2) }
+    | expr TIMES expr         { Expr.Expr(Times, $1, $3) } 
+    | expr DIVIDE expr        { Expr.Expr(Divide, $1, $3) }
+    | expr EQ expr            { Expr.Expr(Eq, $1, $3) }
+    | expr GT expr            { Expr.Expr(Gt, $1, $3) }
+    | expr GE expr            { Expr.Expr(Ge, $1, $3) }
+    | expr LT expr            { Expr.Expr(Lt, $1, $3) }
+    | expr LE expr            { Expr.Expr(Le, $1, $3) }
+    | expr NEQ expr           { Expr.Expr(Ne, $1, $3) }
+    | expr AND expr           { Expr.Expr(And, $1, $3) }
+    | expr OR expr            { Expr.Expr(Or, $1, $3) }
+	| expr MOD expr           { Expr(Mod, $1, $3) }
+
+val_:
+    | INT { Int $1 }
+    | FLOAT { Float $1 }
+    | TSTRING { value.String $1 }
+%%
