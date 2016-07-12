@@ -60,8 +60,8 @@
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>REM fslex.exe "$(ProjectDir)QSLexer.fsl" --unicode
-c:\All\Project\Parsers\QSParse\RunIfChange\bin\Debug\RunIfChange.exe fslex.exe "$(ProjectDir)QSLexer.fsl" --unicode
-c:\All\Project\Parsers\QSParse\RunIfChange\bin\Debug\RunIfChange.exe fsyacc.exe "$(ProjectDir)QSParser.fsp" --module QSParser -v</PreBuildEvent>
+$(SolutionDir)RunIfChange\bin\Debug\RunIfChange.exe fslex.exe "$(ProjectDir)QSLexer.fsl" --unicode
+$(SolutionDir)RunIfChange\bin\Debug\RunIfChange.exe fsyacc.exe "$(ProjectDir)QSParser.fsp" --module QSParser -v</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.

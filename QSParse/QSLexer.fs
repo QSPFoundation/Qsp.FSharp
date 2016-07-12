@@ -1,4 +1,4 @@
-# 1 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 1 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
     
 module QSLexer
 open System
@@ -124,7 +124,7 @@ let comment = ref true
 let newlineL (lexbuf:LexBuffer<_>) = lexbuf.EndPos <- lexbuf.EndPos.NextLine
 let newlinen (lexbuf:LexBuffer<_>) = lexbuf.Lexeme |> Array.sumBy(function '\r' | '\n' -> 1 | _ -> 0) |> fun x -> x / 2 |> fun x -> for i = 1 to x do newlineL lexbuf
 
-# 127 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 127 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
 let trans : uint16[] array = 
     [| 
     (* State 0 *)
@@ -307,227 +307,227 @@ and string2  (lexbuf : Microsoft.FSharp.Text.Lexing.LexBuffer<_>) = _fslex_strin
 and _fslex_tokenize  _fslex_state lexbuf =
   match _fslex_tables.Interpret(_fslex_state,lexbuf) with
   | 0 -> ( 
-# 142 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 142 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                                                 if !comment then
                                                     comment := false; reset_string_buffer(); handle_lexical_error comm lexbuf; COMMENT(get_stored_string())
                                                 else NEQ 
-# 314 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 314 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 1 -> ( 
-# 145 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 145 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                                                 tokenize lexbuf 
-# 319 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 319 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 2 -> ( 
-# 146 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 146 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                                                 comment := true; newlinen lexbuf; NEWLINE 
-# 324 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 324 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 3 -> ( 
-# 147 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 147 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                                                 comment := false; INT(Int32.Parse(LexBuffer<_>.LexemeString lexbuf)) 
-# 329 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 329 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 4 -> ( 
-# 148 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 148 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                                                 comment := false; FLOAT(Double.Parse(LexBuffer<_>.LexemeString lexbuf)) 
-# 334 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 334 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 5 -> ( 
-# 150 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 150 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                                         comment := true; AMP 
-# 339 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 339 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 6 -> ( 
-# 151 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 151 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                                                 comment := false;
                                                 let join sep (xs:seq<char>) = System.String.Join(sep, xs)
                                                 let r = lexbuf.Lexeme |> Seq.skip 2 |> join "" |> STARTLOC
                                                 //printfn "%A" r;
                                                 r
-# 348 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 348 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 7 -> ( 
-# 156 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 156 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                                                 comment := false; reset_string_buffer(); handle_lexical_error string lexbuf; TSTRING(get_stored_string())  
-# 353 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 353 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 8 -> ( 
-# 157 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 157 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                                                 comment := false; reset_string_buffer(); handle_lexical_error string2 lexbuf; TSTRING(get_stored_string())  
-# 358 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 358 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 9 -> ( 
-# 158 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 158 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                                         comment := false; COMMA 
-# 363 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 363 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 10 -> ( 
-# 159 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 159 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                                                 comment := false; ops.[LexBuffer<_>.LexemeString lexbuf] 
-# 368 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 368 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 11 -> ( 
-# 160 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 160 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                                                 comment := false;
                                                 match keywords.TryFind((LexBuffer<_>.LexemeString lexbuf).ToLower()) with   
                                                 | Some(token) -> token
                                                 | None -> ID(LexBuffer<_>.LexemeString lexbuf) 
-# 376 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 376 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 12 -> ( 
-# 164 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 164 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                                                 comment := false; ID(LexBuffer<_>.LexemeString lexbuf) 
-# 381 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 381 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 13 -> ( 
-# 166 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 166 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                                                  comment := true; ENDLOC 
-# 386 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 386 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 14 -> ( 
-# 167 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 167 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                                         comment := false; COLON 
-# 391 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 391 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 15 -> ( 
-# 168 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 168 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                                                 EOF 
-# 396 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 396 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 16 -> ( 
-# 169 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 169 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                                        failwith "tokenize error" 
-# 401 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 401 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | _ -> failwith "tokenize"
 (* Rule comm *)
 and _fslex_comm  _fslex_state lexbuf =
   match _fslex_tables.Interpret(_fslex_state,lexbuf) with
   | 0 -> ( 
-# 177 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 177 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                         handle_lexical_error string lexbuf; comm lexbuf  
-# 410 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 410 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 1 -> ( 
-# 178 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 178 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                        handle_lexical_error string2 lexbuf; comm lexbuf 
-# 415 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 415 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 2 -> ( 
-# 179 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 179 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                        handle_lexical_error stringBrace lexbuf; comm lexbuf 
-# 420 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 420 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 3 -> ( 
-# 182 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 182 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                                store_string_char lexbuf.Lexeme; comm lexbuf 
-# 425 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 425 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 4 -> ( 
-# 183 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 183 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                         newlineL lexbuf; () 
-# 430 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 430 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | _ -> failwith "comm"
 (* Rule stringBrace *)
 and _fslex_stringBrace  _fslex_state lexbuf =
   match _fslex_tables.Interpret(_fslex_state,lexbuf) with
   | 0 -> ( 
-# 186 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 186 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                           () 
-# 439 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 439 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 1 -> ( 
-# 188 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 188 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                      store_string_char [| char_for_backslash lexbuf.Lexeme.[1] |]; stringBrace lexbuf 
-# 444 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 444 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 2 -> ( 
-# 190 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 190 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                      raise(Lexical_error("unterminated string", "", 0, 0)) 
-# 449 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 449 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 3 -> ( 
-# 191 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 191 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                              newlineL lexbuf; stringBrace lexbuf 
-# 454 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 454 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 4 -> ( 
-# 193 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 193 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                      store_string_char lexbuf.Lexeme; stringBrace lexbuf 
-# 459 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 459 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | _ -> failwith "stringBrace"
 (* Rule string *)
 and _fslex_string  _fslex_state lexbuf =
   match _fslex_tables.Interpret(_fslex_state,lexbuf) with
   | 0 -> ( 
-# 196 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 196 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                            store_string_char lexbuf.Lexeme; string lexbuf 
-# 468 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 468 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 1 -> ( 
-# 197 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 197 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                            () 
-# 473 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 473 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 2 -> ( 
-# 199 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 199 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                      store_string_char [| char_for_backslash lexbuf.Lexeme.[1] |]; string lexbuf 
-# 478 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 478 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 3 -> ( 
-# 201 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 201 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                      raise(Lexical_error("unterminated string", "", 0, 0)) 
-# 483 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 483 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 4 -> ( 
-# 202 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 202 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                              newlineL lexbuf; string lexbuf 
-# 488 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 488 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 5 -> ( 
-# 204 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 204 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                      store_string_char lexbuf.Lexeme; string lexbuf 
-# 493 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 493 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | _ -> failwith "string"
 (* Rule string2 *)
 and _fslex_string2  _fslex_state lexbuf =
   match _fslex_tables.Interpret(_fslex_state,lexbuf) with
   | 0 -> ( 
-# 207 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 207 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                              store_string_char lexbuf.Lexeme; string2 lexbuf 
-# 502 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 502 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 1 -> ( 
-# 208 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 208 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                           () 
-# 507 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 507 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 2 -> ( 
-# 210 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 210 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                      store_string_char [| char_for_backslash lexbuf.Lexeme.[1] |]; string2 lexbuf 
-# 512 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 512 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 3 -> ( 
-# 212 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 212 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                      raise(Lexical_error("unterminated string", "", 0, 0)) 
-# 517 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 517 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 4 -> ( 
-# 213 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 213 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                              newlineL lexbuf; string2 lexbuf 
-# 522 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 522 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | 5 -> ( 
-# 215 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 215 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
                      store_string_char lexbuf.Lexeme; string2 lexbuf 
-# 527 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 527 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
           )
   | _ -> failwith "string2"
 
-# 225 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
+# 225 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
 
-# 3000000 "c:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"
+# 3000000 "C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fs"

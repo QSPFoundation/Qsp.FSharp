@@ -25,7 +25,10 @@ let shellExecute program arguments =
     (proc.ExitCode, driverOutput.ToString())
 
 open System.IO
-let dirwork = Path.Combine(System.Environment.CurrentDirectory, "temp")
+let dirwork = 
+    let d = Path.Combine(System.Environment.CurrentDirectory, "temp")
+    if not <| Directory.Exists d then Directory.CreateDirectory d |> ignore
+    d
 
 [<EntryPoint>]
 let main args = 

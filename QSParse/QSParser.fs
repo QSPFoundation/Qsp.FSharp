@@ -3,7 +3,7 @@ module QSParser
 #nowarn "64";; // turn off warnings that type variables used in production annotations are instantiated to concrete type
 open Microsoft.FSharp.Text.Lexing
 open Microsoft.FSharp.Text.Parsing.ParseHelpers
-# 1 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 1 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
    
 open QS
 
@@ -29,7 +29,7 @@ let parse_error_rich = Some (fun (ctxt: Microsoft.FSharp.Text.Parsing.ParseError
     printfn "%A" (p.StartPos.AbsoluteOffset, ctxt.CurrentToken))
 
 
-# 32 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 32 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
 // This type is the type of tokens accepted by the parser
 type token = 
   | NEQ
@@ -454,7 +454,7 @@ let _fsyacc_reductionSymbolCounts = [|1us; 1us; 1us; 1us; 2us; 2us; 2us; 1us; 1u
 let _fsyacc_productionToNonTerminalTable = [|0us; 1us; 2us; 2us; 2us; 2us; 3us; 3us; 3us; 4us; 4us; 5us; 5us; 6us; 6us; 6us; 7us; 7us; 7us; 7us; 7us; 7us; 7us; 7us; 7us; 7us; 7us; 7us; 7us; 7us; 7us; 7us; 7us; 8us; 8us; 8us; 8us; 9us; 9us; 10us; 10us; 10us; 10us; 11us; 11us; 11us; 11us; 11us; 11us; 11us; 12us; 12us; 12us; 13us; 13us; 14us; 14us; 15us; 15us; 16us; 16us; 16us; 16us; 16us; 16us; 16us; 16us; 16us; 16us; 16us; 16us; 16us; 16us; 16us; 16us; 16us; 16us; 16us; 16us; 16us; 16us; 17us; 17us; 17us; |]
 let _fsyacc_immediateActions = [|65535us; 49152us; 65535us; 49152us; 65535us; 16387us; 65535us; 16388us; 65535us; 16389us; 65535us; 16390us; 16391us; 16392us; 65535us; 65535us; 65535us; 16394us; 65535us; 65535us; 65535us; 65535us; 65535us; 16398us; 65535us; 65535us; 16399us; 16401us; 65535us; 65535us; 16402us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 16403us; 65535us; 65535us; 16404us; 65535us; 65535us; 65535us; 16405us; 65535us; 65535us; 65535us; 65535us; 65535us; 16406us; 65535us; 65535us; 65535us; 65535us; 65535us; 16407us; 65535us; 65535us; 65535us; 65535us; 65535us; 16408us; 65535us; 65535us; 65535us; 65535us; 16409us; 65535us; 65535us; 65535us; 65535us; 65535us; 16410us; 65535us; 65535us; 65535us; 65535us; 65535us; 16411us; 65535us; 65535us; 65535us; 65535us; 65535us; 16412us; 65535us; 65535us; 65535us; 65535us; 16413us; 65535us; 65535us; 65535us; 16414us; 65535us; 65535us; 65535us; 65535us; 65535us; 16415us; 65535us; 65535us; 65535us; 16416us; 65535us; 65535us; 65535us; 65535us; 65535us; 16417us; 16418us; 16419us; 16421us; 65535us; 16422us; 65535us; 65535us; 16424us; 65535us; 65535us; 65535us; 16425us; 16426us; 65535us; 65535us; 65535us; 65535us; 16428us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 16433us; 65535us; 16435us; 65535us; 16436us; 65535us; 65535us; 65535us; 16438us; 65535us; 65535us; 16439us; 16443us; 65535us; 65535us; 16445us; 65535us; 16446us; 65535us; 65535us; 16447us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 16450us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 16453us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 16465us; 16466us; 16467us; |]
 let _fsyacc_reductions ()  =    [| 
-# 457 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 457 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : QS.Location list)) in
             Microsoft.FSharp.Core.Operators.box
@@ -463,7 +463,7 @@ let _fsyacc_reductions ()  =    [|
                       raise (Microsoft.FSharp.Text.Parsing.Accept(Microsoft.FSharp.Core.Operators.box _1))
                    )
                  : '_startstart));
-# 466 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 466 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : QS.Statements list)) in
             Microsoft.FSharp.Core.Operators.box
@@ -472,136 +472,136 @@ let _fsyacc_reductions ()  =    [|
                       raise (Microsoft.FSharp.Text.Parsing.Accept(Microsoft.FSharp.Core.Operators.box _1))
                    )
                  : '_startparseStatements));
-# 475 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 475 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 87 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 87 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                 except "blah-blah" 
                    )
-# 87 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 87 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : QS.Location list));
-# 485 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 485 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 88 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 88 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                               [] 
                    )
-# 88 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 88 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : QS.Location list));
-# 495 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 495 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : QS.Location list)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 89 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 89 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                            _2 
                    )
-# 89 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 89 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : QS.Location list));
-# 506 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 506 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'loc)) in
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : QS.Location list)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 90 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 90 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                        _1::_2 
                    )
-# 90 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 90 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : QS.Location list));
-# 518 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 518 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : QS.Statements list)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 93 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 93 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                      _2 
                    )
-# 93 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 93 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : QS.Statements list));
-# 529 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 529 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 94 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 94 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                               [] 
                    )
-# 94 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 94 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : QS.Statements list));
-# 539 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 539 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'statements)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 95 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 95 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                      _1 
                    )
-# 95 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 95 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : QS.Statements list));
-# 550 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 550 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 98 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 98 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                 except "error in loc" 
                    )
-# 98 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 98 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'loc));
-# 560 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 560 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'statements)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 101 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 101 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                     Location(_1, _3) 
                    )
-# 101 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 101 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'loc));
-# 572 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 572 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 105 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 105 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                              failwithf "отсутствует end" 
                    )
-# 105 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 105 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'end_));
-# 582 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 582 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 106 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 106 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                  
                    )
-# 106 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 106 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'end_));
-# 592 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 592 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _5 = (let data = parseState.GetInput(5) in (Microsoft.FSharp.Core.Operators.unbox data : 'statements)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 109 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 109 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                                   [If(_2, _5, [])] 
                    )
-# 109 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 109 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'elseif));
-# 604 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 604 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _5 = (let data = parseState.GetInput(5) in (Microsoft.FSharp.Core.Operators.unbox data : 'statements)) in
@@ -609,12 +609,12 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 110 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 110 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                                          [If(_2, _5, _6)] 
                    )
-# 110 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 110 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'elseif));
-# 617 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 617 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _5 = (let data = parseState.GetInput(5) in (Microsoft.FSharp.Core.Operators.unbox data : 'statements)) in
@@ -622,44 +622,44 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 111 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 111 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                                                        [If(_2, _5, _8)] 
                    )
-# 111 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 111 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'elseif));
-# 630 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 630 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 114 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 115 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                              [] 
                    )
-# 114 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 115 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'statements));
-# 640 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 640 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 115 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 116 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                 except "statements" 
                    )
-# 115 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 116 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'statements));
-# 650 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 650 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'states)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'statements)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 116 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 117 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                        _1@_3 
                    )
-# 116 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 117 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'statements));
-# 662 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 662 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'assertOp)) in
             let _5 = (let data = parseState.GetInput(5) in (Microsoft.FSharp.Core.Operators.unbox data : 'statements)) in
@@ -667,36 +667,36 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 117 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 118 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                                                               AssertCode(_1, _5) :: _8 
                    )
-# 117 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 118 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'statements));
-# 675 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 675 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'statements)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 118 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 119 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                         Comment _1::_3 
                    )
-# 118 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 119 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'statements));
-# 687 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 687 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             let _4 = (let data = parseState.GetInput(4) in (Microsoft.FSharp.Core.Operators.unbox data : 'statements)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 119 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 120 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                          Sign _2::_4 
                    )
-# 119 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 120 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'statements));
-# 699 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 699 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'seq_)) in
             let _4 = (let data = parseState.GetInput(4) in (Microsoft.FSharp.Core.Operators.unbox data : 'states)) in
@@ -704,12 +704,12 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 121 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 122 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                                    Act(_2, _4)::_6 
                    )
-# 121 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 122 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'statements));
-# 712 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 712 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'seq_)) in
             let _5 = (let data = parseState.GetInput(5) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
@@ -718,12 +718,12 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 122 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 123 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                                                     Act(_2, [If(_5, _7, [])])::_9 
                    )
-# 122 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 123 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'statements));
-# 726 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 726 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'seq_)) in
             let _5 = (let data = parseState.GetInput(5) in (Microsoft.FSharp.Core.Operators.unbox data : 'seq_)) in
@@ -732,12 +732,12 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 123 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 124 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                                                   Act(_2, [Act(_5, _7)])::_9 
                    )
-# 123 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 124 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'statements));
-# 740 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 740 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'seq_)) in
             let _5 = (let data = parseState.GetInput(5) in (Microsoft.FSharp.Core.Operators.unbox data : 'statements)) in
@@ -745,12 +745,12 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 124 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 125 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                                                    Act(_2, _5)::_8 
                    )
-# 124 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 125 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'statements));
-# 753 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 753 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _4 = (let data = parseState.GetInput(4) in (Microsoft.FSharp.Core.Operators.unbox data : 'states)) in
@@ -758,12 +758,12 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 126 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 127 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                                      If(_2, _4, [])::_6 
                    )
-# 126 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 127 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'statements));
-# 766 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 766 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _5 = (let data = parseState.GetInput(5) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
@@ -772,12 +772,12 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 127 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 128 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                                                 If(_2, [If(_5, _7, [])], [])::_9 
                    )
-# 127 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 128 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'statements));
-# 780 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 780 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _5 = (let data = parseState.GetInput(5) in (Microsoft.FSharp.Core.Operators.unbox data : 'seq_)) in
@@ -786,12 +786,12 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 128 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 129 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                                                  If(_2, [Act(_5, _7)], [])::_9 
                    )
-# 128 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 129 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'statements));
-# 794 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 794 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _5 = (let data = parseState.GetInput(5) in (Microsoft.FSharp.Core.Operators.unbox data : 'statements)) in
@@ -799,12 +799,12 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 129 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 130 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                                                      If(_2, _5, [])::_8 
                    )
-# 129 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 130 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'statements));
-# 807 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 807 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _4 = (let data = parseState.GetInput(4) in (Microsoft.FSharp.Core.Operators.unbox data : 'states)) in
@@ -813,12 +813,12 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 131 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 132 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                                               If(_2, _4, _6)::_8 
                    )
-# 131 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 132 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'statements));
-# 821 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 821 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _5 = (let data = parseState.GetInput(5) in (Microsoft.FSharp.Core.Operators.unbox data : 'statements)) in
@@ -827,12 +827,12 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 132 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 133 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                                                                              If(_2, _5, _8)::_11 
                    )
-# 132 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 133 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'statements));
-# 835 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 835 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _5 = (let data = parseState.GetInput(5) in (Microsoft.FSharp.Core.Operators.unbox data : 'statements)) in
@@ -841,12 +841,12 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 133 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 134 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                                                          If(_2, _5, _6)::_9 
                    )
-# 133 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 134 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'statements));
-# 849 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 849 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'state)) in
             let _4 = (let data = parseState.GetInput(4) in (Microsoft.FSharp.Core.Operators.unbox data : 'seq_)) in
@@ -854,91 +854,91 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 143 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 144 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                           _1::[Act(_4, _6)] 
                    )
-# 143 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 144 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'states));
-# 862 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 862 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'state)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'states)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 144 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 145 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                               _1 :: _3 
                    )
-# 144 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 145 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'states));
-# 874 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 874 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'state)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 145 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 146 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                _1::[Comment _3] 
                    )
-# 145 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 146 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'states));
-# 886 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 886 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'state)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 146 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 147 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                    [_1] 
                    )
-# 146 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 147 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'states));
-# 897 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 897 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 149 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 150 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                 _1 
                    )
-# 149 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 150 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'id));
-# 908 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 908 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 150 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 151 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                       "*" + _2 
                    )
-# 150 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 151 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'id));
-# 919 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 919 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'id)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 152 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 153 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                              Func(_1, []) 
                    )
-# 152 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 153 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'temp));
-# 930 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 930 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'id)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 153 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 154 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                            Func(_1, []) 
                    )
-# 153 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 154 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'temp));
-# 941 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 941 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'id)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
@@ -946,35 +946,35 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 154 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 155 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                            Func(_1, _3::_5) 
                    )
-# 154 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 155 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'temp));
-# 954 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 954 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 155 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 156 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                   Val(value.String _1) 
                    )
-# 155 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 156 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'temp));
-# 965 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 965 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'assertOp)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 158 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 159 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                               Assert( _1, _3 ) 
                    )
-# 158 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 159 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'state));
-# 977 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 977 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'assertOp)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
@@ -982,464 +982,464 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 159 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 160 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                               Assert( _1, Func(_3, [Val _4]) ) 
                    )
-# 159 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 160 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'state));
-# 990 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 990 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'assertOp)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 160 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 161 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                             Assert( _1, Expr(Plus, _1, _3) ) 
                    )
-# 160 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 161 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'state));
-# 1002 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1002 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'assertOp)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 161 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 162 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                             Assert( _1, Expr(Minus, _1, _3) ) 
                    )
-# 161 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 162 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'state));
-# 1014 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1014 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'temp)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 171 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 172 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                ExprS _1 
                    )
-# 171 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 172 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'state));
-# 1025 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1025 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'temp)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 172 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 173 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                          ExprS( Expr(Plus, _1, _3) ) 
                    )
-# 172 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 173 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'state));
-# 1037 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1037 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'id)) in
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'seq_)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 173 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 174 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                   FuncS(_1, _2) 
                    )
-# 173 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 174 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'state));
-# 1049 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1049 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'id)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 176 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 177 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                              Var _1 
                    )
-# 176 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 177 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'ass));
-# 1060 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1060 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'id)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 177 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 178 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                     Var _2 
                    )
-# 177 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 178 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'ass));
-# 1071 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1071 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'id)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 178 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 179 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                     Var _2 
                    )
-# 178 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 179 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'ass));
-# 1082 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1082 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'ass)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 183 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 184 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                               _1 
                    )
-# 183 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 184 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'assertOp));
-# 1093 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1093 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'ass)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'seq_)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 184 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 185 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                  Func("idx", _1::_3) 
                    )
-# 184 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 185 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'assertOp));
-# 1105 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1105 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'seq_)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 187 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 188 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                              _1 :: _3 
                    )
-# 187 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 188 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'seq_));
-# 1117 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1117 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 188 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 189 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                   [_1] 
                    )
-# 188 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 189 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'seq_));
-# 1128 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1128 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'val_)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'seqval)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 192 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 193 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                (Val _1)::_3 
                    )
-# 192 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 193 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'seqval));
-# 1140 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1140 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'val_)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 193 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 194 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                   [Val _1] 
                    )
-# 193 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 194 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'seqval));
-# 1151 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1151 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'val_)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 197 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 198 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                   Val _1 
                    )
-# 197 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 198 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1162 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1162 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 198 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 199 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                 Var _1 
                    )
-# 198 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 199 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1173 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1173 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 199 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 200 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                      Func(_1, []) 
                    )
-# 199 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 200 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1184 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1184 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'seq_)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 200 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 201 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                      Func(_1, _3) 
                    )
-# 200 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 201 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1196 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1196 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'seq_)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 201 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 202 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                      Func("idx", (Var _1)::_3) 
                    )
-# 201 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 202 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1208 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1208 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 203 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 204 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                   UnarExpr(No, _2) 
                    )
-# 203 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 204 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1219 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1219 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 204 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 205 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                    UnarExpr(Obj, _2) 
                    )
-# 204 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 205 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1230 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1230 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 206 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 207 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                      _2 
                    )
-# 206 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 207 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1241 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1241 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 208 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 209 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                      Expr.Expr(Plus, _1, _3) 
                    )
-# 208 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 209 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1253 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1253 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 209 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 210 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                      Expr.Expr(Minus, _1, _3) 
                    )
-# 209 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 210 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1265 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1265 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : int)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 210 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 211 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                      Val(Int -_2) 
                    )
-# 210 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 211 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1276 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1276 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 211 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 212 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                      Expr.Expr(Times, _1, _3) 
                    )
-# 211 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 212 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1288 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1288 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 212 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 213 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                      Expr.Expr(Divide, _1, _3) 
                    )
-# 212 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 213 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1300 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1300 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 213 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 214 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                      Expr.Expr(Eq, _1, _3) 
                    )
-# 213 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 214 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1312 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1312 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 214 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 215 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                      Expr.Expr(Gt, _1, _3) 
                    )
-# 214 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 215 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1324 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1324 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 215 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 216 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                      Expr.Expr(Ge, _1, _3) 
                    )
-# 215 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 216 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1336 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1336 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 216 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 217 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                      Expr.Expr(Lt, _1, _3) 
                    )
-# 216 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 217 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1348 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1348 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 217 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 218 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                      Expr.Expr(Le, _1, _3) 
                    )
-# 217 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 218 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1360 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1360 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 218 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 219 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                      Expr.Expr(Ne, _1, _3) 
                    )
-# 218 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 219 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1372 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1372 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 219 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 220 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                      Expr.Expr(And, _1, _3) 
                    )
-# 219 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 220 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1384 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1384 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 220 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 221 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                      Expr.Expr(Or, _1, _3) 
                    )
-# 220 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 221 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1396 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1396 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 221 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 222 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                                   Expr(Mod, _1, _3) 
                    )
-# 221 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 222 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'expr));
-# 1408 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1408 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : int)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 224 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 225 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                  Int _1 
                    )
-# 224 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 225 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'val_));
-# 1419 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1419 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : float)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 225 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 226 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                    Float _1 
                    )
-# 225 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 226 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'val_));
-# 1430 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1430 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 226 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 227 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                                      value.String _1 
                    )
-# 226 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
+# 227 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fsp"
                  : 'val_));
 |]
-# 1442 "c:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
+# 1442 "C:\All\Project\Parsers\QSParse\QSParse\QSParser.fs"
 let tables () : Microsoft.FSharp.Text.Parsing.Tables<_> = 
   { reductions= _fsyacc_reductions ();
     endOfInputTag = _fsyacc_endOfInputTag;
