@@ -1,1 +1,0 @@
-start c:\All\PortableGit\git-bash.exe

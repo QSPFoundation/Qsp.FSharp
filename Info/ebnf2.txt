@@ -1,0 +1,15 @@
+ifOne = ifBegin stmtsOne ["else" stmtsOne];
+ifBegin = "if" expr ":"
+actBegin = "act" expr ":"
+actOne = actBegin stmtsOne;
+stmtsOne = actOne | ifOne | assign { "&" assign } [actOne | ifOne]
+
+stmtsMultiNl = nl smtsMulti nl {stmtsMulti nl}
+
+actMulti = actBegin (stmtsOne | stmtsMultiNl "end");
+
+elif = ifBegin stmtsMultiNl ("end" | "else" (elif | stmtsMultiNl "end"));
+
+ifMulti = ifOne | elif = ifBegin (stmtsOne ["else" stmtsOne] | stmtsMultiNl ("end" | "else" (elif | stmtsMultiNl "end")))
+
+stmtsMulti = ifMulti | actMulti | assign { "&" assign } [ifMulti | actMulti]

@@ -1,5 +1,6 @@
-﻿#if INTERACTIVE
-#r @"c:\All\Project\Parsers\QSParse\QSParse\bin\Debug\QSParse.exe"
+module Program
+#if INTERACTIVE
+#r @"..\..\bin\Debug\QSParse.exe"
 #endif
 open QS
 

@@ -59,8 +59,6 @@ let main args =
 
     match args |> List.ofArray with
     | "fslex.exe" as prog::path::args -> f prog path args
- //       let path = @"C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"
-//        let arguments = @"""C:\All\Project\Parsers\QSParse\QSParse\QSLexer.fsl"" --unicode"
     | "fsyacc.exe" as prog::path::args -> f prog path args
     | _ -> 1, sprintf "cmd error"
     |> function code, stdout -> printfn "%s" stdout; code

@@ -5,7 +5,7 @@ open QSParser
 open Microsoft.FSharp.Text.Lexing
 //
 let keywords =   
-    [   
+    [
         "end", END;
         "and", AND;   
         "or", OR; "else", ELSE; "elseif", ELSEIF; "if", IF; "act", ACT;
@@ -139,7 +139,7 @@ let backslash_escapes = ['\\' '\'' '"' 'n' 't' 'b' 'r' ' ']
 
 
 rule tokenize = parse
-| '!'                          { if !comment then
+| '!'                          { if !comment then // если перед ним было ('&'|nl) {whitespace}
                                      comment := false; reset_string_buffer(); handle_lexical_error comm lexbuf; COMMENT(get_stored_string())
                                  else NEQ }
 | whitespace                   { tokenize lexbuf }
