@@ -1,16 +1,42 @@
-﻿module QSAST
-
+﻿module Qsp.Ast
+open FsharpMyExtension
 type Value =
     | Int of int
     | String of string
 
 type Op =
-    // "+" | "-"   | "*"   | "/"    | "mod"
-    | Plus | Minus | Times | Divide | Mod
-    // "=" | ">" | ">=" | "<" | "<=" | ("!" | "<>")| =< | =>
-    | Eq   | Gt  | Ge   | Lt  | Le   | Ne          | El | Eg
-    // "and" | "or"
-    | And    | Or
+    /// `+`
+    | Plus
+    /// `-`
+    | Minus
+    /// `*`
+    | Times
+    /// `/`
+    | Divide
+    /// `mod`
+    | Mod
+
+    /// `=`
+    | Eq
+    /// `>`
+    | Gt
+    /// `>=`
+    | Ge
+    /// `&lt;`
+    | Lt
+    /// `&lt;=`
+    | Le
+    /// `!` or `&lt;>`
+    | Ne
+    /// `=&lt;`
+    | El
+    /// `=>`
+    | Eg
+    /// `and`
+    | And
+    /// `or`
+    | Or
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 [<RequireQualifiedAccess>]
 module Op =
@@ -31,26 +57,33 @@ module Op =
         | And -> "and"
         | Or -> "or"
         | Eq -> "="
-//            opp.AddOperator(InfixOperator("=>", ws, 4, A.Left, fun x y -> Expr(Ge, x, y)))
-//    opp.AddOperator(InfixOperator("=<", ws, 4, A.Left, fun x y -> Expr(Le, x, y)))
-    let ops = Reflect.unionCaseToList <@toString@>
 
-    let fromString = 
-        let m = Map.ofList <| List.map (fun (a,b) -> b,a) ops
-        fun x -> match Map.tryFind x m with Some x -> x | None -> failwithf "not found %A" x    
-type UnarOp = 
-    // "-" |"obj" | "no"
-    | Neg  | Obj  | No
+    let ops =
+        Reflection.Reflection.unionEnum<Op>
+        |> Array.map (fun x -> x, toString x)
+
+    let fromString =
+        let m = Array.map (fun (a, b) -> b, a) ops |> Map.ofArray
+        fun x -> match Map.tryFind x m with Some x -> x | None -> failwithf "not found %A" x
+type UnarOp =
+    /// `-`
+    | Neg
+    /// `obj`
+    | Obj
+    /// `no`
+    | No
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 [<RequireQualifiedAccess>]
 module UnarOp =
     [<ReflectedDefinition>]
     let toString = function | Obj -> "obj" | Neg -> "-" | No -> "no"
-    let ops = Reflect.unionCaseToList <@toString@>
-    let fromString = 
-        let m = Map.ofList <| List.map (fun (a,b) -> b,a) ops
+    let ops =
+        Reflection.Reflection.unionEnum<UnarOp>
+        |> Array.map (fun x -> x, toString x)
+    let fromString =
+        let m = Array.map (fun (a, b) -> b, a) ops |> Map.ofArray
         fun x -> match Map.tryFind x m with Some x -> x | None -> failwithf "not found %A" x
-module Precedences = 
+module Precedences =
     type T = OpB of Op | PrefB of UnarOp
 
     //&
@@ -83,7 +116,7 @@ type Expr =
     | UnarExpr of UnarOp * Expr
     | Expr of Op * Expr * Expr
 
-type Assign = 
+type Assign =
     | AssignVar of string
     | AssignArr of string * Expr
 type Statement =

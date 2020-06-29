@@ -8,7 +8,8 @@
   <ItemGroup>
     <None Include="App.config" />
     <Compile Include="Ast.fs" />
-    <Compile Include="Parser.fs" />
+    <Compile Include="Show.fs" />
+    <Compile Include="Parsec.fs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

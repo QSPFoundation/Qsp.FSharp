@@ -1,7 +1,7 @@
-﻿module QSParsec
-
+﻿module Qsp.Parser
+open FsharpMyExtension
 open FParsec
-open QSAST
+open Qsp.Ast
 
 type A = Associativity
 
@@ -12,7 +12,7 @@ let parsing p str =
     | Failure(errorMsg, _, _) -> failwithf "Failure: %s" errorMsg
 
 //let ws = spaces
-let ws = 
+let ws =
     skipManySatisfy (function '\t' | ' ' -> true | _ -> false)
     //manyChars (pchar '\t' <|> pchar ' ')
 let nl<'a> = skipMany1 newline : Parser<unit, 'a>
@@ -50,42 +50,46 @@ assert
     parsing stringLiteral "''" = ""
 
 
+
 let pexpr =
     let opp = new OperatorPrecedenceParser<Expr,unit,unit>()
     let expr = opp.ExpressionParser
-    let term = 
-        let varOrCall = 
-            let pcall name = 
+    let term =
+        let varOrCall =
+            let pcall name =
                 bet_ws '(' ')' (sepBy expr (pchar ',' >>. ws)) |>> fun args ->
                 Func(name, args)
-            let idx name = 
+            let idx name =
                 bet_ws '[' ']' (sepBy expr (pchar ',' >>. ws)) |>> fun args ->
-                Arr(name, args)                
+                Arr(name, args)
             identifier >>= fun name -> pcall name <|> idx name <|>% (Var name)
         let pred = (stringLiteral |>> String) <|> (pint32 |>> Int) |>> Val .>> ws
         //(pint32 .>> ws |>> (Int >> Val)) <|> varOrCall <|> bet_ws '(' ')' expr
         pred <|> varOrCall <|> bet_ws '(' ')' expr
-    
+
     opp.TermParser <- term
 
-    let addInf opT = 
+    let addInf opT =
         let op = Op.toString opT
         let prec = Precedences.prec <| Precedences.OpB opT
         opp.AddOperator(InfixOperator(op, ws, prec, A.Left, fun x y -> Expr(opT, x, y)))
-    Reflect.createUnionCases |> List.iter addInf
-    
-//    opp.AddOperator(InfixOperator("=>", ws, 4, A.Left, fun x y -> Expr(Ge, x, y)))
-//    opp.AddOperator(InfixOperator("=<", ws, 4, A.Left, fun x y -> Expr(Le, x, y)))
+
+    Reflection.Reflection.initUnionMap<_, int>
+    |> Map.iter (fun k v -> addInf k)
+
+    // opp.AddOperator(InfixOperator("=>", ws, 4, A.Left, fun x y -> Expr(Ge, x, y)))
+    // opp.AddOperator(InfixOperator("=<", ws, 4, A.Left, fun x y -> Expr(Le, x, y)))
     opp.AddOperator(InfixOperator("!",   ws, 4, A.Left, fun x y -> Expr(Le, x, y)))
     //Precedences.prec <| Precedences.OpB And
     opp.AddOperator(InfixOperator("OR",  ws, 1, A.Left, fun x y -> Expr(Le, x, y)))
     opp.AddOperator(InfixOperator("AND", ws, 2, A.Left, fun x y -> Expr(Le, x, y)))
-    let addPref unT = 
+    let addPref unT =
         let op = UnarOp.toString unT
         let prec = Precedences.prec <| Precedences.PrefB unT
         opp.AddOperator(PrefixOperator(op, ws, prec, false, fun x -> UnarExpr(unT, x)))
-    
-    Reflect.createUnionCases |> List.iter addPref
+
+    Reflection.Reflection.initUnionMap<_, int>
+    |> Map.iter (fun k v -> addPref k)
 
     expr
 
@@ -94,62 +98,62 @@ let strInsWs s = pstringCI s >>. ws
 let identOnly s = pstringCI s >>? notFollowedBy (satisfy isLetter) >>. ws
 let pstmt, pstmtRef = createParserForwardedToRef<Statement,unit>()
 let stmts = sepEndBy pstmt (nlws <|> (char_ws '&' >>% ()))
-let assign = 
-    let assdef name ass = 
-        let asscode = 
+let assign =
+    let assdef name ass =
+        let asscode =
             //let stmts = sepBy pstmt nlws
             between (pchar '{' >>. spaces) (spaces >>. char_ws '}') stmts
             |>> fun stmts -> AssingCode(ass, stmts)
         let call = identifier >>=? fun name -> followedBy (identifier <|> (puint32 >>% "") <|> stringLiteral) >>. (sepBy1 pexpr (char_ws ',')) |>> fun args -> Assign(ass, Func(name, args))
         let assexpr = call <|> (pexpr |>> fun defExpr -> Assign(ass, defExpr))
-        
+
         (str_ws "-=" >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Minus, Var name, defExpr)))
         <|> (str_ws "=-" >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Minus, defExpr, Var name)))
         <|> ((str_ws "+=" <|> str_ws "=+") >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Plus, Var name, defExpr)))
         <|> (char_ws '=' >>. (assexpr <|> asscode))
 
-    let assign name = 
+    let assign name =
         let arr = bet_ws '[' ']' pexpr |>> fun braketExpr -> AssignArr(name, braketExpr)
         arr <|>% (AssignVar name) >>= assdef name
     // assign = ["set" | "let"] ident ['[' expr ']'] ('=' ['+'|'-'] | ('+'|'-') '=') exprNotStartWithNeg
     let p = identOnly "set" <|> identOnly "let" >>. identifier >>= assign
-    let all =    
+    let all =
         identifier >>=? fun name ->
         let call name = (sepBy1 pexpr (char_ws ',')) |>> fun exprs -> CallSt(name, exprs)
         //assign name <|> (followedBy (identifier <|> (puint32 >>% "") <|> stringLiteral) >>. call name)
         assign name <|> (followedBy (identifier <|> ((strInsWs "obj" <|> strInsWs "no") >>% "") <|> (puint32 >>% "") <|> stringLiteral) >>. call name)
     p <|> all
     //attempt p <|> (pexpr |>> Statement.StarPl)
-let pcomment<'a> = 
+let pcomment<'a> =
     let stringLiteral2 c =
         let normalCharSnippet = many1Satisfy ((<>) c)
         let cs = string c
         let escapedChar = pstring (cs + cs)
         between (pchar c) (pchar c)
                 (manyStrings (normalCharSnippet <|> escapedChar)) |>> fun x -> System.String.Concat([|cs; x; cs|])
-    let brace = 
+    let brace =
         let normalCharSnippet = many1Satisfy ((<>) '}')
         let escapedChar = pstring "}}"
         between (pchar '{') (pchar '}')
                 (manyStrings (normalCharSnippet <|> escapedChar)) |>> fun x -> System.String.Concat([|"{"; x; "}"|])
-    let p = 
+    let p =
         many1Satisfy (fun c -> c <> '\n' && c <> ''' && c <> '"' && c <> '{')
         <|> stringLiteral2 '"'
         <|> stringLiteral2 '''
         <|> brace
     pchar '!' >>. manyStrings p |>> Comment : Parser<Statement,'a>
-let pexprStmt = 
+let pexprStmt =
     pexpr |>> function Var x -> CallSt(x, []) | Func(name, args) -> CallSt(name,args) | x -> StarPl x
 let psign = char_ws ':' >>. manySatisfy ((<>) '\n') |>> Sign
 module IfMod =
     let ifBegin = strInsWs "if" >>. pexpr .>> char_ws ':'
-    
+
     let stmtsOne, stmtsOneRef = createParserForwardedToRef<Statement list,unit>()
 
     //ifOneBody = stmtsOne ["else" stmtsOne];
     let ifOneBody cond =
-        stmtsOne >>= fun body -> 
-        optList (strInsWs "else" >>. stmtsOne) 
+        stmtsOne >>= fun body ->
+        optList (strInsWs "else" >>. stmtsOne)
         |>> fun elseBody -> If(cond, body, elseBody)
     //ifOne = ifBegin ifOneBody;
     let ifone = ifBegin >>= ifOneBody
@@ -160,18 +164,18 @@ module IfMod =
     let actOne = actBegin >>= fun exprs -> stmtsOne |>> fun body -> Act(exprs, body)
     //stmtsOne = actOne | ifOne | assign { "&" assign } [actOne | ifOne]
     let p = (actOne <|> ifone |>> fun x -> [x])
-    stmtsOneRef := 
-        //p <|> sepBy1 (assign <|> pexprStmt <|> pcomment) (char_ws '&') .>> (skipChar 'a' <|>% ()) .>> ws >>= fun assigns -> 
-        //p <|> sepBy1 (assign <|> pexprStmt <|> pcomment <|> actOne <|> ifone) (char_ws '&') >>= fun assigns -> 
-        sepBy1 (assign <|> pexprStmt <|> pcomment <|> actOne <|> ifone) (char_ws '&') <|> p >>= fun assigns -> 
+    stmtsOneRef :=
+        //p <|> sepBy1 (assign <|> pexprStmt <|> pcomment) (char_ws '&') .>> (skipChar 'a' <|>% ()) .>> ws >>= fun assigns ->
+        //p <|> sepBy1 (assign <|> pexprStmt <|> pcomment <|> actOne <|> ifone) (char_ws '&') >>= fun assigns ->
+        sepBy1 (assign <|> pexprStmt <|> pcomment <|> actOne <|> ifone) (char_ws '&') <|> p >>= fun assigns ->
         optList p |>> fun x -> assigns @ x
-    
+
     let smtsMulti, smtsMultiRef = createParserForwardedToRef<Statement list,unit>()
     //stmtsMultiNl = nl smtsMulti nl {stmtsMulti nl}
     let stmtsMultiNl = nlws >>. sepEndBy1 smtsMulti nlws |>> List.concat
     //actMulti = actBegin (stmtsOne | stmtsMultiNl "end");
-    let actMulti = 
-        actBegin >>= fun args -> 
+    let actMulti =
+        actBegin >>= fun args ->
         stmtsOne <|> (stmtsMultiNl .>> strInsWs "end")
         |>> fun body -> Act(args, body)
     let elsifbody cond elsif =
@@ -191,22 +195,22 @@ module IfMod =
     //stmtsMulti = ifMulti | actMulti | assign { "&" assign } [ifMulti | actMulti]
     let pIf = ifMulti <|> actMulti
     do
-        let p = 
-            sepEndBy1 (assign <|> pcomment <|> pexprStmt <|> psign) (char_ws '&') >>= fun stmts -> 
+        let p =
+            sepEndBy1 (assign <|> pcomment <|> pexprStmt <|> psign) (char_ws '&') >>= fun stmts ->
             opt(opt(char_ws '&') >>. ifone) |>> function None -> stmts | Some x -> List.append stmts [x]
-        smtsMultiRef := 
+        smtsMultiRef :=
             //ifActMulti <|> sepBy (assign <|> pcomment <|> pexprStmt <|> psign) (char_ws '&') >>= fun assigns -> optList ifActMulti |>> fun x -> assigns @ x
             //sepBy (assign <|> pcomment <|> pexprStmt <|> psign) (char_ws '&') <|> ifActMulti >>= fun assigns -> optList ifActMulti |>> fun x -> assigns @ x
             p <|> (pIf |>> fun x -> [x]) <|>% []
-            
-    
+
+
 
 //let startStr = stringLiteral .>> ws .>> nlws |>> (String >> Val >> StarPl)
 
-pstmtRef := 
+pstmtRef :=
     assign <|> IfMod.pIf <|> pcomment <|> (attempt pexprStmt) <|> psign
 
-let ploc = 
+let ploc =
     let anyExceptNl = many1Satisfy (fun c -> c <> '\n')
     char_ws '#' >>. anyExceptNl .>> nlws >>= fun name ->
     stmts .>> (char_ws '-') .>> (skipManySatisfy (fun c -> c<>'\n')) .>> spaces |>> fun body -> Location(name, body)
