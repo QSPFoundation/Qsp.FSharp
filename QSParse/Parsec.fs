@@ -77,12 +77,6 @@ let pexpr =
     Reflection.Reflection.initUnionMap<_, int>
     |> Map.iter (fun k v -> addInf k)
 
-    // opp.AddOperator(InfixOperator("=>", ws, 4, A.Left, fun x y -> Expr(Ge, x, y)))
-    // opp.AddOperator(InfixOperator("=<", ws, 4, A.Left, fun x y -> Expr(Le, x, y)))
-    opp.AddOperator(InfixOperator("!",   ws, 4, A.Left, fun x y -> Expr(Le, x, y)))
-    //Precedences.prec <| Precedences.OpB And
-    opp.AddOperator(InfixOperator("OR",  ws, 1, A.Left, fun x y -> Expr(Le, x, y)))
-    opp.AddOperator(InfixOperator("AND", ws, 2, A.Left, fun x y -> Expr(Le, x, y)))
     let addPref unT =
         let op = UnarOp.toString unT
         let prec = Precedences.prec <| Precedences.PrefB unT
