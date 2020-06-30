@@ -1,0 +1,20 @@
+STORAGE: NONE
+RESTRICTION: >= net461
+NUGET
+  remote: https://www.nuget.org/api/v2
+    FAKE (5.16)
+    FParsec (1.1.1)
+      FSharp.Core (>= 4.3.4)
+      System.ValueTuple (>= 4.4)
+    FSharp.Core (4.7.2)
+    Fuchu (1.1)
+      FSharp.Core (>= 4.3.4)
+    Newtonsoft.Json (12.0.3)
+    System.ValueTuple (4.5)
+GITHUB
+  remote: fsharp/FsAutoComplete
+    src/LanguageServerProtocol/LanguageServerProtocol.fs (f59b0112d59c9b3440b7e174505804e4dee52ad3)
+GROUP Build
+NUGET
+  remote: https://www.nuget.org/api/v2
+    FAKE (5.16)

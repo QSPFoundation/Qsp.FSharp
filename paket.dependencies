@@ -1,0 +1,17 @@
+storage: none
+source https://www.nuget.org/api/v2
+
+framework: >= net461
+nuget FAKE
+nuget FParsec
+nuget FSharp.Core
+nuget Fuchu
+nuget Newtonsoft.Json
+
+// https://github.com/fsharp/FsAutoComplete/tree/master/src/LanguageServerProtocol
+github fsharp/FsAutoComplete src/LanguageServerProtocol/LanguageServerProtocol.fs
+
+group Build
+  source https://nuget.org/api/v2
+
+  nuget FAKE
