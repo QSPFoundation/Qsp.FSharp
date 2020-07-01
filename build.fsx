@@ -80,6 +80,42 @@ Target.create "TrimTrailingWhitespace" (fun _ ->
     )
 )
 
+open Fake.IO
+// TODO: скачать и распаковать http://qsp.su/attachments/txt2gam011.zip в "Utils\txt2gam"
+let compilerPath =
+    Lazy.Create (fun _ ->
+        let compilerPath = "Utils/txt2gam/txt2gam.exe"
+        if System.IO.File.Exists compilerPath then compilerPath
+        else
+            failwithf "Compiler not found at '%A'" compilerPath
+    )
+let compiler src =
+    let dst = Path.changeExtension ".qsp" src
+
+    Command.RawCommand(compilerPath.Value, Arguments.ofList [src; dst])
+    |> CreateProcess.fromCommand
+    |> CreateProcess.withWorkingDirectory (Path.getDirectory compilerPath.Value)
+    |> Proc.run
+    |> fun x -> x.ExitCode
+
+Target.create "Watch" (fun _ ->
+     use watcher =
+        !! "Utils/txt2gam/*.qsps"
+        |> Fake.IO.ChangeWatcher.run (fun changes ->
+            changes
+            |> Seq.iter (fun x ->
+                Trace.trace "Compilation..."
+                let code = compiler x.FullPath
+                Trace.trace (sprintf "Compilation completed with code %d" code)
+            )
+     )
+
+     System.Console.ReadLine() |> ignore
+
+     watcher.Dispose() // по-идеи, и так должен выгрузиться
+)
+
+
 // --------------------------------------------------------------------------------------
 // Build order
 // --------------------------------------------------------------------------------------

@@ -1,12 +1,13 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <TargetFramework>net461</TargetFramework>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
   </PropertyGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <Compile Include="Tokens.fs" />
     <Compile Include="Ast.fs" />
     <Compile Include="Show.fs" />
     <Compile Include="Parsec.fs" />

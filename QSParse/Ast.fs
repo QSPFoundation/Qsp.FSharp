@@ -1,4 +1,4 @@
-﻿module Qsp.Ast
+module Qsp.Ast
 open FsharpMyExtension
 type Value =
     | Int of int
@@ -128,4 +128,10 @@ type Statement =
     | Act of Expr list * Statement list
     | Sign of string
     | Comment of string
+
+/// ```qsp
+/// # start
+/// 'asdf'
+/// - произвольный набор символов
+/// ```
 type Location = Location of string * Statement list

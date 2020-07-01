@@ -1,22 +1,22 @@
-﻿module QSParsecTest
+#I @"e:\Project\FsharpMyExtension\FsharpMyExtension\FsharpMyExtension\bin\Debug\net461\"
+#r @"FParsecCS.dll"
+#r @"FParsec.dll"
+#r @"Fuchu.dll"
+#r @"HtmlAgilityPack.dll"
+#r @"Newtonsoft.Json.dll"
+#r @"Newtonsoft.Json.Bson.dll"
+#r @"FsharpMyExtension.dll"
 
-#if INTERACTIVE
-#r @"..\packages\FParsec.1.0.2\lib\net40-client\FParsecCS.dll"
-#r @"..\packages\FParsec.1.0.2\lib\net40-client\FParsec.dll"
-#endif
-
-#if INTERACTIVE
-#load "reflect.fs"
-#load "QSAST.fs"
-#load "show.fs"
-#endif
-#if INTERACTIVE
-#load "QSParsec.fs"
-#endif
+open FsharpMyExtension
 open FParsec
-open QSParsec
-open QSAST
-open Show
+#load "Tokens.fs"
+#load "Ast.fs"
+open Qsp.Ast
+#load "Show.fs"
+open Qsp.Show
+#load "Parsec.fs"
+open Qsp.Parser
+
 
 let parsingP p = parsing p >> printfn "%A"
 
@@ -41,10 +41,10 @@ parsingP pstmt "if a: k else pre if cond: d  elseif celif: d"
 
 parsingP pstmt "IF e:
 stmt1 & stmt
-elseif e2 : 
-    stmt2 
+elseif e2 :
+    stmt2
     stmt3
-elseif e3 : 
+elseif e3 :
     end2
     if e4 :
         stmt5
@@ -88,7 +88,7 @@ printState s' |> show |> printfn "%s"
 let str = System.IO.File.ReadAllText(@"e:\Disc D\All\It\DefaultBox\drive\C\All2\Games\GamesSourceCode\destiny 0.5.txt", System.Text.Encoding.Default)
 let res = parsing (many ploc) str
 let test2 =
-    let f x = 
+    let f x =
         let s = printState x |> show
         if s |> parsing pstmt = x then None
         else Some(s)

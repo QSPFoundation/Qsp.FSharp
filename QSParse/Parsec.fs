@@ -1,4 +1,4 @@
-﻿module Qsp.Parser
+module Qsp.Parser
 open FsharpMyExtension
 open FParsec
 open Qsp.Ast
@@ -210,4 +210,25 @@ let ploc =
     stmts .>> (char_ws '-') .>> (skipManySatisfy (fun c -> c<>'\n')) .>> spaces |>> fun body -> Location(name, body)
 //let plst = str_ws "begin" >>. sepEndBy ident (nl >>. ws) .>> str "end"
 //parsing plst "begin a\n end"
+open Qsp.Tokens
+open FsharpMyExtension.Either
 
+let start str =
+    let p =
+        many1Satisfy (not << isLetter)
+        >>. many
+            ((getPosition .>>? many1Satisfy isLetter .>>. getPosition
+              |>> fun (p1, p2) ->
+                let range =
+                    {
+                        StartLine = int p1.Line
+                        EndLine = int p2.Line
+                        StartColumn = int p1.Column
+                        EndColumn = int p2.Column
+                    }
+                { TokenType = Keyword
+                  Range = range } )
+             .>> many1Satisfy (not << isLetter))
+    match run p str with
+    | Success(x, _, _) -> Right x
+    | Failure(x, _, _) -> Left x

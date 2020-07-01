@@ -133,7 +133,7 @@ flycheck_*.el
 .projectile
 
 ### VisualStudioCode ###
-.vscode
+# .vscode
 
 
 
@@ -393,3 +393,4 @@ paket-files/
 
 /Output/
 /.ionide/
+/Utils/
