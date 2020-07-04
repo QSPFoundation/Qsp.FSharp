@@ -9,7 +9,10 @@
     <None Include="App.config" />
     <Compile Include="Tokens.fs" />
     <Compile Include="Ast.fs" />
+    <Compile Include="Defines.fs" />
     <Compile Include="Show.fs" />
+    <Compile Include="ParserGeneric.fs" />
+    <Compile Include="ParserExpr.fs" />
     <Compile Include="Parsec.fs" />
   </ItemGroup>
   <ItemGroup>

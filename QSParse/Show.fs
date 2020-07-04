@@ -3,47 +3,90 @@ open FsharpMyExtension
 open FsharpMyExtension.ShowList
 open Qsp.Ast
 
-let printState =
-    let showValue = function
-        | Int x -> shows x //| Float x -> x.ToString()
-        | String x -> bet "'" "'" (x.Replace("'", "''") |> showString)
-    let ops = Op.toString >> showString
-//    let ops = function
-//        | Plus -> "+" | Minus -> "-" | Times -> "*" | Divide -> "/"
-//        | Eq -> "=" | Gt -> ">" | Ge -> ">=" | Lt -> "<" | Le -> "<=" | Ne -> "<>"   // =, >, >=, <, <=, (<>|!)
-//        | And -> "and" | Or -> "or" | Mod -> "mod"
-    let unar = function No -> "no" | Obj -> "obj" | Neg -> "-"
-    let rec showExpr = function
+
+let showVarType = function
+    | StringType -> showChar '$'
+    | ImplicitNumericType -> empty
+    | ExplicitNumericType -> showChar '#'
+let showVar (typ:VarType, varName:string) =
+    showVarType typ << showString varName
+
+let showValue = function
+    | Int x -> shows x
+    | String x -> bet "'" "'" (x.Replace("'", "''") |> showString)
+let ops = Op.toString >> showString
+
+let unar = function No -> "no" | Obj -> "obj" | Neg -> "-"
+
+let simpleShowExpr : _ -> ShowS =
+    let rec f = function
         | Val v -> showValue v
-        | Var v -> showString v
-        | Func(name, es) -> showString name << showParen true (List.map showExpr es |> join ", ")
+        | Var v -> showVar v
+        | Func(name, es) ->
+            showString name << showParen true (List.map f es |> join ", ")
         | UnarExpr(op, e) ->
             let space = function Obj | No -> showChar ' ' | Neg -> id
-            showString (unar op) << space op << showExpr e
-        //| Expr(op, e1, e2) -> showExpr e1 << showChar ' ' << showString(ops op) << showChar ' ' << showExpr e2
+            let x =
+                match e with
+                | Expr(_, _, _) ->
+                    showParen true (f e)
+                | Arr(_, _) // `-(arr[idx])` лучше выглядит, чем `-arr[idx]`?
+                | Func(_, _) // `-(func(idx))` лучше выглядит, чем `-(arr(idx))`?
+                | UnarExpr _
+                | Val _
+                | Var _ ->
+                    space op << f e
+            showString (unar op) << x
         | Expr(op, e1, e2) ->
-            let prec = Precedences.OpB >> Precedences.prec
-            let f = function
-                | Expr(op', _, _) -> showParen (prec op > prec op')
-                | UnarExpr _ -> showParen true | _ -> id
-            let f x = f x (showExpr x)
-            f e1 << showChar ' ' << ops op << showChar ' ' << f e2
-        | Arr(name, es) -> showString name << bet "[" "]" (List.map showExpr es |> join ", ")
-    let showAssign = function
-        | Assign.AssignArr(nameVar, expr) -> showString nameVar << bet "[" "]" (showExpr expr)
-        | Assign.AssignVar name -> showString name
+            let f body =
+                match body with
+                | Val(_)
+                | Var _ ->  f body
+                | UnarExpr(_, _)
+                | Expr(_, _, _) ->
+                    showParen true (f body)
+                | Func(_, _)
+                | Arr(_, _) ->
+                    f body
+            f e1 << showChar ' '
+            << ops op << showChar ' '
+            << f e2
+        | Arr(var, es) ->
+            showVar var << bet "[" "]" (List.map f es |> join ", ")
+    f
+let rec showExpr = function
+    | Val v -> showValue v
+    | Var v -> showVar v
+    | Func(name, es) -> showString name << showParen true (List.map showExpr es |> join ", ")
+    | UnarExpr(op, e) ->
+        let space = function Obj | No -> showChar ' ' | Neg -> id
+        showString (unar op) << space op << showExpr e
+    | Expr(op, e1, e2) ->
+        let prec = Precedences.OpB >> Precedences.prec
+        let f = function
+            | Expr(op', _, _) -> showParen (prec op > prec op')
+            | UnarExpr _ -> showParen true | _ -> id
+        let f x = f x (showExpr x)
+        f e1 << showChar ' ' << ops op << showChar ' ' << f e2
+    | Arr(var, es) -> showVar var << bet "[" "]" (List.map showExpr es |> join ", ")
 
-    let (|OneStmt|_|) = function
-        | [x] ->
-            match x with
-            | Assign _ | CallSt _ | StarPl _ | Comment _ -> Some x
-            | AssingCode _ -> None // спорно
-            | Act _ | If _ -> None
-            | Sign _ -> None // эту нечисть нужно как можно более нагляднее подчеркнуть. Да странно будет, если она окажется одна в списке инструкций.
-        | _ -> None
 
-    //let (OneStmt x) = [ parsing pstmt "a = 1"; ]
-    let (|AssingName|) = function AssignArr(x, _) -> x | AssignVar x -> x
+let showAssign = function
+    | Assign.AssignArr(var, key) -> showVar var << bet "[" "]" (showExpr key)
+    | Assign.AssignVar v -> showVar v
+
+let (|OneStmt|_|) = function
+    | [x] ->
+        match x with
+        | Assign _ | CallSt _ | StarPl _ | Comment _ -> Some x
+        | Act _ | If _ -> None
+        | Label _ -> None // эту нечисть нужно как можно более нагляднее подчеркнуть. Да странно будет, если она окажется одна в списке инструкций.
+    | _ -> None
+
+//let (OneStmt x) = [ parsing pstmt "a = 1"; ]
+let (|AssingName|) = function AssignArr(x, _) -> x | AssignVar x -> x
+
+let printState =
     let tabss n = replicate n '\t'
     let rec state tabs xs =
         let f = function [] -> nl | xs -> nl << joinEmpty "\n" (List.map (state <| tabs + 1) xs)
@@ -57,26 +100,19 @@ let printState =
             | Assign(ass, e) -> showAssign ass << showString " = " << showExpr e
             | CallSt(name, es) -> showString name << showChar ' ' << (List.map showExpr es |> join ", ")
             | StarPl e -> showExpr e
-            | Sign s -> showChar ':' << showString s
+            | Label s -> showChar ':' << showString s
             | If(e, body, elseBody) ->
                 let ifBegin e = showString "if " << showExpr e << showChar ':'
                 let body =
                     match body, elseBody with
                     | OneStmt x, OneStmt y -> showChar ' ' << f' x << showString " else " << f' y
                     | OneStmt x, [] -> showChar ' ' << f' x
-                    //| [CallSt _ as x], [CallSt _ as y] -> showChar ' ' << f' x << showString " else " << f' y
-                    //| [Assign _ as x], [] | [CallSt _ as x], [] | [StarPl _ as x], [] -> showChar ' ' << f' x
                     | xs, ys ->
                         let rec els xs =
                             if List.isEmpty xs then id
                             else
                                 let body = function [If(e, xs, ys)] -> ifBegin e << f xs << els ys | xs -> f xs
                                 indent << showString "else" << body xs
-//                            | [] -> id
-//                            | [If(e, xs, ys)] ->
-//                                indent << showString "else" << ifBegin e << f xs << els ys
-//                            | ys ->
-//                                indent << showString "else" << f ys
                         f xs << els ys << indent << showString "end"
                 ifBegin e << body
             | Act(es, body) ->
@@ -85,8 +121,6 @@ let printState =
                     | xs -> f xs << indent << showString "end"
                 showString "act " << join ", " (List.map showExpr es) << showChar ':' << fbody body
             | Comment s -> showChar '!' << showString s
-            | AssingCode(ass, stmts) ->
-                showAssign ass << showString " = " << showChar '{' << nl << (f stmts) << indent << showChar '}'
         tabss tabs << f' xs
     state 0
 let showLoc (Location(name, statements)) =

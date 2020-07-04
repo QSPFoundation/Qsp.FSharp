@@ -7,20 +7,11 @@
 #r @"Newtonsoft.Json.Bson.dll"
 #r @"FsharpMyExtension.dll"
 
-open FsharpMyExtension
-open FParsec
-#load "Tokens.fs"
-#load "Ast.fs"
-open Qsp.Ast
-#load "Show.fs"
-open Qsp.Show
-#load "Parsec.fs"
-open Qsp.Parser
 
 
-let parsingP p = parsing p >> printfn "%A"
+let parsingP p = run p >> printfn "%A"
 
-parsingP pexpr "sprintchance =< nochance" // sprintchance =< (no chance)
+// parsingP pexpr ""
 parsingP pstmt "a = obj 's'"
 parsingP pstmt "a =- 10"
 parsingP pstmt "a = a + 10"
@@ -61,36 +52,19 @@ end"
 
 //System.Text.Encoding.Default
 //System.Text.Encoding.UTF8
-parsing (many ploc) (System.IO.File.ReadAllText(@"e:\Disc D\All\It\DefaultBox\drive\C\All2\Games\GamesSourceCode\etoEdit.txt", System.Text.Encoding.UTF8))
+run (many ploc) (System.IO.File.ReadAllText(@"e:\Disc D\All\It\DefaultBox\drive\C\All2\Games\GamesSourceCode\etoEdit.txt", System.Text.Encoding.UTF8))
 |> ignore
 //|> fun x -> System.IO.File.WriteAllText(@"e:\res.txt", sprintf "%A" x)
-parsing (many ploc) (System.IO.File.ReadAllText(@"e:\Disc D\All\It\DefaultBox\drive\C\All2\Games\GamesSourceCode\al.txt"))
+run (many ploc) (System.IO.File.ReadAllText(@"e:\Disc D\All\It\DefaultBox\drive\C\All2\Games\GamesSourceCode\al.txt"))
 |> ignore
 //|> fun x -> System.IO.File.WriteAllText(@"e:\res.txt", sprintf "%A" x)
-
-
-let s = parsing pstmt "k = k + 1" //"a = a = (no a) > b"
-let s' = parsing pstmt "a = a = no (a > b)"
-let test p s =
-    let p = parsing p
-    let before = p s
-    let after = printState before |> show |> p
-    if  after <> before then failwithf "before:\n%A\nafter:\n%A" before after
-test pstmt "a = a = no -a > b"
-parsingP pstmt "asdf obj 'Персонаж'"
-parsingP pstmt "a = pstam> (pmaxstam/4)*2 and pstam <= (pmaxstam/4)*3"
-test pstmt "php -= 3*emdmg*2 - parm"
-parsing pstmt """php =+ 3*emdmg*2 - parm"""
-|> printState |> show |> printfn "%A"
-printState s |> show |> printfn "%s"
-printState s' |> show |> printfn "%s"
 
 let str = System.IO.File.ReadAllText(@"e:\Disc D\All\It\DefaultBox\drive\C\All2\Games\GamesSourceCode\destiny 0.5.txt", System.Text.Encoding.Default)
-let res = parsing (many ploc) str
+let res = run (many ploc) str
 let test2 =
     let f x =
         let s = printState x |> show
-        if s |> parsing pstmt = x then None
+        if s |> run pstmt = x then None
         else Some(s)
 
     List.choose (function Location(name, stmts) -> match List.choose f stmts with [] -> None | xs -> Some(name, xs)) res

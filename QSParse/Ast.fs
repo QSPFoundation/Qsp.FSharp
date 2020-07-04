@@ -85,19 +85,16 @@ module UnarOp =
         fun x -> match Map.tryFind x m with Some x -> x | None -> failwithf "not found %A" x
 module Precedences =
     type T = OpB of Op | PrefB of UnarOp
+    // &
+    // OR
+    // AND
+    // OBJ, NO
+    // =, <, >, !, <>, <=, >=, =<, =>
+    // +, -
+    // MOD
+    // *, /
+    // +, - (унарные)
 
-    //&
-    //OR
-    //AND
-    //OBJ, NO
-    //=, <, >, !, <>, <=, >=, =<, =>
-    //+, -
-    //MOD
-    //*, /
-    //+, - (унарные)
-
-//        "=, <, >, <>, <=, >=".Split([|", "|], System.StringSplitOptions.None)
-//        |> Array.map (Op.fromString >> sprintf "OpB %A") |> join " | "
     let prec = function
         | OpB Or -> 1
         | OpB And -> 2
@@ -108,25 +105,35 @@ module Precedences =
         | OpB Mod -> 6
         | OpB Times | OpB Divide -> 7
         | PrefB Neg -> 8
+
+type VarType =
+    /// `varName`, если к такой присвоить строковое значение, то интерпретатор попытается преобразовать ее в число. Если не получится, выбьет ошибку.
+    | ImplicitNumericType
+    /// `#varName`, если к такой присвоить строковое значение, то интерпретатор попытается преобразовать ее в число. Если не получится, выбьет ошибку.
+    | ExplicitNumericType
+    /// `$varName`, к такой переменной можно смело присваивать и число, и строку
+    | StringType
 type Expr =
     | Val of Value
-    | Var of string
+    | Var of var:(VarType * string)
     | Func of string * Expr list
-    | Arr of string * Expr list
+    | Arr of var:(VarType * string) * Expr list
     | UnarExpr of UnarOp * Expr
     | Expr of Op * Expr * Expr
 
 type Assign =
-    | AssignVar of string
-    | AssignArr of string * Expr
+    | AssignVar of var:(VarType * string)
+    /// Ключом массива может быть значение любого типа
+    | AssignArr of var:(VarType * string) * key:Expr
+
 type Statement =
     | Assign of Assign * Expr
-    | AssingCode of Assign * Statement list
     | CallSt of string * Expr list
+    /// Вычисляется `expr` и посылается в `*pl`
     | StarPl of Expr
     | If of Expr * Statement list * Statement list
     | Act of Expr list * Statement list
-    | Sign of string
+    | Label of string
     | Comment of string
 
 /// ```qsp
