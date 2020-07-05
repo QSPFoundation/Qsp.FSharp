@@ -24,7 +24,7 @@ let ws<'UserState> =
     skipManySatisfy (fun c -> System.Char.IsWhiteSpace c && c <> '\n')
     : Parser<_, 'UserState>
 let ws1<'UserState> =
-    skipMany1Satisfy (fun c -> System.Char.IsWhiteSpace c && c <> '\n')
+    skipMany1SatisfyL (fun c -> System.Char.IsWhiteSpace c && c <> '\n') "any white space except '\\n'"
     : Parser<_, 'UserState>
 
 let char_ws c = pchar c .>> ws
@@ -44,27 +44,13 @@ let stringLiteral<'UserState> =
     <|> bet '{' '}' (p '}') // TODO: забавно: проверил компилятор, и тот напрочь не воспринимает экранирование `}}`
     : Parser<_, 'UserState>
 
-open Fuchu
-[<Tests>]
-let stringLiteralTest =
-    testList "stringLiteralTest" [
-        testCase "1" <| fun () ->
-            Assert.Equal("", Right " ", runEither stringLiteral "\" \"")
-        testCase "2" <| fun () ->
-            Assert.Equal("", Right "\"", runEither stringLiteral "\"\"\"\"")
-        testCase "3" <| fun () ->
-            Assert.Equal("", Right "\"'", runEither stringLiteral "\"\"'\"\"")
-        testCase "5" <| fun () ->
-            Assert.Equal("", Right "", runEither stringLiteral "''")
-        testCase "6" <| fun () ->
-            Assert.Equal("", Right "'", runEither stringLiteral "''''")
-        testCase "4" <| fun () ->
-            Assert.Equal("", Right "\"", runEither stringLiteral "'\"'")
-        testCase "braces1" <| fun () ->
-            Assert.Equal("", Right "abc", runEither stringLiteral "{abc}")
-        testCase "braces escaped" <| fun () ->
-            Assert.Equal("", Right "}", runEither stringLiteral "{}}}")
-    ]
+/// Дело в том, что названия переменных могут начинаться с ключевых слов ("**if**SomethingTrue", например), а значит, чтобы это пресечь, можно воспользоваться именно этой функцией так:
+/// ```fsharp
+/// pstring "if" .>>? notFollowedVar
+/// ```
+let notFollowedVarCont<'UserState> =
+    notFollowedBy (satisfy (fun c -> isLetter c || isDigit c || c = '_' || c = '.'))
+    : Parser<_, 'UserState>
 
 type State =
     {
@@ -83,3 +69,83 @@ let emptyState =
         Hovers = []
     }
 type 'a Parser = Parser<'a, State>
+
+let appendToken2 tokenType p1 p2 =
+    updateUserState (fun st ->
+        let token =
+            { Qsp.Tokens.TokenType = tokenType
+              Qsp.Tokens.Range = p1, p2 }
+
+        { st with Tokens = token :: st.Tokens }
+    )
+
+let appendToken tokenType p =
+    (getPosition .>>.? p .>>. getPosition)
+    >>= fun ((p1, p), p2) ->
+        appendToken2 tokenType p1 p2
+        // updateUserState (fun st ->
+        //     let token =
+        //         { Qsp.Tokens.TokenType = tokenType
+        //           Qsp.Tokens.Range = p1, p2 }
+
+        //     { st with Tokens = token :: st.Tokens }
+        // )
+        >>. preturn p
+open Qsp.Tokens
+
+let stringLiteralWithToken : _ Parser =
+    // Если не разбивать, то VS Code выбьет: "`range` cannot span multiple lines"
+    let bet tokenType openedChar closedChar =
+        let p =
+            many1Satisfy (fun c' -> not (c' = closedChar || c' = '\n'))
+            <|> (attempt(skipChar closedChar >>. skipChar closedChar)
+                  >>% string closedChar)
+        pipe2
+            (appendToken tokenType
+                (pchar openedChar >>. manyStrings p)
+             .>> opt skipNewline)
+            (many (appendToken tokenType (many1Strings p) <|> newlineReturn "")
+             .>> appendToken tokenType (pchar closedChar)) // TODO: Здесь самое то использовать `PunctuationDefinitionStringEnd`
+            (fun x xs ->
+                x::xs |> String.concat "\n")
+    bet TokenType.StringQuotedSingle '\'' '\''
+    <|> bet TokenType.StringQuotedDouble '"' '"'
+
+let pbraces: _ Parser =
+    let pbraces, pbracesRef = createParserForwardedToRef()
+    let p = many1Satisfy (isNoneOf "{}\n")
+
+    pbracesRef :=
+        pipe2
+            (appendToken TokenType.StringBraced
+                (many1Satisfy2 ((=) '{') (isNoneOf "{}\n")) )
+            (many
+                (appendToken TokenType.StringBraced (many1Strings p)
+                 <|> newlineReturn "\n"
+                 <|> pbraces
+                )
+             .>>. appendToken TokenType.StringBraced (pchar '}'))
+            (fun x (xs, closedChar) ->
+                seq {
+                    yield x
+                    yield! xs
+                    yield string closedChar
+                }
+                |> System.String.Concat
+            )
+    pipe2
+        (appendToken TokenType.StringBraced
+            (pchar '{' >>. manyStrings p)
+         .>>. opt (newlineReturn "\n"))
+        (many
+            (appendToken TokenType.StringBraced (many1Strings p)
+             <|> newlineReturn "\n"
+             <|> pbraces
+            )
+         .>> appendToken TokenType.StringBraced (pchar '}')) // TODO: Здесь самое то использовать `PunctuationDefinitionStringEnd`
+        (fun (x, nl) xs ->
+            match nl with
+            | None ->
+                x::xs |> System.String.Concat
+            | Some nl ->
+                x::nl::xs |> System.String.Concat)

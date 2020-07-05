@@ -1,18 +1,19 @@
 module Qsp.Tokens
 
-type Range =
-    { StartColumn : int
-      StartLine : int
-      EndColumn : int
-      EndLine : int }
+type Range = FParsec.Position * FParsec.Position
+
 type TokenType =
+    /// в TS `var` называется `storage.type.js`
+    | Type
     | Keyword
     /// `act`, `if`, `:`, `end`
     | KeywordControl
     | Function
-    /// Она же, наверное, процедура... А чем, собственно, оператор отличается от функции?
-    | Procedure
+    /// В QSP `comment.line` и `comment.block` объединены
+    | Comment
 
+    | Procedure
+    | Variable
     /// `keyword.operator.assignment.js`
     ///
     /// `=`
@@ -34,11 +35,12 @@ type TokenType =
     /// `&`
     | PunctuationTerminatorStatement
 
-    | PunctuationDefinitionStringBegin
-    | PunctuationDefinitionStringEnd
+    // | PunctuationDefinitionStringBegin
+    // | PunctuationDefinitionStringEnd
     | StringQuotedDouble
     | StringQuotedSingle
-    | ConstantCharacterEscape
+    | StringBraced
+    // | ConstantCharacterEscape
 type Token =
     { TokenType: TokenType
       Range: Range }

@@ -81,6 +81,7 @@ let (|OneStmt|_|) = function
         | Assign _ | CallSt _ | StarPl _ | Comment _ -> Some x
         | Act _ | If _ -> None
         | Label _ -> None // эту нечисть нужно как можно более нагляднее подчеркнуть. Да странно будет, если она окажется одна в списке инструкций.
+        | Exit -> None // ¯\_(ツ)_/¯
     | _ -> None
 
 //let (OneStmt x) = [ parsing pstmt "a = 1"; ]
@@ -121,6 +122,7 @@ let printState =
                     | xs -> f xs << indent << showString "end"
                 showString "act " << join ", " (List.map showExpr es) << showChar ':' << fbody body
             | Comment s -> showChar '!' << showString s
+            | Exit -> showString "exit"
         tabss tabs << f' xs
     state 0
 let showLoc (Location(name, statements)) =

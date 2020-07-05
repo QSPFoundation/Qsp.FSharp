@@ -5,12 +5,17 @@ open FsharpMyExtension.Either
 open Qsp
 open Qsp.Ast
 open Qsp.Parser.Generic
+open Qsp.Tokens
 
 let pbinaryOperator : _ Parser =
-    // keywords
     // transferOperators
     // procedures
-    Defines.binaryOperators
+    [
+        Defines.binaryOperators
+        Defines.keywords
+    ]
+    |> List.concat
+    |> List.sortDescending
     |> List.map pstringCI
     |> choice
 
@@ -25,8 +30,16 @@ let pexplicitVar : _ Parser =
             pchar '#' >>% ExplicitNumericType
             pchar '$' >>% StringType
         ]
-    varType .>>. p
-    |>> fun (typ, x) -> typ, x
+    (getPosition .>>.? varType) .>>. (p .>>. getPosition)
+    >>= fun ((p1, typ), (x, p2)) ->
+        updateUserState (fun st ->
+            let token =
+                { Tokens.TokenType = Tokens.Variable
+                  Tokens.Range = p1, p2 }
+
+            { st with Tokens = token :: st.Tokens }
+        )
+        >>. preturn (typ, x)
 type ProcOrFunc =
     | Procedure of string
     | Function of string
@@ -48,30 +61,42 @@ let pdefProcOrFunc : _ Parser =
         |> List.map pstring
         |> choice |>> Function
     pprocedure <|> pfunction
+let notFollowedByBinOpIdent =
+    // конечно, тут нужно объяснить пользователю, почему именно нельзя использовать то или иное слово
+    // проще назвать, что допустимо
+    // let p =
+    //     choice [
+    //         spaces1
+    //         skipChar '"'
+    //         skipChar '''
+    //         eof
+    //     ]
+    // let followedVarCont =
+    //     followedBy (satisfy (fun c -> isDigit c || c = '_' || c = '.'))
+    let p =
+        pbinaryOperator
+        .>> (skipSatisfy (fun c ->
+                not (isLetter c || isDigit c || c = '_' || c = '.'))
+             <|> eof)
+    let p2 =
+        notFollowedByL p "идентификатор, а не строковый бинарный оператор"
+        >>. ident
+    // runStateEither p2 emptyState "no"
+    // runStateEither p2 emptyState "no " // нельзя
+    // runStateEither p2 emptyState "node" // можно
+    // runStateEither p2 emptyState "foobar" // можно
+
+    p2
+    // notFollowedByL (keywords >>. p) "нельзя использовать здесь ключевое слово"
+    // let keys = notFollowedByL ((choice <| List.map pstringCI ["let"; "set"; "if"; "end"; "elseif"; "else"; "act"; "no"; "obj"]) >>. (spaces1 <|> eof <|> skipChar '"' <|> skipChar ''')) "some excess"
 
 let pexpr : _ Parser =
     let opp = new OperatorPrecedenceParser<Expr, unit, _>()
+
     let expr = opp.ExpressionParser
-    /// Допустим, у нас есть заданная функция `mid`, и есть правила
-    let notFollowedNewLiter =
-        notFollowedBy (satisfy (fun c -> isDigit c || c = '_' || c = '.'))
-    let notFollowedByBinOp =
-        // конечно, тут нужно объяснить пользователю, почему именно нельзя использовать то или иное слово
-        // проще назвать, что допустимо
-        // let p =
-        //     choice [
-        //         spaces1
-        //         skipChar '"'
-        //         skipChar '''
-        //         eof
-        //     ]
-        let p = pbinaryOperator .>> notFollowedNewLiter
-        notFollowedByL p "выражение, а не строковый бинарный оператор"
-        // notFollowedByL (keywords >>. p) "нельзя использовать здесь ключевое слово"
-        // let keys = notFollowedByL ((choice <| List.map pstringCI ["let"; "set"; "if"; "end"; "elseif"; "else"; "act"; "no"; "obj"]) >>. (spaces1 <|> eof <|> skipChar '"' <|> skipChar ''')) "some excess"
 
     let term =
-        let varOrCall =
+        let pcallFuncOrArrOrVar =
             let pbraket = bet_ws '[' ']' (sepBy expr (skipChar ',' >>. ws))
             let pexplicitVar =
                 pexplicitVar .>> ws .>>. opt pbraket
@@ -79,7 +104,7 @@ let pexpr : _ Parser =
                     match arr with
                     | Some args -> Arr(var, args)
                     | None -> Var var
-            let pcallDefFunction =
+            let pcallFunctionOrArrOrVar =
                 // let pfunction = functions |> List.map pstring |> choice
                 // pdefProcOrFunc <|> identifier
                 // подожди, теперь идет очередь семантики.
@@ -87,27 +112,38 @@ let pexpr : _ Parser =
                 let pfuncCall =
                     bet_ws '(' ')' (sepBy expr (pchar ',' >>. ws))
                     |>> fun args name -> Func(name, args)
-                notFollowedByBinOp
-                >>. ident .>> ws
-                .>>. (pfuncCall
-                      <|> (pbraket |>> fun arg name -> Arr((ImplicitNumericType, name), arg))
-                      <|>% fun name -> Var(ImplicitNumericType, name))
-
-                |>> fun (name, f) -> f name
-            pexplicitVar <|> pcallDefFunction
+                // pipe2
+                //     (notFollowedByBinOpIdent .>> ws)
+                //     (pfuncCall
+                //       <|> (pbraket |>> fun arg name -> Arr((ImplicitNumericType, name), arg))
+                //       <|>% fun name -> Var(ImplicitNumericType, name))
+                //     (fun name f -> f name)
+                tuple2
+                    (tuple3 getPosition notFollowedByBinOpIdent getPosition
+                     .>> ws)
+                    ((pfuncCall |>> fun f -> TokenType.Function, f)
+                      <|> (pbraket
+                           |>> fun arg ->
+                                let f name = Arr((ImplicitNumericType, name), arg)
+                                TokenType.Variable, f)
+                      <|>% (TokenType.Variable, fun name -> Var(ImplicitNumericType, name)))
+                >>= fun ((p1, name, p2), (tokenType, f)) ->
+                    appendToken2 tokenType p1 p2
+                    >>. preturn (f name)
+            pexplicitVar <|> pcallFunctionOrArrOrVar
         let pval =
             choice [
-                stringLiteral |>> String
+                stringLiteralWithToken <|> pbraces |>> String
                 pint32 |>> Int
             ]
             |>> Val
-        pval <|> varOrCall <|> bet_ws '(' ')' expr
+        pval <|> pcallFuncOrArrOrVar <|> bet_ws '(' ')' expr
 
     opp.TermParser <- term .>> ws
 
     let afterStringParser opName =
         if String.forall isLetter opName then
-            notFollowedBy (satisfy (fun c -> isDigit c || c = '_' || c = '.'))
+            notFollowedVarCont
             >>. ws
         else
             ws
@@ -125,4 +161,4 @@ let pexpr : _ Parser =
         PrefixOperator(unarOp, afterStringParser unarOp, prec, false, fun x -> UnarExpr(unT, x))
         |> opp.AddOperator
     )
-    expr
+    expr <?> "expr"

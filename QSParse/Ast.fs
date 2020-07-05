@@ -26,6 +26,8 @@ type Op =
     | Lt
     /// `&lt;=`
     | Le
+    /// `!` — то же самое, что и `&lt;>`
+    | Bang
     /// `!` or `&lt;>`
     | Ne
     /// `=&lt;`
@@ -57,6 +59,7 @@ module Op =
         | And -> "and"
         | Or -> "or"
         | Eq -> "="
+        | Bang -> "!"
 
     let ops =
         Reflection.Reflection.unionEnum<Op>
@@ -99,8 +102,8 @@ module Precedences =
         | OpB Or -> 1
         | OpB And -> 2
         | PrefB Obj | PrefB No -> 3
-        // =     | <      | >      | <>     | <=     | >=     | =>     | =<
-        | OpB Eq | OpB Lt | OpB Gt | OpB Ne | OpB Le | OpB Ge | OpB Eg | OpB El-> 4
+        // =     | <      | >      | !        | <>     | <=     | >=     | =>     | =<
+        | OpB Eq | OpB Lt | OpB Gt | OpB Bang | OpB Ne | OpB Le | OpB Ge | OpB Eg | OpB El-> 4
         | OpB Plus | OpB Minus -> 5
         | OpB Mod -> 6
         | OpB Times | OpB Divide -> 7
@@ -135,6 +138,7 @@ type Statement =
     | Act of Expr list * Statement list
     | Label of string
     | Comment of string
+    | Exit
 
 /// ```qsp
 /// # start
