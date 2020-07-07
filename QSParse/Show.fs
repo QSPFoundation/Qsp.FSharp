@@ -86,9 +86,16 @@ let (|OneStmt|_|) = function
     | _ -> None
 
 let (|AssingName|) = function AssignArr(x, _) -> x | AssignVar x -> x
-
-let printState =
-    let tabss n = replicate n '\t'
+type IndentsOption =
+    | UsingSpaces of int
+    | UsingTabs
+let showStmt indentsOption =
+    let tabss =
+        match indentsOption with
+        | UsingTabs ->
+            fun n -> replicate n '\t'
+        | UsingSpaces spacesCount ->
+            fun n -> replicate (n * spacesCount) ' '
     let rec state tabs xs =
         let f = function [] -> nl | xs -> nl << joinEmpty "\n" (List.map (state <| tabs + 1) xs)
 
@@ -123,12 +130,15 @@ let printState =
                 showString "act " << join ", " (List.map showExpr es) << showChar ':' << fbody body
             | Comment s -> showChar '!' << showString s
             | AssingCode(ass, stmts) ->
-                showAssign ass << showString " = " << showChar '{' << nl << (f stmts) << indent << showChar '}'
+                showAssign ass << showString " = " << showChar '{' << f stmts << indent << showChar '}'
             | Exit -> showString "exit"
         tabss tabs << f' xs
     state 0
-let showLoc (Location(name, statements)) =
+let showLoc indentsOption (Location(name, statements)) =
     showString "# " << showString name << nl
-    << joinEmpty "\n" (List.map printState statements) << nl
+    << joinEmpty "\n" (List.map (showStmt indentsOption) statements) << nl
     << showString (sprintf "--- %s ----------" name)
-let printLocs xs = List.map showLoc xs |> joinEmpty "\n\n" |> show
+let printLocs indentsOption xs =
+    List.map (showLoc indentsOption) xs
+    |> joinEmpty "\n\n"
+    |> show

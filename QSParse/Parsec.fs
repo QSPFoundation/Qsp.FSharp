@@ -1,4 +1,4 @@
-module Qsp.Parser.Main
+﻿module Qsp.Parser.Main
 open FParsec
 open FsharpMyExtension
 open FsharpMyExtension.Either
@@ -94,7 +94,13 @@ let pcomment : _ Parser =
     appendToken TokenType.Comment (pchar '!')
     >>. manyStrings p |>> Statement.Comment
 
-let psign = char_ws ':' >>. manySatisfy ((<>) '\n') |>> Label
+let psign =
+    appendToken TokenType.LabelColon
+        (pchar ':')
+    >>. ws
+    >>. appendToken TokenType.NameLabel
+            (many1SatisfyL ((<>) '\n') "labelName") // TODO: literal? Trim trailng spaces
+    |>> Label
 let pexit : _ Parser =
     appendToken TokenType.KeywordControl
         (pstringCI "exit" .>>? notFollowedVarCont)
@@ -108,6 +114,8 @@ let pstmt =
     let pstmt, pstmtRef = createParserForwardedToRef<Statement, _>()
     let pInlineStmts =
         many (pstmt .>> ws .>> skipMany (ppunctuationTerminator .>> ws))
+    let pInlineStmts1 =
+        many1 (pstmt .>> ws .>> skipMany (ppunctuationTerminator .>> ws))
     let pstmts =
         many
             (pstmt .>> spaces
@@ -175,12 +183,46 @@ let pstmt =
         let p =
             ws .>>? skipNewline >>. spaces >>. pstmts .>> setIsEndOptionalTo false
             <|> (spaces >>. pInlineStmts .>> setIsEndOptionalTo true) // .>> spaces
-        let pElse1 = pelseKeyword >>. p
+        let pElse1 =
+            pelseKeyword >>. ws
+            >>. (pInlineStmts1 .>> opt pendKeyword // .>> (skipNewline <|> eof)
+                 <|> (spaces >>. pstmts .>> pendKeyword))
+        let pend =
+            getUserState
+            >>= fun x ->
+                if x.IsEndOptional then
+                    optional pendKeyword
+                else
+                    pendKeyword >>% ()
+        // let pelseIf, pelseIfRef = createParserForwardedToRef()
+        let pelseIf =
+            // let pelseIf' =
+            //     pelseifHeader .>> ws
+            //     .>>. (pInlineStmts1 <|> (spaces >>. pstmts))
+
+
+            // pelseifHeader .>> ws
+            // .>>. ((pInlineStmts1 .>>. many (pelseifHeader .>> ws .>>. pInlineStmts1)) .>>. (pElse1 <|> (opt pendKeyword >>% [])) // .>> (skipNewline <|> eof)
+            //       <|> (spaces >>. (pstmts .>>. many (pelseifHeader .>> ws .>>. pInlineStmts1)) .>>. (pElse1 <|> (pendKeyword >>% []))))
+            // |>> fun (expr, ((thenBody, elifs), elseBody)) ->
+            //     let rec f = function
+            //         | (expr, thenBody)::xs ->
+            //             [If(expr, thenBody, f xs)]
+            //         | [] -> elseBody
+            //     [If(expr, thenBody, f elifs)]
+            many1 (pelseifHeader .>>. p)
+            .>>. (pElse1 <|> (pend >>% []))
+            |>> fun (elifs, elseBody) ->
+                let rec f = function
+                    | (expr, thenBody)::xs ->
+                        [If(expr, thenBody, f xs)]
+                    | [] -> elseBody
+                f elifs
         let pElseIfs1 =
             pipe2
                 (many1
-                    (pelseifHeader .>>. p
-                     .>> optional (notFollowedBy pendKeyword >>. spaces))) // TODO: UserState не меняется, если изменить его в `notFollowedBy`?
+                    (pelseifHeader .>>. p))
+                    //  .>> optional (notFollowedBy pendKeyword >>. spaces))) // TODO: UserState не меняется, если изменить его в `notFollowedBy`?
                 (opt (pelseKeyword >>. p))
                 (fun elifs elseBody ->
                     let elseBody = elseBody |> Option.defaultValue []
@@ -196,18 +238,12 @@ let pstmt =
                     //     | x -> failwithf "%A" x)
                     //     elseBody
                 )
-        let pend =
-            getUserState
-            >>= fun x ->
-                if x.IsEndOptional then
-                    optional pendKeyword
-                else
-                    pendKeyword >>% ()
+
         let pElse =
             pipe2
                 (many
-                    (pelseifHeader .>>. p
-                     .>> optional (notFollowedBy pendKeyword >>. spaces))) // TODO: UserState не меняется, если изменить его в `notFollowedBy`?
+                    (pelseifHeader .>>. p))
+                    //  .>> optional (notFollowedBy pendKeyword >>. spaces))) // TODO: UserState не меняется, если изменить его в `notFollowedBy`?
                 (opt
                     (pelseKeyword >>. p))
                 (fun elifs elseBody ->
@@ -236,13 +272,13 @@ let pstmt =
 
         // `if expr: stmt1 & stmt2 & ...` — такому выражению `end` не нужен, поскольку эту роль выполняет конец строки.
         // Также работает и с `elif expr: stmt1 & stmt2 & ...`, и с `else expr: stmt1 & stmt2 & ...`.
-        let pElseIf =
-            spaces >>? (pElseIfs1 <|> pElse1 .>> pend)
-            <|> (optional pendKeyword >>% [])
         pipe2
-            pifHeader
-            (ws >>? skipNewline >>. spaces >>. pstmts .>>. (setIsEndOptionalTo false >>. pElse .>> pend)
-             <|> (spaces >>. pInlineStmts .>>. pElseIf))
+            // pifHeader
+            // (ws >>? skipNewline >>. spaces >>. pstmts .>>. (setIsEndOptionalTo false >>. pElse .>> pend)
+            //  <|> (spaces >>. pInlineStmts .>>. (setIsEndOptionalTo true >>. pElse .>> pend)))
+            (pifHeader .>> ws)
+            ((pInlineStmts1 .>>. (pelseIf <|> pElse1 <|> (opt pendKeyword >>% []))
+             <|> (spaces >>. pstmts .>>. (pelseIf <|> pElse1 <|> (pendKeyword >>% [])))))
             (fun expr (thenBody, elseBody) ->
                 If(expr, thenBody, elseBody))
     pstmtRef :=
@@ -287,3 +323,13 @@ let start str =
         emptyState
         ""
         str
+let startOnFile enc path =
+    let p =
+        spaces >>. many (ploc .>> spaces)
+        .>> (getPosition >>= fun p ->
+                updateUserState (fun st ->
+                    { st with LastSymbolPos = p}))
+    runParserOnFile (p .>> eof)
+        emptyState
+        path
+        enc

@@ -99,10 +99,10 @@ let stringLiteralWithToken : _ Parser =
             <|> (attempt(skipChar closedChar >>. skipChar closedChar)
                   >>% string closedChar)
         pipe2
-            (appendToken tokenType
-                (pchar openedChar >>. manyStrings p)
-             .>> opt skipNewline)
-            (many (appendToken tokenType (many1Strings p) <|> newlineReturn "")
+            (appendToken tokenType (pchar openedChar)
+             >>. appendToken tokenType (manyStrings p))
+            (many
+                (newline >>. appendToken tokenType (manyStrings p))
              .>> appendToken tokenType (pchar closedChar)) // TODO: Здесь самое то использовать `PunctuationDefinitionStringEnd`
             (fun x xs ->
                 x::xs |> String.concat "\n")

@@ -41,6 +41,19 @@ type TokenType =
     | StringQuotedSingle
     | StringBraced
     // | ConstantCharacterEscape
+    /// `entity.name.label.cs`
+    | NameLabel
+
+    /// `punctuation.separator.colon.cs`
+    | LabelColon
+    /// `punctuation.definition.interpolation.begin.cs`
+    ///
+    /// `<<`
+    | InterpolationBegin
+    /// `punctuation.definition.interpolation.end.cs`
+    ///
+    /// `>>`
+    | InterpolationEnd
 type Token =
     { TokenType: TokenType
       Range: Range }
