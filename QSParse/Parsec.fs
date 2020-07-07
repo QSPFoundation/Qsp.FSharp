@@ -12,8 +12,12 @@ open Qsp.Tokens
 let ppunctuationTerminator : _ Parser =
     appendToken TokenType.KeywordControl (pchar '&')
 
-let pAssign =
+let pAssign stmts =
     let assdef name ass =
+        let asscode =
+            between (pchar '{' >>. spaces) (spaces >>. char_ws '}') stmts
+            |>> fun stmts -> AssingCode(ass, stmts)
+
         let call =
             ident >>=?
             fun name ->
@@ -34,7 +38,7 @@ let pAssign =
             str_ws "-=" >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Minus, Var name, defExpr))
             str_ws "=-" >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Minus, defExpr, Var name))
             (str_ws "+=" <|> str_ws "=+") >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Plus, Var name, defExpr))
-            str_ws "=" >>. assexpr
+            str_ws "=" >>. (asscode <|> assexpr)
         ]
 
     let assign name =
@@ -65,7 +69,7 @@ let pcallProc =
         let p =
             Defines.proceduresWithAsterix
             |> List.sortDescending
-            |> List.map pstring
+            |> List.map pstringCI
             |> choice
         appendToken TokenType.Procedure
             (p .>>? notFollowedVarCont)
@@ -76,40 +80,29 @@ let pcallProc =
      .>>. sepBy pexpr (char_ws ',')) // Кстати, `,` — "punctuation.separator.parameter.js"
      <|> (appendToken TokenType.Procedure
               notFollowedByBinOpIdent
-          .>>? (ws1 <|> followedBy (satisfy (isAnyOf "'\"(")))
+          .>>? (ws1 <|> followedBy (satisfy (isAnyOf "'\"")))
           .>>.? sepBy1 pexpr (char_ws ','))
     |>> fun (name, args) ->
         CallSt(name, args)
 
 let pcomment : _ Parser =
-    let stringLiteral2 c =
-        let normalCharSnippet = many1Satisfy ((<>) c)
-        let cs = string c
-        let escapedChar = pstring (cs + cs)
-        between (pchar c) (pchar c)
-                (manyStrings (normalCharSnippet <|> escapedChar)) |>> fun x -> System.String.Concat([|cs; x; cs|])
-    let brace =
-        let normalCharSnippet = many1Satisfy ((<>) '}')
-        let escapedChar = pstring "}}"
-        between (pchar '{') (pchar '}')
-                (manyStrings (normalCharSnippet <|> escapedChar)) |>> fun x -> System.String.Concat([|"{"; x; "}"|])
     let p =
-        many1Satisfy (fun c -> c <> '\n' && c <> ''' && c <> '"' && c <> '{')
-        <|> stringLiteral2 '"'
-        <|> stringLiteral2 '''
-        <|> brace
-    appendToken TokenType.Comment
-        (pchar '!' >>. manyStrings p |>> Statement.Comment)
+        appendToken TokenType.Comment
+            (many1Satisfy (fun c -> c <> '\n' && c <> ''' && c <> '"' && c <> '{'))
+        <|> stringLiteralWithToken
+        <|> pbraces
+    appendToken TokenType.Comment (pchar '!')
+    >>. manyStrings p |>> Statement.Comment
 
 let psign = char_ws ':' >>. manySatisfy ((<>) '\n') |>> Label
 let pexit : _ Parser =
     appendToken TokenType.KeywordControl
-        (pstring "exit" .>>? notFollowedVarCont)
+        (pstringCI "exit" .>>? notFollowedVarCont)
     >>% Exit
 
 let pendKeyword : _ Parser =
     appendToken TokenType.KeywordControl
-        (pstring "end" .>>? notFollowedVarCont)
+        (pstringCI "end" .>>? notFollowedVarCont)
 
 let pstmt =
     let pstmt, pstmtRef = createParserForwardedToRef<Statement, _>()
@@ -133,7 +126,7 @@ let pstmt =
         pipe2
             pactHeader
             ((ws >>? skipNewline >>. spaces >>. pstmts .>> pendKeyword)
-              <|> (spaces >>. pInlineStmts))
+              <|> (spaces >>. pInlineStmts .>> optional pendKeyword))
             (fun expr body ->
                 Act(expr, body))
     let pIf =
@@ -176,24 +169,25 @@ let pstmt =
         //     end
         // end
         // ```
+        let setIsEndOptionalTo boolean =
+            updateUserState (fun x -> { x with IsEndOptional = boolean })
 
-
-        let pElse =
+        let p =
+            ws .>>? skipNewline >>. spaces >>. pstmts .>> setIsEndOptionalTo false
+            <|> (spaces >>. pInlineStmts .>> setIsEndOptionalTo true) // .>> spaces
+        let pElse1 = pelseKeyword >>. p
+        let pElseIfs1 =
             pipe2
-                (many
-                    (pipe2
-                        (pelseifHeader .>>? ws .>>? skipNewline)
-                        (spaces >>. pstmts)
-                        (fun expr thenBody  ->
-                            If(expr, thenBody, []))))
-                (opt (pelseKeyword .>> spaces >>. pstmts))
+                (many1
+                    (pelseifHeader .>>. p
+                     .>> optional (notFollowedBy pendKeyword >>. spaces))) // TODO: UserState не меняется, если изменить его в `notFollowedBy`?
+                (opt (pelseKeyword >>. p))
                 (fun elifs elseBody ->
                     let elseBody = elseBody |> Option.defaultValue []
                     let rec f = function
-                        | If(expr, thenBody, [])::xs ->
+                        | (expr, thenBody)::xs ->
                             [If(expr, thenBody, f xs)]
                         | [] -> elseBody
-                        | x -> failwithf "%A" x
                     f elifs
                     // List.fold (fun st ->
                     //     function
@@ -202,12 +196,53 @@ let pstmt =
                     //     | x -> failwithf "%A" x)
                     //     elseBody
                 )
-            .>> pendKeyword
+        let pend =
+            getUserState
+            >>= fun x ->
+                if x.IsEndOptional then
+                    optional pendKeyword
+                else
+                    pendKeyword >>% ()
+        let pElse =
+            pipe2
+                (many
+                    (pelseifHeader .>>. p
+                     .>> optional (notFollowedBy pendKeyword >>. spaces))) // TODO: UserState не меняется, если изменить его в `notFollowedBy`?
+                (opt
+                    (pelseKeyword >>. p))
+                (fun elifs elseBody ->
+                    let elseBody = elseBody |> Option.defaultValue []
+                    let rec f = function
+                        | (expr, thenBody)::xs ->
+                            [If(expr, thenBody, f xs)]
+                        | [] -> elseBody
+                    f elifs
+                    // List.fold (fun st ->
+                    //     function
+                    //     | (If(expr, thenBody, [])) ->
+                    //         [If(expr, thenBody, st)]
+                    //     | x -> failwithf "%A" x)
+                    //     elseBody
+                )
 
+        // `end` нужен, чтобы инструкции, определенные ниже, не ушли в тело `if`
+        // ```qsps
+        // if expr:
+        //     stmt1
+        // end & ! без него `stmt2` станет принадлежать телу `if`
+        // stmt2
+        // ...
+        // ```
+
+        // `if expr: stmt1 & stmt2 & ...` — такому выражению `end` не нужен, поскольку эту роль выполняет конец строки.
+        // Также работает и с `elif expr: stmt1 & stmt2 & ...`, и с `else expr: stmt1 & stmt2 & ...`.
+        let pElseIf =
+            spaces >>? (pElseIfs1 <|> pElse1 .>> pend)
+            <|> (optional pendKeyword >>% [])
         pipe2
             pifHeader
-            ((ws >>? skipNewline >>. spaces >>. pstmts .>>. pElse)
-             <|> (spaces >>. pInlineStmts |>> fun x -> x, [])) // TODO: по-идеи, еще может быть `else`
+            (ws >>? skipNewline >>. spaces >>. pstmts .>>. (setIsEndOptionalTo false >>. pElse .>> pend)
+             <|> (spaces >>. pInlineStmts .>>. pElseIf))
             (fun expr (thenBody, elseBody) ->
                 If(expr, thenBody, elseBody))
     pstmtRef :=
@@ -217,8 +252,8 @@ let pstmt =
             psign
             pIf
             pAct
+            pAssign pstmts
             pcallProc
-            pAssign
             attempt (pexpr |>> StarPl) // `attempt` — только ради одного единственного случая: `-`, который завершает локацию
         ]
     pstmt
@@ -232,13 +267,23 @@ let pminusKeyword : _ Parser =
     appendToken TokenType.KeywordControl (pchar '-') // хотя здесь больше подошел бы обычный `end`
 let ploc =
     pipe2
-        (psharpKeyword .>> ws >>. (many1Satisfy ((<>) '\n')) .>> spaces)
+        (psharpKeyword .>> ws
+         >>. appendToken TokenType.StringQuotedSingle // надо же как-то подчеркнуть название локации
+                (many1Satisfy ((<>) '\n'))
+         .>> spaces)
         (pstmts
-         .>> ((pminusKeyword .>> ws) .>> (skipManySatisfy ((<>) '\n'))))
+         .>> (pminusKeyword .>> ws
+              .>> appendToken TokenType.Comment
+                    (skipManySatisfy ((<>) '\n'))))
         (fun name body -> Location(name, body))
 
 let start str =
-    runParserOnString (spaces >>. many (ploc .>> spaces) .>> eof)
+    let p =
+        spaces >>. many (ploc .>> spaces)
+        .>> (getPosition >>= fun p ->
+                updateUserState (fun st ->
+                    { st with LastSymbolPos = p}))
+    runParserOnString (p .>> eof)
         emptyState
         ""
         str

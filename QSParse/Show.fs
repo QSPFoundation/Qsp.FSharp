@@ -79,12 +79,12 @@ let (|OneStmt|_|) = function
     | [x] ->
         match x with
         | Assign _ | CallSt _ | StarPl _ | Comment _ -> Some x
+        | AssingCode _ -> None // спорно
         | Act _ | If _ -> None
         | Label _ -> None // эту нечисть нужно как можно более нагляднее подчеркнуть. Да странно будет, если она окажется одна в списке инструкций.
         | Exit -> None // ¯\_(ツ)_/¯
     | _ -> None
 
-//let (OneStmt x) = [ parsing pstmt "a = 1"; ]
 let (|AssingName|) = function AssignArr(x, _) -> x | AssignVar x -> x
 
 let printState =
@@ -122,6 +122,8 @@ let printState =
                     | xs -> f xs << indent << showString "end"
                 showString "act " << join ", " (List.map showExpr es) << showChar ':' << fbody body
             | Comment s -> showChar '!' << showString s
+            | AssingCode(ass, stmts) ->
+                showAssign ass << showString " = " << showChar '{' << nl << (f stmts) << indent << showChar '}'
             | Exit -> showString "exit"
         tabss tabs << f' xs
     state 0

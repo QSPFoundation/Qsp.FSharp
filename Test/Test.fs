@@ -61,26 +61,13 @@ let pexprTest =
             let input = "a = pstam> (pmaxstam/4)*2 and pstam <= (pmaxstam/4)*3"
             let exp = "((a = pstam) > ((pmaxstam / 4) * 2)) and (pstam <= ((pmaxstam / 4) * 3))"
             Assert.Equal("", Right exp, runExprShow input)
-
-        // testCase "3" <| fun () ->
-        //     Assert.Equal("", Right "\"'", runEither stringLiteral "\"\"'\"\"")
-        // testCase "5" <| fun () ->
-        //     Assert.Equal("", Right "", runEither stringLiteral "''")
-        // testCase "6" <| fun () ->
-        //     Assert.Equal("", Right "'", runEither stringLiteral "''''")
-        // testCase "4" <| fun () ->
-        //     Assert.Equal("", Right "\"", runEither stringLiteral "'\"'")
-        // testCase "braces1" <| fun () ->
-        //     Assert.Equal("", Right "abc", runEither stringLiteral "{abc}")
-        // testCase "braces escaped" <| fun () ->
-        //     Assert.Equal("", Right "}", runEither stringLiteral "{}}}")
     ]
 // #load "Parsec.fs"
 
 [<Tests>]
 let assignTest =
     let runExpr str =
-        Qsp.Parser.Generic.runStateEither Qsp.Parser.Main.pAssign Qsp.Parser.Generic.emptyState str
+        Qsp.Parser.Generic.runStateEither (Qsp.Parser.Main.pAssign FParsec.Primitives.pzero) Qsp.Parser.Generic.emptyState str
         |> snd
     testList "assignTest" [
         testCase "implicit assign implicit var" <| fun () ->
@@ -99,6 +86,13 @@ let assignTest =
                     Val (Int 42)))
             Assert.Equal("", Right exp, runExpr input)
         testCase "implicit `-=` implicit var" <| fun () ->
+            let input = "years -= 10"
+            let exp =
+              (Assign
+                 (AssignVar (ImplicitNumericType, "years"),
+                  Expr (Minus, Var (ImplicitNumericType, "years"), Val (Int 10))))
+            Assert.Equal("", Right exp, runExpr input)
+        testCase "implicit `-=` implicit var 2" <| fun () ->
             let input = "php -= 3*emdmg*2 - parm"
             let exp =
                 (Assign
@@ -177,13 +171,6 @@ let assignTest =
             Assert.None("", act)
     ]
 
-
-    // // ломает семантику:
-    // "min = 10" // нельзя, потому что `min` — встроенная функция. Семантику ломает, дерево — нет.
-
-    // // Ломает дерево:
-    // "f(expr) += 10" // Да `var += value` — это `var = var + value`, но выражение всегда ложное
-
 [<Tests>]
 let stringLiteralTest =
     testList "stringLiteralTest" [
@@ -223,10 +210,20 @@ let stringLiteralWithTokenTest =
             Assert.Equal("", Right "'", runEither "''''")
         testCase "4" <| fun () ->
             Assert.Equal("", Right "\"", runEither "'\"'")
-        // testCase "braces1" <| fun () ->
-        //     Assert.Equal("", Right "abc", runEither "{abc}")
-        // testCase "braces escaped" <| fun () ->
-        //     Assert.Equal("", Right "}", runEither "{}}}")
+        testCase "multiline test" <| fun () ->
+            let input =
+                [
+                    "'"
+                    "    a"
+                    "'"
+                ] |> String.concat "\n"
+            let exp =
+                [
+                    ""
+                    "    a"
+                    ""
+                ] |> String.concat "\n"
+            Assert.Equal("", Right exp, runEither input)
     ]
 [<Tests>]
 let pbracesTests =
@@ -334,21 +331,18 @@ let pcallProcTests =
             Assert.Equal("", Right exp, runStmts input)
     ]
 [<Tests>]
-let stmtTests =
+let ifTests =
     let runStmts str =
-        Qsp.Parser.Generic.runStateEither Qsp.Parser.Main.pstmt Qsp.Parser.Generic.emptyState str
+        Qsp.Parser.Generic.runStateEither
+            Qsp.Parser.Main.pstmt
+            Qsp.Parser.Generic.emptyState str
         |> snd
-    testList "stmtTests" [
-        testCase "inline act" <| fun () ->
-            let input =
-                [
-                    "act 'some act': gt 'hall'"
-                    "'инструкция, которая не принадлежит конструкции'"
-                ] |> String.concat "\n"
-            let exp =
-                Act ([Val (String "some act")], [CallSt ("gt", [Val (String "hall")])])
-
-            Assert.Equal("", Right exp, runStmts input)
+    let runStmtsEof str =
+        Qsp.Parser.Generic.runStateEither
+            (Qsp.Parser.Main.pstmt .>> eof)
+            Qsp.Parser.Generic.emptyState str
+        |> snd
+    testList "ifTests" [
         testCase "inline if" <| fun () ->
             let input =
                 [
@@ -360,6 +354,37 @@ let stmtTests =
                    (Var (ImplicitNumericType, "expr"), [CallSt ("gt", [Val (String "hall")])],
                     []))
             Assert.Equal("", Right exp, runStmts input)
+        testCase "inline if 2" <| fun () ->
+            let input =
+                [
+                    "if expr:"
+                    "    if expr2: stmt1"
+                    "    if expr3:"
+                    "        stmt1"
+                    "    else stmt2"
+                    "    if expr4: stmt3"
+                    "    elseif expr5: stmt4"
+                    "    stmt5"
+                    "end"
+                ] |> String.concat "\n"
+            let exp =
+                If
+                  (Var (ImplicitNumericType, "expr"),
+                   [If
+                      (Var (ImplicitNumericType, "expr2"),
+                       [StarPl (Var (ImplicitNumericType, "stmt1"))], []);
+                    If
+                      (Var (ImplicitNumericType, "expr3"),
+                       [StarPl (Var (ImplicitNumericType, "stmt1"))],
+                       [StarPl (Var (ImplicitNumericType, "stmt2"))]);
+                    If
+                      (Var (ImplicitNumericType, "expr4"),
+                       [StarPl (Var (ImplicitNumericType, "stmt3"))],
+                       [If
+                          (Var (ImplicitNumericType, "expr5"),
+                           [StarPl (Var (ImplicitNumericType, "stmt4"))], [])]);
+                    StarPl (Var (ImplicitNumericType, "stmt5"))], [])
+            Assert.Equal("", Right exp, runStmtsEof input)
         testCase "simple if" <| fun () ->
             let input =
                 [
@@ -372,7 +397,7 @@ let stmtTests =
                    (Var (ImplicitNumericType, "expr"),
                     [StarPl (Var (ImplicitNumericType, "someStmt"))], []))
 
-            Assert.Equal("", Right exp, runStmts input)
+            Assert.Equal("", Right exp, runStmtsEof input)
         testCase "elseif test" <| fun () ->
             let input =
                 [
@@ -397,7 +422,7 @@ let stmtTests =
                            (Var (ImplicitNumericType, "expr3"),
                             [StarPl (Var (ImplicitNumericType, "stmt3"))],
                             [StarPl (Var (ImplicitNumericType, "stmt4"))])])]))
-            Assert.Equal("", Right exp, runStmts input)
+            Assert.Equal("", Right exp, runStmtsEof input)
         testCase "elseif test2" <| fun () ->
             let input =
                 [
@@ -419,7 +444,22 @@ let stmtTests =
                         [If
                            (Var (ImplicitNumericType, "expr3"),
                             [StarPl (Var (ImplicitNumericType, "stmt3"))], [])])]))
-            Assert.Equal("", Right exp, runStmts input)
+            Assert.Equal("", Right exp, runStmtsEof input)
+        testCase "another inline if" <| fun () ->
+            let input =
+                [
+                    "if expr:"
+                    "elseif expr: stmt"
+                    "else"
+                    "end"
+                ] |> String.concat "\n"
+            let exp =
+              (If
+                 (Var (ImplicitNumericType, "expr"), [],
+                  [If
+                     (Var (ImplicitNumericType, "expr"),
+                      [StarPl (Var (ImplicitNumericType, "stmt"))], [])]))
+            Assert.Equal("", Right exp, runStmtsEof input)
         testCase "elseif test2" <| fun () ->
             let input =
                 [
@@ -454,39 +494,93 @@ let stmtTests =
                       [If
                          (Var (ImplicitNumericType, "expr3"),
                           [StarPl (Var (ImplicitNumericType, "stmt3"))], [])])]))
+            Assert.Equal("", Right exp, runStmtsEof input)
+        testCase "if" <| fun () ->
+            let input =
+                [
+                    "if expr1:"
+                    "    stmt1"
+                    "    act 'arg': pl"
+                    "elseif expr2:"
+                    "    if expr3: stmt2 else stmt3 if expr4: stmt4 elseif expr5: stmt5"
+                    "    stmt6"
+                    "end"
+                ] |> String.concat "\n"
+
+            let exp =
+              (If
+                 (Var (ImplicitNumericType, "expr1"),
+                  [StarPl (Var (ImplicitNumericType, "stmt1"));
+                   Act ([Val (String "arg")], [StarPl (Var (ImplicitNumericType, "pl"))])],
+                  [If
+                     (Var (ImplicitNumericType, "expr2"),
+                      [If
+                         (Var (ImplicitNumericType, "expr3"),
+                          [StarPl (Var (ImplicitNumericType, "stmt2"))],
+                          [StarPl (Var (ImplicitNumericType, "stmt3"));
+                           If
+                             (Var (ImplicitNumericType, "expr4"),
+                              [StarPl (Var (ImplicitNumericType, "stmt4"))],
+                              [If
+                                 (Var (ImplicitNumericType, "expr5"),
+                                  [StarPl (Var (ImplicitNumericType, "stmt5"))], [])]);
+                           StarPl (Var (ImplicitNumericType, "stmt6"))])], [])]))
+
+            Assert.Equal("", Right exp, runStmtsEof input)
+    ]
+[<Tests>]
+let stmtTests =
+    let runStmts str =
+        Qsp.Parser.Generic.runStateEither
+            Qsp.Parser.Main.pstmt
+            Qsp.Parser.Generic.emptyState str
+        |> snd
+    let runStmtsEof str =
+        Qsp.Parser.Generic.runStateEither
+            (Qsp.Parser.Main.pstmt .>> eof)
+            Qsp.Parser.Generic.emptyState str
+        |> snd
+    testList "stmtTests" [
+        testCase "inline act" <| fun () ->
+            let input =
+                [
+                    "act 'some act': gt 'hall'"
+                    "'инструкция, которая не принадлежит конструкции'"
+                ] |> String.concat "\n"
+            let exp =
+                Act ([Val (String "some act")], [CallSt ("gt", [Val (String "hall")])])
+
             Assert.Equal("", Right exp, runStmts input)
-        // testCase "braces1" <| fun () ->
-        //     let input =
-        //         [
-        //             "if c:"
-        //             "    smt"
-        //             "    act 'arg': pl"
-        //             "elseif c2:"
-        //             "    if a: k else pre if cond: d  elseif celif: d"
-        //             "    stmt2"
-        //             "end"
-        //         ] |> String.concat "\n"
 
+
+        // порядок разбора
+        testCase "stmt `years -= 10`" <| fun () ->
+            let input = "years -= 10"
+            let exp =
+              (Assign
+                 (AssignVar (ImplicitNumericType, "years"),
+                  Expr (Minus, Var (ImplicitNumericType, "years"), Val (Int 10))))
+            Assert.Equal("", Right exp, runStmtsEof input)
+        testCase "call function as expression" <| fun () ->
+            // f(1) — должно обрабатываться раньше, чем `callProc arg1, arg2`
+            let input = "iif(somevar >= 2, 'thenBody', 'elseBody')"
+            let exp =
+              (StarPl
+                 (Func
+                    ("iif",
+                     [Expr (Ge, Var (ImplicitNumericType, "somevar"), Val (Int 2));
+                      Val (String "thenBody"); Val (String "elseBody")])))
+            Assert.Equal("", Right exp, runStmtsEof input)
+        testCase "call procedure" <| fun () ->
+            let input = "gt 'begin', 'real_character'"
+            let exp =
+                CallSt ("gt", [Val (String "begin"); Val (String "real_character")])
+            Assert.Equal("", Right exp, runStmtsEof input)
+        // testCase "call " <| fun () ->
+        //     let input = "The(Lady), or, the, Tiger"
         //     let exp =
-        //         (If
-        //            (Var (ImplicitNumericType, "expr"),
-        //             [StarPl (Var (ImplicitNumericType, "someStmt"))], []))
-
+        //         CallSt ("gt", [Val (String "begin"); Val (String "real_character")])
         //     Assert.Equal("", Right exp, runStmts input)
-
-        // однострочный ад
-        // if 0:
-        //      'k'
-        // else
-        //      'pre'
-        //      if 0:
-        //           d
-        //      elseif -1:
-        //           'welcome to hell!'
-        //      end
-        // end
-
-        // "if a: k else pre if cond: d  elseif celif: d"
     ]
 
 [<EntryPoint;System.STAThread>]

@@ -105,21 +105,12 @@ let pexpr : _ Parser =
                     | Some args -> Arr(var, args)
                     | None -> Var var
             let pcallFunctionOrArrOrVar =
-                // let pfunction = functions |> List.map pstring |> choice
-                // pdefProcOrFunc <|> identifier
-                // подожди, теперь идет очередь семантики.
-                // indent
                 let pfuncCall =
                     bet_ws '(' ')' (sepBy expr (pchar ',' >>. ws))
                     |>> fun args name -> Func(name, args)
-                // pipe2
-                //     (notFollowedByBinOpIdent .>> ws)
-                //     (pfuncCall
-                //       <|> (pbraket |>> fun arg name -> Arr((ImplicitNumericType, name), arg))
-                //       <|>% fun name -> Var(ImplicitNumericType, name))
-                //     (fun name f -> f name)
+
                 tuple2
-                    (tuple3 getPosition notFollowedByBinOpIdent getPosition
+                    (getPosition .>>.? notFollowedByBinOpIdent .>>. getPosition
                      .>> ws)
                     ((pfuncCall |>> fun f -> TokenType.Function, f)
                       <|> (pbraket
@@ -127,7 +118,7 @@ let pexpr : _ Parser =
                                 let f name = Arr((ImplicitNumericType, name), arg)
                                 TokenType.Variable, f)
                       <|>% (TokenType.Variable, fun name -> Var(ImplicitNumericType, name)))
-                >>= fun ((p1, name, p2), (tokenType, f)) ->
+                >>= fun (((p1, name), p2), (tokenType, f)) ->
                     appendToken2 tokenType p1 p2
                     >>. preturn (f name)
             pexplicitVar <|> pcallFunctionOrArrOrVar
@@ -141,23 +132,33 @@ let pexpr : _ Parser =
 
     opp.TermParser <- term .>> ws
 
-    let afterStringParser opName =
-        if String.forall isLetter opName then
-            notFollowedVarCont
-            >>. ws
+    Op.ops
+    |> Array.iter (fun (opTyp, (opName, isSymbolic)) ->
+        let prec = Precedences.prec <| Precedences.OpB opTyp
+        if isSymbolic then
+            InfixOperator(opName, ws, prec, Associativity.Left, fun x y -> Expr(opTyp, x, y))
+            |> opp.AddOperator
         else
-            ws
-    Reflection.Reflection.unionEnum
-    |> Array.iter (fun opT ->
-        let binOp = Op.toString opT
-        let prec = Precedences.prec <| Precedences.OpB opT
-        InfixOperator(binOp, afterStringParser binOp, prec, Associativity.Left, fun x y -> Expr(opT, x, y))
-        |> opp.AddOperator
+            let afterStringParser = notFollowedVarCont >>. ws
+            InfixOperator(opName, afterStringParser, prec, Associativity.Left, fun x y -> Expr(opTyp, x, y))
+            |> opp.AddOperator
+            // TODO: @low в QSP все операторы case-insensitive
+            InfixOperator(opName.ToUpper(), afterStringParser, prec, Associativity.Left, fun x y -> Expr(opTyp, x, y))
+            |> opp.AddOperator
     )
+
     Reflection.Reflection.unionEnum
     |> Array.iter (fun unT ->
+        // TODO: `-var` и `-(expr)` — можно, `- var` и `- (expr)` — нельзя
+        let afterStringParser opName =
+            if String.forall isLetter opName then
+                notFollowedVarCont
+                >>. ws
+            else
+                ws
         let unarOp = UnarOp.toString unT
         let prec = Precedences.prec <| Precedences.PrefB unT
+        // TODO: @low в QSP все операторы case-insensitive
         PrefixOperator(unarOp, afterStringParser unarOp, prec, false, fun x -> UnarExpr(unT, x))
         |> opp.AddOperator
     )

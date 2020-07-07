@@ -38,7 +38,7 @@ type Op =
     | And
     /// `or`
     | Or
-
+type IsBinOpSymbolic = bool
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 [<RequireQualifiedAccess>]
 module Op =
@@ -63,7 +63,12 @@ module Op =
 
     let ops =
         Reflection.Reflection.unionEnum<Op>
-        |> Array.map (fun x -> x, toString x)
+        |> Array.map (fun x ->
+            let IsBinOpSymbolic opName =
+                not <| String.exists FParsec.CharParsers.isLetter opName
+                : IsBinOpSymbolic
+            let y = toString x
+            x, (y, IsBinOpSymbolic y) )
 
     let fromString =
         let m = Array.map (fun (a, b) -> b, a) ops |> Map.ofArray
@@ -131,6 +136,7 @@ type Assign =
 
 type Statement =
     | Assign of Assign * Expr
+    | AssingCode of Assign * Statement list
     | CallSt of string * Expr list
     /// Вычисляется `expr` и посылается в `*pl`
     | StarPl of Expr
@@ -141,7 +147,7 @@ type Statement =
     | Exit
 
 /// ```qsp
-/// # start
+/// # location name
 /// 'asdf'
 /// - произвольный набор символов
 /// ```

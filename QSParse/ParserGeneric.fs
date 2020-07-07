@@ -61,12 +61,17 @@ type State =
         SemanticErrors: (Qsp.Tokens.Range * string) list
         /// Информация обо всём и вся
         Hovers: (Qsp.Tokens.Range * string) list
+        /// Нужен для `if` конструкции. Эх, если бы ее можно было как-то именно там оставить, но увы.
+        IsEndOptional : bool
+        LastSymbolPos : FParsec.Position
     }
 let emptyState =
     {
         Tokens = []
         SemanticErrors = []
         Hovers = []
+        IsEndOptional = false
+        LastSymbolPos = FParsec.Position("", 0L, 1L, 1L)
     }
 type 'a Parser = Parser<'a, State>
 
@@ -83,13 +88,6 @@ let appendToken tokenType p =
     (getPosition .>>.? p .>>. getPosition)
     >>= fun ((p1, p), p2) ->
         appendToken2 tokenType p1 p2
-        // updateUserState (fun st ->
-        //     let token =
-        //         { Qsp.Tokens.TokenType = tokenType
-        //           Qsp.Tokens.Range = p1, p2 }
-
-        //     { st with Tokens = token :: st.Tokens }
-        // )
         >>. preturn p
 open Qsp.Tokens
 
