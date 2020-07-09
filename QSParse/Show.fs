@@ -106,7 +106,13 @@ let showStmt indentsOption =
             | Assign(AssingName name' as ass, Expr((Plus|Minus) as op, e, Var name)) when name' = name ->
                 showAssign ass << showString " =" << ops op << showChar ' ' << showExpr e
             | Assign(ass, e) -> showAssign ass << showString " = " << showExpr e
-            | CallSt(name, es) -> showString name << showChar ' ' << (List.map showExpr es |> join ", ")
+            | CallSt(name, es) ->
+                let args =
+                    if List.isEmpty es then
+                        empty
+                    else
+                        showChar ' ' << (List.map showExpr es |> join ", ")
+                showString name << args
             | StarPl e -> showExpr e
             | Label s -> showChar ':' << showString s
             | If(e, body, elseBody) ->

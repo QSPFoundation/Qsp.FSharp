@@ -542,7 +542,7 @@ let ifTests =
               (If
                  (Var (ImplicitNumericType, "expr1"),
                   [StarPl (Var (ImplicitNumericType, "stmt1"));
-                   Act ([Val (String "arg")], [StarPl (Var (ImplicitNumericType, "pl"))])],
+                   Act ([Val (String "arg")], [CallSt ("pl", [])])],
                   [If
                      (Var (ImplicitNumericType, "expr2"),
                       [If
@@ -556,24 +556,6 @@ let ifTests =
                                  (Var (ImplicitNumericType, "expr5"),
                                   [StarPl (Var (ImplicitNumericType, "stmt5"))], [])])]);
                        StarPl (Var (ImplicitNumericType, "stmt6"))], [])]))
-            let exp2 =
-              (If
-                 (Var (ImplicitNumericType, "expr1"),
-                  [StarPl (Var (ImplicitNumericType, "stmt1"));
-                   Act ([Val (String "arg")], [StarPl (Var (ImplicitNumericType, "pl"))])],
-                  [If
-                     (Var (ImplicitNumericType, "expr2"),
-                      [If
-                         (Var (ImplicitNumericType, "expr3"),
-                          [StarPl (Var (ImplicitNumericType, "stmt2"))],
-                          [StarPl (Var (ImplicitNumericType, "stmt3"));
-                           If
-                             (Var (ImplicitNumericType, "expr4"),
-                              [StarPl (Var (ImplicitNumericType, "stmt4"))],
-                              [If
-                                 (Var (ImplicitNumericType, "expr5"),
-                                  [StarPl (Var (ImplicitNumericType, "stmt5"))], [])]);
-                           StarPl (Var (ImplicitNumericType, "stmt6"))])], [])]))
             Assert.Equal("", Right exp, runStmtsEof input)
     ]
 [<Tests>]
@@ -674,13 +656,14 @@ module TestOnMocks =
         let showExpPath = addExpToPath showActPath
 
         let act =
-            if System.IO.File.Exists parseExpPath then
-                let src : T = Json.desf parseExpPath
-                src |> Qsp.Show.printLocs Qsp.Show.UsingTabs
-            else
+            // if System.IO.File.Exists parseExpPath then
+            //     let src : T = Json.desf parseExpPath
+            //     src |> Qsp.Show.printLocs Qsp.Show.UsingTabs
+            // else
                 let act = startOnFile srcPath
-                act |> Json.serf parseExpPath
-                failwithf "\"%s\" не найден, потому пришлось его создать. Естественно, все тесты пошли коту под хвост." parseExpPath
+                // act |> Json.serf parseExpPath
+                // failwithf "\"%s\" не найден, потому пришлось его создать. Естественно, все тесты пошли коту под хвост." parseExpPath
+                act |> Qsp.Show.printLocs Qsp.Show.UsingTabs
         let exp =
             if System.IO.File.Exists showExpPath then
                 System.IO.File.ReadAllText showExpPath

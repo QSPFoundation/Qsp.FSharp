@@ -137,7 +137,41 @@ let pcallProc =
                                     (range, msg) :: st.SemanticErrors })
                 | Some () ->
                     preturn ()
-            >>. preturn (CallSt(name, args))
+            >>% CallSt(name, args)
+let pcallProcBySemantic =
+    // да-да, это именно так нужно было сделать в самом начале, но увы.
+    let ident =
+        Defines.procs
+        |> Seq.sortByDescending (fun (KeyValue(name, _)) -> name) // для жадности
+        |> Seq.map (fun (KeyValue(name, (dscr, sign))) ->
+            let p = pstringCI name .>> notFollowedVarCont
+            getPosition .>>.? p .>>. getPosition
+            >>= fun ((p1, name), p2) ->
+                let range = toRange (p1, p2)
+                appendToken2 TokenType.Procedure p1 p2
+                >>. appendHover2 dscr p1 p2
+                >>% (name, range, sign)
+        )
+        |> List.ofSeq
+        |> choice
+    ident .>> ws
+    .>>. ((followedBy (skipNewline <|> skipChar '&' <|> eof)) >>% []
+          <|> bet_ws '(' ')' (sepBy pexpr (pchar ',' >>. ws)))
+    >>= fun ((name, range, sign), args) ->
+            args
+            |> Array.ofList
+            |> Defines.getFuncByOverloadType sign
+            |> function
+                | None ->
+                    let msg =
+                        Defines.Show.printSignature name sign
+                        |> sprintf "Ожидается одна из перегрузок:\n%s"
+                    updateUserState (fun st ->
+                        { st with SemanticErrors =
+                                    (range, msg) :: st.SemanticErrors })
+                | Some () ->
+                    preturn ()
+            >>% CallSt(name, args)
 let pcomment : _ Parser =
     let p =
         appendToken TokenType.Comment
@@ -346,6 +380,7 @@ let pstmt =
             pAct
             pAssign pstmts
             pcallProc
+            pcallProcBySemantic
             attempt (pexpr |>> StarPl) // `attempt` — только ради одного единственного случая: `-`, который завершает локацию
         ]
     pstmt

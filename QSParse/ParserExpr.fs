@@ -109,34 +109,60 @@ let pexpr : _ Parser =
                                 TokenType.Variable, f)
                       <|>% (TokenType.Variable, fun name -> Var(ImplicitNumericType, name)))
                 >>= fun (((p1, name), p2), (tokenType, f)) ->
-                    let p =
                         match tokenType with
                         | TokenType.Function ->
-                            Defines.functions
-                            |> Map.tryFind (name.ToLower())
-                            |> function
-                                | Some (dscr, sign) ->
-                                    appendHover2 dscr p1 p2
-                                | None ->
-                                    [
-                                        "Такой функции нет, а если есть, то напишите мне, автору расширения, пожалуйста, и я непременно добавлю."
-                                        "Когда-нибудь добавлю: 'Возможно, вы имели ввиду: ...'"
-                                    ]
-                                    |> String.concat "\n"
-                                    |> appendSemanticError p1 p2
+                            match f name with
+                            | Func(name, args) as func ->
+                                let p =
+                                    Defines.functions
+                                    |> Map.tryFind (name.ToLower())
+                                    |> function
+                                        | Some (dscr, (sign, returnType)) ->
+                                            let range = toRange (p1, p2)
+                                            let p =
+                                                args
+                                                |> Array.ofList
+                                                |> Defines.getFuncByOverloadType sign
+                                                |> function
+                                                    | None ->
+                                                        let msg =
+                                                            Defines.Show.printFuncSignature name returnType sign
+                                                            |> sprintf "Ожидается одна из перегрузок:\n%s"
+                                                        updateUserState (fun st ->
+                                                            { st with SemanticErrors =
+                                                                        (range, msg) :: st.SemanticErrors })
+                                                    | Some () ->
+                                                        preturn ()
+                                            p
+                                            >>. appendHover2 dscr p1 p2
+                                        | None ->
+                                            [
+                                                "Такой функции нет, а если есть, то напишите мне, автору расширения, пожалуйста, и я непременно добавлю."
+                                                "Когда-нибудь добавлю: 'Возможно, вы имели ввиду: ...'"
+                                            ]
+                                            |> String.concat "\n"
+                                            |> appendSemanticError p1 p2
+                                p
+                                >>. appendToken2 tokenType p1 p2
+                                >>% func
+                            | func -> preturn func
                         | TokenType.Variable ->
-                            Defines.vars
-                            |> Map.tryFind (name.ToLower())
-                            |> function
-                                | Some dscr ->
-                                    appendHover2 dscr p1 p2
-                                | None ->
-                                    let dscr = "Пользовательская глобальная переменная числового типа"
-                                    appendHover2 dscr p1 p2
-                        | x -> failwithf "%A" x
-                    p
-                    >>. appendToken2 tokenType p1 p2
-                    >>% f name
+                            let p =
+                                Defines.vars
+                                |> Map.tryFind (name.ToLower())
+                                |> function
+                                    | Some dscr ->
+                                        appendHover2 dscr p1 p2
+                                    | None ->
+                                        let dscr = "Пользовательская глобальная переменная числового типа"
+                                        appendHover2 dscr p1 p2
+                            p
+                            >>. appendToken2 tokenType p1 p2
+                            >>% f name
+                        | tokenType ->
+                            appendToken2 tokenType p1 p2
+                            >>% f name
+
             pexplicitVar <|> pcallFunctionOrArrOrVar
         let pval =
             choice [

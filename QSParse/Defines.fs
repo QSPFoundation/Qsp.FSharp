@@ -1037,7 +1037,7 @@ let transferOperators =
 /// Всевозможные процедуры
 let procs =
     procedures @ transferOperators
-    |> List.map (fun (name, dscr, sign) -> name, (dscr, sign))
+    |> List.map (fun (name, dscr, sign) -> name, ((dscr:Description), sign))
     |> Map.ofList
 let unknown =
     [
