@@ -54,6 +54,8 @@ type TokenType =
     ///
     /// `>>`
     | InterpolationEnd
+
+    | ConstantNumericInteger
 type Token =
     { TokenType: TokenType
       Range: Range }

@@ -11,10 +11,9 @@ let runStateEither p st str =
     match runParserOnString p st "" str with
     | Success(x, st, _) -> st, Right(x)
     | Failure(x, _, st) -> st, Left(x)
+let isIdentifierChar c = isLetter c || isDigit c || c = '_' || c = '.'
 
 let ident<'UserState> =
-    let isIdentifierChar c = isLetter c || isDigit c || c = '_' || c = '.'
-
     skipChar '_' >>? many1Satisfy isIdentifierChar
     |>> fun ident -> "_" + ident
     <|> many1Satisfy2L isLetter isIdentifierChar "identifier"
@@ -44,24 +43,30 @@ let stringLiteral<'UserState> =
     <|> bet '{' '}' (p '}') // TODO: забавно: проверил компилятор, и тот напрочь не воспринимает экранирование `}}`
     : Parser<_, 'UserState>
 
+
 /// Дело в том, что названия переменных могут начинаться с ключевых слов ("**if**SomethingTrue", например), а значит, чтобы это пресечь, можно воспользоваться именно этой функцией так:
 /// ```fsharp
 /// pstring "if" .>>? notFollowedVar
 /// ```
 let notFollowedVarCont<'UserState> =
-    notFollowedBy (satisfy (fun c -> isLetter c || isDigit c || c = '_' || c = '.'))
+    notFollowedBy (satisfy isIdentifierChar)
     : Parser<_, 'UserState>
-
+type InlineRange =
+    {
+        Line: int64
+        Column1: int64
+        Column2: int64
+    }
 type State =
     {
         Tokens: Qsp.Tokens.Token list
         /// Здесь ошибки только те, что могут определиться во время поверхностного семантического разбора, то есть это то, что не нуждается в нескольких проходах. Например, можно определить, что в коде пытаются переопределить встроенную функцию, и это будет ошибкой.
         ///
         /// А если хочется понять, что инструкция `gt 'some loc'` верна, то придется пройтись дважды, чтобы определить, существует ли вообще `'some loc'`. Если бы локации определялись последовательно, то есть нельзя было бы обратиться к той, что — ниже, тогда потребовался только один проход. Но в таком случае придется вводить что-то вроде `rec`, чтобы перейти на локацию, определенную ниже. Но всё это возвращает к той же задаче, потому ну его.
-        SemanticErrors: (Qsp.Tokens.Range * string) list
+        SemanticErrors: (InlineRange * string) list
         /// Информация обо всём и вся
-        Hovers: (Qsp.Tokens.Range * string) list
-        /// Нужен для `if` конструкции. Эх, если бы ее можно было как-то именно там оставить, но увы.
+        Hovers: (InlineRange * string) list
+        /// Нужен для `elseif` конструкции. Эх, если бы ее можно было как-то именно там оставить, но увы.
         IsEndOptional : bool
         LastSymbolPos : FParsec.Position
     }
@@ -85,9 +90,42 @@ let appendToken2 tokenType p1 p2 =
     )
 
 let appendToken tokenType p =
+    getPosition .>>.? p .>>. getPosition
+    >>= fun ((p1, p), p2) ->
+        appendToken2 tokenType p1 p2
+        >>. preturn p
+let toRange (p1:FParsec.Position, p2:FParsec.Position) =
+    {
+        Line = p1.Line // Должно выполняться условие `p1.Line = p2.Line`
+        Column1 = p1.Column
+        Column2 = p2.Column // Должно выполняться условие `p2.Column > p1.Column`
+    }
+let appendHover2 msg (p1:FParsec.Position) (p2:FParsec.Position) =
+    updateUserState (fun st ->
+        let range = toRange (p1, p2)
+        { st with Hovers = (range, msg) :: st.Hovers }
+    )
+
+let appendSemanticError (p1:FParsec.Position) (p2:FParsec.Position) msg =
+    let range = toRange (p1, p2)
+    updateUserState (fun st ->
+        { st with SemanticErrors =
+                    (range, msg) :: st.SemanticErrors })
+// let appendSemanticError2 p getMsg =
+//     getPosition .>>.? p .>>. getPosition
+//     >>= fun ((p1, x), p2) ->
+//         appendSemanticError p1 p2 (getMsg x)
+//         >>. preturn x
+let appendHover msg p =
+    (getPosition .>>.? p .>>. getPosition)
+    >>= fun ((p1, p), p2) ->
+        appendHover2 msg p1 p2
+        >>. preturn p
+let appendTokenHover tokenType msg p =
     (getPosition .>>.? p .>>. getPosition)
     >>= fun ((p1, p), p2) ->
         appendToken2 tokenType p1 p2
+        >>. appendHover2 msg p1 p2
         >>. preturn p
 open Qsp.Tokens
 

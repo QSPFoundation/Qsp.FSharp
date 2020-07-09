@@ -8,11 +8,9 @@ open Qsp.Parser.Generic
 open Qsp.Tokens
 
 let pbinaryOperator : _ Parser =
-    // transferOperators
-    // procedures
     [
-        Defines.binaryOperators
-        Defines.keywords
+        Defines.binaryOperators |> List.map (fun (x, _, _) -> x)
+        Defines.keywords |> List.map fst
     ]
     |> List.concat
     |> List.sortDescending
@@ -22,7 +20,6 @@ let pbinaryOperator : _ Parser =
 /// берёт только то, что начинается с `#` или `$`
 let pexplicitVar : _ Parser =
     let isIdentifierFirstChar c = isLetter c || c = '_'
-    let isIdentifierChar c = isLetter c || isDigit c || c = '_' || c = '.'
     let p = many1Satisfy2L isIdentifierFirstChar isIdentifierChar "identifier"
     // TODO: или просто `many1Satisfy isIdentifierChar` ?
     let varType =
@@ -30,37 +27,31 @@ let pexplicitVar : _ Parser =
             pchar '#' >>% ExplicitNumericType
             pchar '$' >>% StringType
         ]
-    (getPosition .>>.? varType) .>>. (p .>>. getPosition)
-    >>= fun ((p1, typ), (x, p2)) ->
-        updateUserState (fun st ->
-            let token =
-                { Tokens.TokenType = Tokens.Variable
-                  Tokens.Range = p1, p2 }
 
-            { st with Tokens = token :: st.Tokens }
-        )
-        >>. preturn (typ, x)
+    (getPosition .>>.? varType) .>>. (p .>>. getPosition)
+    >>= fun ((p1, typ), (varName, p2)) ->
+        let msg =
+            match typ with
+            | StringType ->
+                Defines.vars
+                |> Map.tryFind (sprintf "$%s" (varName.ToLower()))
+                |> function
+                    | Some dscr -> dscr
+                    | None -> "Пользовательская глобальная переменная строчного типа"
+            | ExplicitNumericType ->
+                Defines.vars
+                |> Map.tryFind (sprintf "#%s" (varName.ToLower()))
+                |> function
+                    | Some dscr -> dscr
+                    | None -> "Пользовательская глобальная переменная числового типа"
+            | ImplicitNumericType -> failwith "Not Implemented"
+        appendToken2 Tokens.Variable p1 p2
+        >>. appendHover2 msg p1 p2
+        >>. preturn (typ, varName)
 type ProcOrFunc =
     | Procedure of string
     | Function of string
-let pdefProcOrFunc : _ Parser =
-    let pprocedure =
-        [
-            Defines.procedures
-            Defines.proceduresWithAsterix
-            Defines.transferOperators
-        ]
-        |> List.concat
-        |> List.sortDescending // чтобы обеспечить жадность
-        |> List.map pstring
-        |> choice
-        |>> Procedure
-    let pfunction =
-        Defines.functions
-        |> List.sortDescending // чтобы обеспечить жадность
-        |> List.map pstring
-        |> choice |>> Function
-    pprocedure <|> pfunction
+
 let notFollowedByBinOpIdent =
     // конечно, тут нужно объяснить пользователю, почему именно нельзя использовать то или иное слово
     // проще назвать, что допустимо
@@ -75,8 +66,7 @@ let notFollowedByBinOpIdent =
     //     followedBy (satisfy (fun c -> isDigit c || c = '_' || c = '.'))
     let p =
         pbinaryOperator
-        .>> (skipSatisfy (fun c ->
-                not (isLetter c || isDigit c || c = '_' || c = '.'))
+        .>> (skipSatisfy (not << isIdentifierChar)
              <|> eof)
     let p2 =
         notFollowedByL p "идентификатор, а не строковый бинарный оператор"
@@ -119,13 +109,40 @@ let pexpr : _ Parser =
                                 TokenType.Variable, f)
                       <|>% (TokenType.Variable, fun name -> Var(ImplicitNumericType, name)))
                 >>= fun (((p1, name), p2), (tokenType, f)) ->
-                    appendToken2 tokenType p1 p2
-                    >>. preturn (f name)
+                    let p =
+                        match tokenType with
+                        | TokenType.Function ->
+                            Defines.functions
+                            |> Map.tryFind (name.ToLower())
+                            |> function
+                                | Some (dscr, sign) ->
+                                    appendHover2 dscr p1 p2
+                                | None ->
+                                    [
+                                        "Такой функции нет, а если есть, то напишите мне, автору расширения, пожалуйста, и я непременно добавлю."
+                                        "Когда-нибудь добавлю: 'Возможно, вы имели ввиду: ...'"
+                                    ]
+                                    |> String.concat "\n"
+                                    |> appendSemanticError p1 p2
+                        | TokenType.Variable ->
+                            Defines.vars
+                            |> Map.tryFind (name.ToLower())
+                            |> function
+                                | Some dscr ->
+                                    appendHover2 dscr p1 p2
+                                | None ->
+                                    let dscr = "Пользовательская глобальная переменная числового типа"
+                                    appendHover2 dscr p1 p2
+                        | x -> failwithf "%A" x
+                    p
+                    >>. appendToken2 tokenType p1 p2
+                    >>% f name
             pexplicitVar <|> pcallFunctionOrArrOrVar
         let pval =
             choice [
                 stringLiteralWithToken <|> pbraces |>> String
-                pint32 |>> Int
+                appendToken TokenType.ConstantNumericInteger
+                    (pint32 |>> Int)
             ]
             |>> Val
         pval <|> pcallFuncOrArrOrVar <|> bet_ws '(' ')' expr

@@ -46,45 +46,98 @@ let pAssign stmts =
             bet_ws '[' ']' pexpr
             |>> fun braketExpr -> AssignArr(name, braketExpr)
         arr <|>% AssignVar name >>=? assdef name
-
+    let highlightImplicitVar p =
+        getPosition .>>.? p .>>. getPosition
+        >>= fun ((p1, (name:string)), p2) ->
+            let nameLower = name.ToLower()
+            Defines.vars
+            |> Map.tryFind nameLower
+            |> function
+                | Some dscr ->
+                    appendHover2 dscr p1 p2
+                | None ->
+                    if Map.containsKey nameLower Defines.procs then
+                        appendSemanticError p1 p2 "Нельзя переопределять процедуру"
+                    elif Map.containsKey nameLower Defines.functions then
+                        appendSemanticError p1 p2 "Нельзя переопределять функцию"
+                    else
+                        let dscr = "Пользовательская глобальная переменная числового типа"
+                        appendHover2 dscr p1 p2
+            >>. appendToken2 TokenType.Variable p1 p2
+            >>. preturn name
     let pExplicitAssign =
         let p =
             appendToken
                 TokenType.Type
                 ((pstringCI "set" <|> pstringCI "let") .>>? notFollowedVarCont)
             .>> ws
-            >>. (pexplicitVar <|> (ident |>> fun name -> ImplicitNumericType, name))
+            >>. (pexplicitVar <|> (highlightImplicitVar ident |>> fun name -> ImplicitNumericType, name))
         p <|> pexplicitVar .>>? ws
         >>=? assign
 
     let pImlicitAssign =
-        appendToken TokenType.Variable notFollowedByBinOpIdent .>>? ws
+        highlightImplicitVar notFollowedByBinOpIdent .>>? ws
         >>=? fun name ->
             assign (ImplicitNumericType, name)
     pExplicitAssign <|> pImlicitAssign
 
 let pcallProc =
+    let f defines p =
+        getPosition .>>.? p .>>. getPosition
+        >>= fun ((p1, name), p2) ->
+            let range = toRange (p1, p2)
+            let p =
+                defines
+                |> Map.tryFind (String.toLower name)
+                |> function
+                    | Some (dscr, sign) ->
+                        appendHover2 dscr p1 p2
+                        >>% Some sign
+                    | None ->
+                        [
+                            "Такой процедуры нет, а если есть, то напишите мне, автору расширения, пожалуйста, и я непременно добавлю."
+                            "Когда-нибудь добавлю: 'Возможно, вы имели ввиду: ...'"
+                        ]
+                        |> String.concat "\n"
+                        |> appendSemanticError p1 p2
+                        >>% None
+            appendToken2 TokenType.Procedure p1 p2
+            >>. p
+            |>> fun sign -> name, range, sign
     let pProcWithAsterix: _ Parser =
-        // TODO: вообще-то, это уже уровень семантики, ведь синтаксис вполне допускает название такой процедуры
         let p =
-            Defines.proceduresWithAsterix
-            |> List.sortDescending
-            |> List.map pstringCI
-            |> choice
-        appendToken TokenType.Procedure
-            (p .>>? notFollowedVarCont)
+            pchar '*' >>. many1Satisfy isIdentifierChar
+            |>> sprintf "*%s" // да, так и хочется использоваться `many1Satisfy2`, но она довольствуется лишь первым символом, то есть '*', потому не подходит
 
-    (appendToken TokenType.Procedure
-         pProcWithAsterix
-     .>> ws
-     .>>. sepBy pexpr (char_ws ',')) // Кстати, `,` — "punctuation.separator.parameter.js"
-     <|> (appendToken TokenType.Procedure
-              notFollowedByBinOpIdent
+        f Defines.proceduresWithAsterix p
+
+    let procHoverAndToken =
+        f Defines.procs notFollowedByBinOpIdent
+
+    pProcWithAsterix
+    .>> ws .>>. sepBy pexpr (char_ws ',') // Кстати, `,` — "punctuation.separator.parameter.js"
+    <|> (procHoverAndToken
           .>>? (ws1 <|> followedBy (satisfy (isAnyOf "'\"")))
           .>>.? sepBy1 pexpr (char_ws ','))
-    |>> fun (name, args) ->
-        CallSt(name, args)
-
+    >>= fun ((name, range, sign), args) ->
+        match sign with
+        | None ->
+            preturn (CallSt(name, args))
+        | Some x ->
+            args
+            |> Array.ofList
+            |> Defines.getFuncByOverloadType x
+            |> function
+                | None ->
+                    let msg =
+                        Defines.Show.printSignature name x
+                        |> sprintf "Ожидается одна из перегрузок:\n%s"
+                    updateUserState (fun st ->
+                        { st with SemanticErrors =
+                                    (range, msg) :: st.SemanticErrors })
+                | Some () ->
+                    preturn ()
+            >>. preturn (CallSt(name, args))
 let pcomment : _ Parser =
     let p =
         appendToken TokenType.Comment
@@ -101,14 +154,21 @@ let psign =
     >>. appendToken TokenType.NameLabel
             (many1SatisfyL ((<>) '\n') "labelName") // TODO: literal? Trim trailng spaces
     |>> Label
+let genKeywordParser keyword =
+    let dscr =
+        Qsp.Defines.keywords
+        |> List.tryPick (fun (name, dscr) ->
+            if name = keyword then Some dscr
+            else None)
+        |> Option.defaultWith (fun () -> failwithf "not found %s" keyword)
+    appendTokenHover TokenType.KeywordControl dscr
+        (pstringCI keyword .>>? notFollowedVarCont)
 let pexit : _ Parser =
-    appendToken TokenType.KeywordControl
-        (pstringCI "exit" .>>? notFollowedVarCont)
+    genKeywordParser "exit"
     >>% Exit
 
 let pendKeyword : _ Parser =
-    appendToken TokenType.KeywordControl
-        (pstringCI "end" .>>? notFollowedVarCont)
+    genKeywordParser "end"
 
 let pstmt =
     let pstmt, pstmtRef = createParserForwardedToRef<Statement, _>()
@@ -126,8 +186,7 @@ let pstmt =
 
     let pAct =
         let pactKeyword : _ Parser =
-            appendToken TokenType.KeywordControl
-                (pstringCI "act" .>>? notFollowedVarCont)
+            genKeywordParser "act"
 
         let pactHeader = pactKeyword .>> ws >>. sepBy1 pexpr (char_ws ',') .>> pcolonKeyword
 
@@ -139,14 +198,11 @@ let pstmt =
                 Act(expr, body))
     let pIf =
         let pifKeyword : _ Parser =
-            appendToken TokenType.KeywordControl
-                (pstringCI "if" .>>? notFollowedVarCont)
+            genKeywordParser "if"
         let pelseifKeyword : _ Parser =
-            appendToken TokenType.KeywordControl
-                (pstringCI "elseif" .>>? notFollowedVarCont)
+            genKeywordParser "elseif"
         let pelseKeyword : _ Parser =
-            appendToken TokenType.KeywordControl
-                (pstringCI "else" .>>? notFollowedVarCont)
+            genKeywordParser "else"
         let pifHeader = pifKeyword .>> ws >>. pexpr .>> pcolonKeyword
         let pelseifHeader = pelseifKeyword .>> ws >>. pexpr .>> pcolonKeyword
 
