@@ -2,6 +2,7 @@ module Qsp.Parser.Generic
 open FParsec
 open FsharpMyExtension
 open FsharpMyExtension.Either
+open Qsp
 
 let runEither p str =
     match run p str with
@@ -57,15 +58,41 @@ type InlineRange =
         Column1: int64
         Column2: int64
     }
+/// A document highlight kind.
+[<RequireQualifiedAccess>]
+type DocumentHighlightKind =
+    /// A textual occurrence.
+    | Text = 1
+
+    /// Read-access of a symbol, like reading a variable.
+    | Read = 2
+
+    /// Write-access of a symbol, like writing to a variable.
+    | Write = 3
+type VarHighlightKind =
+    | ReadAccess
+    | WriteAccess
+// type Var =
+type VarHighlights =
+    {
+        Ma: Map<Ast.Var, (InlineRange * VarHighlightKind) list>
+        Ranges: (InlineRange * Ast.Var) list
+    }
+let varHighlightsEmpty =
+    {
+        Ma = Map.empty
+        Ranges = []
+    }
 type State =
     {
-        Tokens: Qsp.Tokens.Token list
+        Tokens: Tokens.Token list
         /// Здесь ошибки только те, что могут определиться во время поверхностного семантического разбора, то есть это то, что не нуждается в нескольких проходах. Например, можно определить, что в коде пытаются переопределить встроенную функцию, и это будет ошибкой.
         ///
         /// А если хочется понять, что инструкция `gt 'some loc'` верна, то придется пройтись дважды, чтобы определить, существует ли вообще `'some loc'`. Если бы локации определялись последовательно, то есть нельзя было бы обратиться к той, что — ниже, тогда потребовался только один проход. Но в таком случае придется вводить что-то вроде `rec`, чтобы перейти на локацию, определенную ниже. Но всё это возвращает к той же задаче, потому ну его.
         SemanticErrors: (InlineRange * string) list
         /// Информация обо всём и вся
         Hovers: (InlineRange * string) list
+        VarHighlights: VarHighlights
         /// Нужен для `elseif` конструкции. Эх, если бы ее можно было как-то именно там оставить, но увы.
         IsEndOptional : bool
         LastSymbolPos : FParsec.Position
@@ -77,14 +104,30 @@ let emptyState =
         Hovers = []
         IsEndOptional = false
         LastSymbolPos = FParsec.Position("", 0L, 1L, 1L)
+        VarHighlights = varHighlightsEmpty
     }
 type 'a Parser = Parser<'a, State>
+
+let appendVarHighlight (r:InlineRange) (var:Ast.Var) highlightKind =
+    let var = mapSnd String.toLower var // for case-insensitively
+    updateUserState (fun st ->
+        { st with
+            VarHighlights =
+                {
+                    Ranges = (r, var)::st.VarHighlights.Ranges
+                    Ma =
+                        let v = r, highlightKind
+                        st.VarHighlights.Ma
+                        |> Map.addOrMod var [v] (fun xs -> v::xs)
+                }
+        }
+    )
 
 let appendToken2 tokenType p1 p2 =
     updateUserState (fun st ->
         let token =
-            { Qsp.Tokens.TokenType = tokenType
-              Qsp.Tokens.Range = p1, p2 }
+            { Tokens.TokenType = tokenType
+              Tokens.Range = p1, p2 }
 
         { st with Tokens = token :: st.Tokens }
     )
@@ -127,7 +170,7 @@ let appendTokenHover tokenType msg p =
         appendToken2 tokenType p1 p2
         >>. appendHover2 msg p1 p2
         >>. preturn p
-open Qsp.Tokens
+open Tokens
 
 let stringLiteralWithToken : _ Parser =
     // Если не разбивать, то VS Code выбьет: "`range` cannot span multiple lines"

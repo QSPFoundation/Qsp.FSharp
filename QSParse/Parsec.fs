@@ -49,6 +49,7 @@ let pAssign stmts =
     let highlightImplicitVar p =
         getPosition .>>.? p .>>. getPosition
         >>= fun ((p1, (name:string)), p2) ->
+            let range = toRange (p1, p2)
             let nameLower = name.ToLower()
             Defines.vars
             |> Map.tryFind nameLower
@@ -64,6 +65,7 @@ let pAssign stmts =
                         let dscr = "Пользовательская глобальная переменная числового типа"
                         appendHover2 dscr p1 p2
             >>. appendToken2 TokenType.Variable p1 p2
+            >>. appendVarHighlight range (ImplicitNumericType, name) VarHighlightKind.WriteAccess
             >>. preturn name
     let pExplicitAssign =
         let p =
@@ -71,8 +73,8 @@ let pAssign stmts =
                 TokenType.Type
                 ((pstringCI "set" <|> pstringCI "let") .>>? notFollowedVarCont)
             .>> ws
-            >>. (pexplicitVar <|> (highlightImplicitVar ident |>> fun name -> ImplicitNumericType, name))
-        p <|> pexplicitVar .>>? ws
+            >>. (pexplicitVar VarHighlightKind.WriteAccess <|> (highlightImplicitVar ident |>> fun name -> ImplicitNumericType, name))
+        p <|> pexplicitVar VarHighlightKind.WriteAccess .>>? ws
         >>=? assign
 
     let pImlicitAssign =

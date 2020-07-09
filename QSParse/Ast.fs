@@ -121,18 +121,19 @@ type VarType =
     | ExplicitNumericType
     /// `$varName`, к такой переменной можно смело присваивать и число, и строку
     | StringType
+type Var = VarType * string
 type Expr =
     | Val of Value
-    | Var of var:(VarType * string)
+    | Var of var:Var
     | Func of string * Expr list
-    | Arr of var:(VarType * string) * Expr list
+    | Arr of var:Var * Expr list
     | UnarExpr of UnarOp * Expr
     | Expr of Op * Expr * Expr
 
 type Assign =
-    | AssignVar of var:(VarType * string)
+    | AssignVar of var:Var
     /// Ключом массива может быть значение любого типа
-    | AssignArr of var:(VarType * string) * key:Expr
+    | AssignArr of var:Var * key:Expr
 
 type Statement =
     | Assign of Assign * Expr

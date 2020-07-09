@@ -18,7 +18,7 @@ let pbinaryOperator : _ Parser =
     |> choice
 
 /// берёт только то, что начинается с `#` или `$`
-let pexplicitVar : _ Parser =
+let pexplicitVar varHighlightKind : _ Parser =
     let isIdentifierFirstChar c = isLetter c || c = '_'
     let p = many1Satisfy2L isIdentifierFirstChar isIdentifierChar "identifier"
     // TODO: или просто `many1Satisfy isIdentifierChar` ?
@@ -30,6 +30,7 @@ let pexplicitVar : _ Parser =
 
     (getPosition .>>.? varType) .>>. (p .>>. getPosition)
     >>= fun ((p1, typ), (varName, p2)) ->
+        let range = toRange (p1, p2)
         let msg =
             match typ with
             | StringType ->
@@ -47,6 +48,7 @@ let pexplicitVar : _ Parser =
             | ImplicitNumericType -> failwith "Not Implemented"
         appendToken2 Tokens.Variable p1 p2
         >>. appendHover2 msg p1 p2
+        >>. appendVarHighlight range (typ, varName) varHighlightKind
         >>. preturn (typ, varName)
 type ProcOrFunc =
     | Procedure of string
@@ -89,7 +91,7 @@ let pexpr : _ Parser =
         let pcallFuncOrArrOrVar =
             let pbraket = bet_ws '[' ']' (sepBy expr (skipChar ',' >>. ws))
             let pexplicitVar =
-                pexplicitVar .>> ws .>>. opt pbraket
+                pexplicitVar VarHighlightKind.ReadAccess .>> ws .>>. opt pbraket
                 |>> fun (var, arr) ->
                     match arr with
                     | Some args -> Arr(var, args)
@@ -109,6 +111,7 @@ let pexpr : _ Parser =
                                 TokenType.Variable, f)
                       <|>% (TokenType.Variable, fun name -> Var(ImplicitNumericType, name)))
                 >>= fun (((p1, name), p2), (tokenType, f)) ->
+                        let range = toRange (p1, p2)
                         match tokenType with
                         | TokenType.Function ->
                             match f name with
@@ -118,7 +121,6 @@ let pexpr : _ Parser =
                                     |> Map.tryFind (name.ToLower())
                                     |> function
                                         | Some (dscr, (sign, returnType)) ->
-                                            let range = toRange (p1, p2)
                                             let p =
                                                 args
                                                 |> Array.ofList
@@ -158,6 +160,7 @@ let pexpr : _ Parser =
                                         appendHover2 dscr p1 p2
                             p
                             >>. appendToken2 tokenType p1 p2
+                            >>. appendVarHighlight range (ImplicitNumericType, name) VarHighlightKind.ReadAccess
                             >>% f name
                         | tokenType ->
                             appendToken2 tokenType p1 p2
