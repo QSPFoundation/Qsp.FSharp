@@ -357,11 +357,12 @@ let pcallProcTests =
     ]
 
 let printStmts stmts =
-    List.map (Qsp.Show.showStmt (Qsp.Show.UsingSpaces 4)) stmts
+    List.collect (Show.showStmt (Qsp.Show.UsingSpaces 4) Show.FormatConfig.Default) stmts
     |> ShowList.joinEmpty "\n"
     |> ShowList.show
 let printStmt stmt =
-    Qsp.Show.showStmt (Qsp.Show.UsingSpaces 4) stmt
+    Qsp.Show.showStmt (Qsp.Show.UsingSpaces 4) Show.FormatConfig.Default stmt
+    |> ShowList.joinEmpty "\n"
     |> ShowList.show
 [<Tests>]
 let ifTests =
@@ -666,7 +667,7 @@ module TestOnMocks =
                 let act = startOnFile srcPath
                 // act |> Json.serf parseExpPath
                 // failwithf "\"%s\" не найден, потому пришлось его создать. Естественно, все тесты пошли коту под хвост." parseExpPath
-                act |> Qsp.Show.printLocs Qsp.Show.UsingTabs
+                act |> Qsp.Show.printLocs Qsp.Show.UsingTabs Show.FormatConfig.Default
         let exp =
             if System.IO.File.Exists showExpPath then
                 System.IO.File.ReadAllText showExpPath
