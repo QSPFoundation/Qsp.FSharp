@@ -172,38 +172,42 @@ let appendTokenHover tokenType msg p =
         >>. preturn p
 open Tokens
 
-let stringLiteralWithToken : _ Parser =
-    // Если не разбивать, то VS Code выбьет: "`range` cannot span multiple lines"
+let stringLiteralWithToken pexpr : _ Parser =
     let bet tokenType openedChar closedChar =
         let p =
-            many1Satisfy (fun c' -> not (c' = closedChar || c' = '\n'))
+            many1Satisfy (fun c' -> not (c' = closedChar || c' = '\n' || c' = '<'))
             <|> (attempt(skipChar closedChar >>. skipChar closedChar)
                   >>% string closedChar)
+            <|> (skipChar '<' >>? notFollowedBy (skipChar '<') >>% "<")
+        let plineKind =
+            appendToken tokenType (many1Strings p) |>> Ast.StringKind
+            <|> (appendToken TokenType.InterpolationBegin (pstring "<<")
+                 >>. (ws >>. pexpr |>> Ast.ExprKind)
+                 .>> ws .>> appendToken TokenType.InterpolationEnd (pstring ">>"))
         pipe2
             (appendToken tokenType (pchar openedChar)
-             >>. appendToken tokenType (manyStrings p))
+             >>. many plineKind)
             (many
-                (newline >>. appendToken tokenType (manyStrings p))
+                (newline >>. many plineKind)
              .>> appendToken tokenType (pchar closedChar)) // TODO: Здесь самое то использовать `PunctuationDefinitionStringEnd`
-            (fun x xs ->
-                x::xs |> String.concat "\n")
+            (fun x xs -> (x:Ast.Line)::xs)
     bet TokenType.StringQuotedSingle '\'' '\''
     <|> bet TokenType.StringQuotedDouble '"' '"'
 
-let pbraces: _ Parser =
+let pbraces tokenType : _ Parser =
     let pbraces, pbracesRef = createParserForwardedToRef()
     let p = many1Satisfy (isNoneOf "{}\n")
 
     pbracesRef :=
         pipe2
-            (appendToken TokenType.StringBraced
+            (appendToken tokenType
                 (many1Satisfy2 ((=) '{') (isNoneOf "{}\n")) )
             (many
-                (appendToken TokenType.StringBraced (many1Strings p)
+                (appendToken tokenType (many1Strings p)
                  <|> newlineReturn "\n"
                  <|> pbraces
                 )
-             .>>. appendToken TokenType.StringBraced (pchar '}'))
+             .>>. appendToken tokenType (pchar '}'))
             (fun x (xs, closedChar) ->
                 seq {
                     yield x
@@ -213,15 +217,15 @@ let pbraces: _ Parser =
                 |> System.String.Concat
             )
     pipe2
-        (appendToken TokenType.StringBraced
+        (appendToken tokenType
             (pchar '{' >>. manyStrings p)
          .>>. opt (newlineReturn "\n"))
         (many
-            (appendToken TokenType.StringBraced (many1Strings p)
+            (appendToken tokenType (many1Strings p)
              <|> newlineReturn "\n"
              <|> pbraces
             )
-         .>> appendToken TokenType.StringBraced (pchar '}')) // TODO: Здесь самое то использовать `PunctuationDefinitionStringEnd`
+         .>> appendToken tokenType (pchar '}')) // TODO: Здесь самое то использовать `PunctuationDefinitionStringEnd`
         (fun (x, nl) xs ->
             match nl with
             | None ->

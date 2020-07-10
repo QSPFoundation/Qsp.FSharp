@@ -1,4 +1,4 @@
-﻿module Qsp.Parser.Main
+module Qsp.Parser.Main
 open FParsec
 open FsharpMyExtension
 open FsharpMyExtension.Either
@@ -175,11 +175,29 @@ let pcallProcBySemantic =
                     preturn ()
             >>% CallSt(name, args)
 let pcomment : _ Parser =
+    let stringLiteralWithToken : _ Parser =
+        let bet tokenType openedChar closedChar =
+            let p =
+                many1Satisfy (fun c' -> not (c' = closedChar || c' = '\n'))
+                <|> (attempt(skipChar closedChar >>. skipChar closedChar)
+                      >>% string closedChar + string closedChar)
+            pipe2
+                (appendToken tokenType (pchar openedChar)
+                 >>. appendToken tokenType (manyStrings p))
+                (many
+                    (newline >>. appendToken tokenType (manyStrings p))
+                 .>> appendToken tokenType (pchar closedChar)) // TODO: Здесь самое то использовать `PunctuationDefinitionStringEnd`
+                (fun x xs ->
+                    x::xs |> String.concat "\n"
+                    |> fun x -> sprintf "%c%s%c" openedChar x closedChar
+                    )
+        bet TokenType.Comment '\'' '\''
+        <|> bet TokenType.Comment '"' '"'
     let p =
         appendToken TokenType.Comment
             (many1Satisfy (fun c -> c <> '\n' && c <> ''' && c <> '"' && c <> '{'))
         <|> stringLiteralWithToken
-        <|> pbraces
+        <|> (pbraces TokenType.Comment |>> sprintf "{%s}")
     appendToken TokenType.Comment (pchar '!')
     >>. manyStrings p |>> Statement.Comment
 

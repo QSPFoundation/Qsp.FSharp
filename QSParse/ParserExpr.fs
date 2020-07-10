@@ -169,7 +169,8 @@ let pexpr : _ Parser =
             pexplicitVar <|> pcallFunctionOrArrOrVar
         let pval =
             choice [
-                stringLiteralWithToken <|> pbraces |>> String
+                // TODO: `pbraces` — он точно нужен?
+                stringLiteralWithToken expr |>> String
                 appendToken TokenType.ConstantNumericInteger
                     (pint32 |>> Int)
             ]
@@ -182,7 +183,12 @@ let pexpr : _ Parser =
     |> Array.iter (fun (opTyp, (opName, isSymbolic)) ->
         let prec = Precedences.prec <| Precedences.OpB opTyp
         if isSymbolic then
-            InfixOperator(opName, ws, prec, Associativity.Left, fun x y -> Expr(opTyp, x, y))
+            if opName = ">" then
+                // внутри string есть подстановка `<<expr>>`, и эта условность нужна, чтобы не захватывать `>>`
+                let p = notFollowedBy (pchar '>') >>. ws
+                InfixOperator(opName, p, prec, Associativity.Left, fun x y -> Expr(opTyp, x, y))
+            else
+                InfixOperator(opName, ws, prec, Associativity.Left, fun x y -> Expr(opTyp, x, y))
             |> opp.AddOperator
         else
             let afterStringParser = notFollowedVarCont >>. ws

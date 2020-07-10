@@ -1,8 +1,5 @@
 module Qsp.Ast
 open FsharpMyExtension
-type Value =
-    | Int of int
-    | String of string
 
 type Op =
     /// `+`
@@ -122,7 +119,18 @@ type VarType =
     /// `$varName`, к такой переменной можно смело присваивать и число, и строку
     | StringType
 type Var = VarType * string
-type Expr =
+type LineKind =
+    | StringKind of string
+    /// Это то, что заключено между `&lt;&lt; >>`
+    | ExprKind of Expr
+/// Без переносов
+and Line = LineKind list
+
+and Value =
+    | Int of int
+    | String of Line list
+
+and Expr =
     | Val of Value
     | Var of var:Var
     | Func of string * Expr list

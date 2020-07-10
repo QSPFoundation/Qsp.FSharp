@@ -11,16 +11,32 @@ let showVarType = function
 let showVar (typ:VarType, varName:string) =
     showVarType typ << showString varName
 
-let showValue = function
+let showValue showExpr = function
     | Int x -> shows x
-    | String x -> bet "'" "'" (x.Replace("'", "''") |> showString)
+    | String lines ->
+        lines
+        |> List.map (
+            List.map (
+                function
+                | StringKind x ->
+                    showString (x.Replace("'", "''"))
+                | ExprKind x ->
+                    showExpr x
+                    |> show
+                    |> fun x -> x.Replace("'", "''")
+                    |> showString // м-да, но иначе непонятно, как экранировать string в выражениях
+                    |> bet "<<" ">>"
+            ) >> joinsEmpty empty
+        )
+        |> joinsEmpty (showString "\n")
+        |> bet "'" "'"
 let ops = Op.toString >> showString
 
 let unar = function No -> "no" | Obj -> "obj" | Neg -> "-"
 
-let simpleShowExpr : _ -> ShowS =
+let rec simpleShowExpr expr: ShowS =
     let rec f = function
-        | Val v -> showValue v
+        | Val v -> showValue simpleShowExpr v
         | Var v -> showVar v
         | Func(name, es) ->
             showString name << showParen true (List.map f es |> join ", ")
@@ -53,9 +69,9 @@ let simpleShowExpr : _ -> ShowS =
             << f e2
         | Arr(var, es) ->
             showVar var << bet "[" "]" (List.map f es |> join ", ")
-    f
+    f expr
 let rec showExpr = function
-    | Val v -> showValue v
+    | Val v -> showValue showExpr v
     | Var v -> showVar v
     | Func(name, es) -> showString name << showParen true (List.map showExpr es |> join ", ")
     | UnarExpr(op, e) ->

@@ -11,6 +11,7 @@ open FParsec
 #load @"..\QSParse\ParserExpr.fs"
 #load @"..\QSParse\Parsec.fs"
 #endif
+open Qsp
 open Qsp.Ast
 open Qsp.Parser.Generic
 open Qsp.Parser.Expr
@@ -195,21 +196,23 @@ let stringLiteralTest =
 [<Tests>]
 let stringLiteralWithTokenTest =
     let runEither str =
-        Qsp.Parser.Generic.runStateEither stringLiteralWithToken Qsp.Parser.Generic.emptyState str
+        Qsp.Parser.Generic.runStateEither (stringLiteralWithToken pexpr) Qsp.Parser.Generic.emptyState str
         |> snd
+    let f str =
+        [[StringKind str]]
     testList "stringLiteralWithTokenTest" [
         testCase "1" <| fun () ->
-            Assert.Equal("", Right " ", runEither "\" \"")
+            Assert.Equal("", Right (f " "), runEither "\" \"")
         testCase "2" <| fun () ->
-            Assert.Equal("", Right "\"", runEither "\"\"\"\"")
+            Assert.Equal("", Right (f "\""), runEither "\"\"\"\"")
         testCase "3" <| fun () ->
-            Assert.Equal("", Right "\"'\"", runEither "\"\"\"'\"\"\"")
+            Assert.Equal("", Right (f "\"'\""), runEither "\"\"\"'\"\"\"")
         testCase "5" <| fun () ->
-            Assert.Equal("", Right "", runEither "''")
+            Assert.Equal("", Right [[]], runEither "''")
         testCase "6" <| fun () ->
-            Assert.Equal("", Right "'", runEither "''''")
+            Assert.Equal("", Right (f "'"), runEither "''''")
         testCase "4" <| fun () ->
-            Assert.Equal("", Right "\"", runEither "'\"'")
+            Assert.Equal("", Right (f "\""), runEither "'\"'")
         testCase "multiline `'` test" <| fun () ->
             let input =
                 [
@@ -219,10 +222,10 @@ let stringLiteralWithTokenTest =
                 ] |> String.concat "\n"
             let exp =
                 [
-                    ""
-                    "    a"
-                    ""
-                ] |> String.concat "\n"
+                    []
+                    [ StringKind "    a"]
+                    []
+                ]
             Assert.Equal("", Right exp, runEither input)
         testCase "multiline `'` test2" <| fun () ->
             let input =
@@ -235,18 +238,18 @@ let stringLiteralWithTokenTest =
                 ] |> String.concat "\n"
             let exp =
                 [
-                    ""
-                    "    a"
-                    ""
-                    "b"
-                    ""
-                ] |> String.concat "\n"
+                    []
+                    [ StringKind "    a" ]
+                    []
+                    [ StringKind "b" ]
+                    []
+                ]
             Assert.Equal("", Right exp, runEither input)
     ]
 [<Tests>]
 let pbracesTests =
     let runEither str =
-        Qsp.Parser.Generic.runStateEither pbraces Qsp.Parser.Generic.emptyState str
+        Qsp.Parser.Generic.runStateEither (pbraces Tokens.TokenType.StringBraced) Qsp.Parser.Generic.emptyState str
         |> snd
     testList "stringLiteralWithTokenTest" [
         testCase "base" <| fun () ->
@@ -381,7 +384,7 @@ let ifTests =
                 ] |> String.concat "\n"
             let exp =
                 (If
-                   (Var (ImplicitNumericType, "expr"), [CallSt ("gt", [Val (String "hall")])],
+                   (Var (ImplicitNumericType, "expr"), [CallSt ("gt", [Val (String [[StringKind "hall"]])])],
                     []))
             Assert.Equal("", Right exp, runStmts input)
         testCase "inline if 2" <| fun () ->
@@ -542,7 +545,7 @@ let ifTests =
               (If
                  (Var (ImplicitNumericType, "expr1"),
                   [StarPl (Var (ImplicitNumericType, "stmt1"));
-                   Act ([Val (String "arg")], [CallSt ("pl", [])])],
+                   Act ([Val (String [[StringKind "arg"]])], [CallSt ("pl", [])])],
                   [If
                      (Var (ImplicitNumericType, "expr2"),
                       [If
@@ -578,7 +581,7 @@ let stmtTests =
                     "'инструкция, которая не принадлежит конструкции'"
                 ] |> String.concat "\n"
             let exp =
-                Act ([Val (String "some act")], [CallSt ("gt", [Val (String "hall")])])
+                Act ([Val (String [[StringKind "some act"]])], [CallSt ("gt", [Val (String [[StringKind "hall"]])])])
 
             Assert.Equal("", Right exp, runStmts input)
 
@@ -598,12 +601,12 @@ let stmtTests =
                  (Func
                     ("iif",
                      [Expr (Ge, Var (ImplicitNumericType, "somevar"), Val (Int 2));
-                      Val (String "thenBody"); Val (String "elseBody")])))
+                      Val (String [[StringKind "thenBody"]]); Val (String [[StringKind "elseBody"]])])))
             Assert.Equal("", Right exp, runStmtsEof input)
         testCase "call procedure" <| fun () ->
             let input = "gt 'begin', 'real_character'"
             let exp =
-                CallSt ("gt", [Val (String "begin"); Val (String "real_character")])
+                CallSt ("gt", [Val (String [[StringKind "begin"]]); Val (String [[StringKind "real_character"]])])
             Assert.Equal("", Right exp, runStmtsEof input)
         // testCase "call " <| fun () ->
         //     let input = "The(Lady), or, the, Tiger"
@@ -681,7 +684,7 @@ module TestOnMocks =
         let mocksDir = @"..\..\..\..\Output\Mocks"
         System.IO.Directory.GetFiles(mocksDir, "*.qsps")
         |> Array.map (fun path ->
-            testCase (sprintf "'%s' test" path) <| fun () ->
+            testCase (sprintf "'%s' test" (System.IO.Path.GetFullPath path)) <| fun () ->
                 showTest path
                 Assert.Equal("", true, true)
         )
