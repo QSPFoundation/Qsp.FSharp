@@ -56,6 +56,12 @@ type TokenType =
     | InterpolationEnd
 
     | ConstantNumericInteger
+type InlineRange =
+    {
+        Line: int64
+        Column1: int64
+        Column2: int64
+    }
 type Token =
     { TokenType: TokenType
-      Range: Range }
+      Range: InlineRange }

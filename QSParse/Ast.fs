@@ -154,10 +154,10 @@ type Statement =
     | Label of string
     | Comment of string
     | Exit
-
+type LocationName = string
 /// ```qsp
 /// # location name
 /// 'asdf'
 /// - произвольный набор символов
 /// ```
-type Location = Location of string * Statement list
+type Location = Location of LocationName * Statement list

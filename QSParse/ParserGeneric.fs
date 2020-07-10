@@ -52,12 +52,7 @@ let stringLiteral<'UserState> =
 let notFollowedVarCont<'UserState> =
     notFollowedBy (satisfy isIdentifierChar)
     : Parser<_, 'UserState>
-type InlineRange =
-    {
-        Line: int64
-        Column1: int64
-        Column2: int64
-    }
+
 /// A document highlight kind.
 [<RequireQualifiedAccess>]
 type DocumentHighlightKind =
@@ -75,13 +70,33 @@ type VarHighlightKind =
 // type Var =
 type VarHighlights =
     {
-        Ma: Map<Ast.Var, (InlineRange * VarHighlightKind) list>
-        Ranges: (InlineRange * Ast.Var) list
+        Ma: Map<Ast.Var, (Tokens.InlineRange * VarHighlightKind) list>
+        Ranges: (Tokens.InlineRange * Ast.Var) list
     }
 let varHighlightsEmpty =
     {
         Ma = Map.empty
         Ranges = []
+    }
+type LocHighlights =
+    {
+        Ma: Map<Ast.LocationName, (Tokens.InlineRange * VarHighlightKind) list>
+        Ranges: (Tokens.InlineRange * Ast.LocationName) list
+    }
+let locHighlightsEmpty =
+    {
+        Ma = Map.empty
+        Ranges = []
+    }
+type Highlights =
+    {
+        VarHighlights: VarHighlights
+        LocHighlights: LocHighlights
+    }
+let highlightsEmpty =
+    {
+        VarHighlights = varHighlightsEmpty
+        LocHighlights = locHighlightsEmpty
     }
 type State =
     {
@@ -89,13 +104,15 @@ type State =
         /// Здесь ошибки только те, что могут определиться во время поверхностного семантического разбора, то есть это то, что не нуждается в нескольких проходах. Например, можно определить, что в коде пытаются переопределить встроенную функцию, и это будет ошибкой.
         ///
         /// А если хочется понять, что инструкция `gt 'some loc'` верна, то придется пройтись дважды, чтобы определить, существует ли вообще `'some loc'`. Если бы локации определялись последовательно, то есть нельзя было бы обратиться к той, что — ниже, тогда потребовался только один проход. Но в таком случае придется вводить что-то вроде `rec`, чтобы перейти на локацию, определенную ниже. Но всё это возвращает к той же задаче, потому ну его.
-        SemanticErrors: (InlineRange * string) list
+        SemanticErrors: (Tokens.InlineRange * string) list
         /// Информация обо всём и вся
-        Hovers: (InlineRange * string) list
-        VarHighlights: VarHighlights
+        Hovers: (Tokens.InlineRange * string) list
+        Highlights: Highlights
         /// Нужен для `elseif` конструкции. Эх, если бы ее можно было как-то именно там оставить, но увы.
         IsEndOptional : bool
         LastSymbolPos : FParsec.Position
+        /// К ним обращаются раньше, чем она определена, потому проверяется по ходу дела
+        LocsThatNeedCheck: Map<Ast.LocationName, Tokens.InlineRange list>
     }
 let emptyState =
     {
@@ -104,71 +121,111 @@ let emptyState =
         Hovers = []
         IsEndOptional = false
         LastSymbolPos = FParsec.Position("", 0L, 1L, 1L)
-        VarHighlights = varHighlightsEmpty
+        Highlights = highlightsEmpty
+        LocsThatNeedCheck = Map.empty
     }
 type 'a Parser = Parser<'a, State>
 
-let appendVarHighlight (r:InlineRange) (var:Ast.Var) highlightKind =
+let pGetDefLocPos locName =
+    getUserState
+    |>> fun st ->
+        match Map.tryFind locName st.Highlights.LocHighlights.Ma with
+        | None ->
+            None
+        | Some(value) ->
+            value
+            |> List.tryPick (fun (r, kind) ->
+                match kind with
+                | WriteAccess -> Some r
+                | _ -> None
+            )
+
+let appendVarHighlight (r:Tokens.InlineRange) (var:Ast.Var) highlightKind =
     let var = mapSnd String.toLower var // for case-insensitively
     updateUserState (fun st ->
         { st with
-            VarHighlights =
+            Highlights =
                 {
-                    Ranges = (r, var)::st.VarHighlights.Ranges
-                    Ma =
-                        let v = r, highlightKind
-                        st.VarHighlights.Ma
-                        |> Map.addOrMod var [v] (fun xs -> v::xs)
+                    st.Highlights with
+                        VarHighlights =
+                            {
+                                Ranges = (r, var)::st.Highlights.VarHighlights.Ranges
+                                Ma =
+                                    let v = r, highlightKind
+                                    st.Highlights.VarHighlights.Ma
+                                    |> Map.addOrMod var [v] (fun xs -> v::xs)
+                            }
+                }
+        }
+    )
+let appendLocHighlight (r:Tokens.InlineRange) (loc:string) highlightKind =
+    let loc = String.toLower loc // без шуток, они тоже case-insensitively, хотя и представляют из себя string
+    updateUserState (fun st ->
+        { st with
+            Highlights =
+                {
+                    st.Highlights with
+                        LocHighlights =
+                            {
+                                Ranges = (r, loc)::st.Highlights.LocHighlights.Ranges
+                                Ma =
+                                    let v = r, highlightKind
+                                    st.Highlights.LocHighlights.Ma
+                                    |> Map.addOrMod loc [v] (fun xs -> v::xs)
+                            }
                 }
         }
     )
 
-let appendToken2 tokenType p1 p2 =
+let appendToken2 tokenType r =
     updateUserState (fun st ->
         let token =
             { Tokens.TokenType = tokenType
-              Tokens.Range = p1, p2 }
-
+              Tokens.Range = r }
         { st with Tokens = token :: st.Tokens }
     )
 
+let toRange (p1:FParsec.Position) (p2:FParsec.Position) =
+    {
+        Tokens.InlineRange.Line = p1.Line // Должно выполняться условие `p1.Line = p2.Line`
+        Tokens.InlineRange.Column1 = p1.Column
+        Tokens.InlineRange.Column2 = p2.Column // Должно выполняться условие `p2.Column > p1.Column`
+    }
 let appendToken tokenType p =
     getPosition .>>.? p .>>. getPosition
     >>= fun ((p1, p), p2) ->
-        appendToken2 tokenType p1 p2
+        let r = toRange p1 p2
+        appendToken2 tokenType r
         >>. preturn p
-let toRange (p1:FParsec.Position, p2:FParsec.Position) =
-    {
-        Line = p1.Line // Должно выполняться условие `p1.Line = p2.Line`
-        Column1 = p1.Column
-        Column2 = p2.Column // Должно выполняться условие `p2.Column > p1.Column`
-    }
-let appendHover2 msg (p1:FParsec.Position) (p2:FParsec.Position) =
+
+let applyRange p =
+    getPosition .>>.? p .>>. getPosition
+    >>= fun ((p1, p), p2) ->
+        let range = toRange p1 p2
+        preturn (range, p)
+
+let appendHover2 msg range =
     updateUserState (fun st ->
-        let range = toRange (p1, p2)
         { st with Hovers = (range, msg) :: st.Hovers }
     )
 
-let appendSemanticError (p1:FParsec.Position) (p2:FParsec.Position) msg =
-    let range = toRange (p1, p2)
+let appendSemanticError range msg =
     updateUserState (fun st ->
         { st with SemanticErrors =
                     (range, msg) :: st.SemanticErrors })
-// let appendSemanticError2 p getMsg =
-//     getPosition .>>.? p .>>. getPosition
-//     >>= fun ((p1, x), p2) ->
-//         appendSemanticError p1 p2 (getMsg x)
-//         >>. preturn x
+
 let appendHover msg p =
     (getPosition .>>.? p .>>. getPosition)
     >>= fun ((p1, p), p2) ->
-        appendHover2 msg p1 p2
+        let r = toRange p1 p2
+        appendHover2 msg r
         >>. preturn p
 let appendTokenHover tokenType msg p =
     (getPosition .>>.? p .>>. getPosition)
     >>= fun ((p1, p), p2) ->
-        appendToken2 tokenType p1 p2
-        >>. appendHover2 msg p1 p2
+        let r = toRange p1 p2
+        appendToken2 tokenType r
+        >>. appendHover2 msg r
         >>. preturn p
 open Tokens
 

@@ -30,7 +30,7 @@ let pexplicitVar varHighlightKind : _ Parser =
 
     (getPosition .>>.? varType) .>>. (p .>>. getPosition)
     >>= fun ((p1, typ), (varName, p2)) ->
-        let range = toRange (p1, p2)
+        let range = toRange p1 p2
         let msg =
             match typ with
             | StringType ->
@@ -46,8 +46,8 @@ let pexplicitVar varHighlightKind : _ Parser =
                     | Some dscr -> dscr
                     | None -> "Пользовательская глобальная переменная числового типа"
             | ImplicitNumericType -> failwith "Not Implemented"
-        appendToken2 Tokens.Variable p1 p2
-        >>. appendHover2 msg p1 p2
+        appendToken2 Tokens.Variable range
+        >>. appendHover2 msg range
         >>. appendVarHighlight range (typ, varName) varHighlightKind
         >>. preturn (typ, varName)
 type ProcOrFunc =
@@ -111,7 +111,7 @@ let pexpr : _ Parser =
                                 TokenType.Variable, f)
                       <|>% (TokenType.Variable, fun name -> Var(ImplicitNumericType, name)))
                 >>= fun (((p1, name), p2), (tokenType, f)) ->
-                        let range = toRange (p1, p2)
+                        let range = toRange p1 p2
                         match tokenType with
                         | TokenType.Function ->
                             match f name with
@@ -130,22 +130,20 @@ let pexpr : _ Parser =
                                                         let msg =
                                                             Defines.Show.printFuncSignature name returnType sign
                                                             |> sprintf "Ожидается одна из перегрузок:\n%s"
-                                                        updateUserState (fun st ->
-                                                            { st with SemanticErrors =
-                                                                        (range, msg) :: st.SemanticErrors })
+                                                        appendSemanticError range msg
                                                     | Some () ->
                                                         preturn ()
                                             p
-                                            >>. appendHover2 dscr p1 p2
+                                            >>. appendHover2 dscr range
                                         | None ->
                                             [
                                                 "Такой функции нет, а если есть, то напишите мне, автору расширения, пожалуйста, и я непременно добавлю."
                                                 "Когда-нибудь добавлю: 'Возможно, вы имели ввиду: ...'"
                                             ]
                                             |> String.concat "\n"
-                                            |> appendSemanticError p1 p2
+                                            |> appendSemanticError range
                                 p
-                                >>. appendToken2 tokenType p1 p2
+                                >>. appendToken2 tokenType range
                                 >>% func
                             | func -> preturn func
                         | TokenType.Variable ->
@@ -154,16 +152,16 @@ let pexpr : _ Parser =
                                 |> Map.tryFind (name.ToLower())
                                 |> function
                                     | Some dscr ->
-                                        appendHover2 dscr p1 p2
+                                        appendHover2 dscr range
                                     | None ->
                                         let dscr = "Пользовательская глобальная переменная числового типа"
-                                        appendHover2 dscr p1 p2
+                                        appendHover2 dscr range
                             p
-                            >>. appendToken2 tokenType p1 p2
+                            >>. appendToken2 tokenType range
                             >>. appendVarHighlight range (ImplicitNumericType, name) VarHighlightKind.ReadAccess
                             >>% f name
                         | tokenType ->
-                            appendToken2 tokenType p1 p2
+                            appendToken2 tokenType range
                             >>% f name
 
             pexplicitVar <|> pcallFunctionOrArrOrVar

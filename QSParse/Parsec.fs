@@ -49,22 +49,22 @@ let pAssign stmts =
     let highlightImplicitVar p =
         getPosition .>>.? p .>>. getPosition
         >>= fun ((p1, (name:string)), p2) ->
-            let range = toRange (p1, p2)
+            let range = toRange p1 p2
             let nameLower = name.ToLower()
             Defines.vars
             |> Map.tryFind nameLower
             |> function
                 | Some dscr ->
-                    appendHover2 dscr p1 p2
+                    appendHover2 dscr range
                 | None ->
                     if Map.containsKey nameLower Defines.procs then
-                        appendSemanticError p1 p2 "Нельзя переопределять процедуру"
+                        appendSemanticError range "Нельзя переопределять процедуру"
                     elif Map.containsKey nameLower Defines.functions then
-                        appendSemanticError p1 p2 "Нельзя переопределять функцию"
+                        appendSemanticError range "Нельзя переопределять функцию"
                     else
                         let dscr = "Пользовательская глобальная переменная числового типа"
-                        appendHover2 dscr p1 p2
-            >>. appendToken2 TokenType.Variable p1 p2
+                        appendHover2 dscr range
+            >>. appendToken2 TokenType.Variable range
             >>. appendVarHighlight range (ImplicitNumericType, name) VarHighlightKind.WriteAccess
             >>. preturn name
     let pExplicitAssign =
@@ -85,15 +85,14 @@ let pAssign stmts =
 
 let pcallProc =
     let f defines p =
-        getPosition .>>.? p .>>. getPosition
-        >>= fun ((p1, name), p2) ->
-            let range = toRange (p1, p2)
+        applyRange p
+        >>= fun (range, name) ->
             let p =
                 defines
                 |> Map.tryFind (String.toLower name)
                 |> function
                     | Some (dscr, sign) ->
-                        appendHover2 dscr p1 p2
+                        appendHover2 dscr range
                         >>% Some sign
                     | None ->
                         [
@@ -101,9 +100,9 @@ let pcallProc =
                             "Когда-нибудь добавлю: 'Возможно, вы имели ввиду: ...'"
                         ]
                         |> String.concat "\n"
-                        |> appendSemanticError p1 p2
+                        |> appendSemanticError range
                         >>% None
-            appendToken2 TokenType.Procedure p1 p2
+            appendToken2 TokenType.Procedure range
             >>. p
             |>> fun sign -> name, range, sign
     let pProcWithAsterix: _ Parser =
@@ -116,16 +115,60 @@ let pcallProc =
     let procHoverAndToken =
         f Defines.procs notFollowedByBinOpIdent
 
+    let pDefProc : _ Parser =
+        Defines.procs
+        |> Seq.sortByDescending (fun (KeyValue(name, _)) -> name) // для жадности
+        |> Seq.map (fun (KeyValue(name, (dscr, sign))) ->
+            applyRange (pstringCI name .>> notFollowedVarCont)
+            >>= fun (range, name) ->
+                appendToken2 TokenType.Procedure range
+                >>. appendHover2 dscr range
+                >>% (name, range, sign)
+        )
+        |> List.ofSeq
+        |> choice
+
     pProcWithAsterix
-    .>> ws .>>. sepBy pexpr (char_ws ',') // Кстати, `,` — "punctuation.separator.parameter.js"
+    .>> ws .>>. sepBy (applyRange pexpr) (char_ws ',') // Кстати, `,` — "punctuation.separator.parameter.js"
+    <|> (pDefProc .>> ws
+         .>>. (followedBy (skipNewline <|> skipChar '&' <|> eof) >>% []
+               <|> bet_ws '(' ')' (sepBy (applyRange pexpr) (pchar ',' >>. ws))
+               <|> sepBy1 (applyRange pexpr) (char_ws ','))
+         |>> fun ((name, range, sign), args) -> ((name, range, Some sign), args))
     <|> (procHoverAndToken
           .>>? (ws1 <|> followedBy (satisfy (isAnyOf "'\"")))
-          .>>.? sepBy1 pexpr (char_ws ','))
+          .>>.? sepBy1 (applyRange pexpr) (char_ws ','))
     >>= fun ((name, range, sign), args) ->
         match sign with
         | None ->
-            preturn (CallSt(name, args))
+            preturn (CallSt(name, List.map snd args))
         | Some x ->
+            let procNameLower = String.toLower name
+            let pLoc =
+                if Set.contains procNameLower Defines.transferOperatorsSet then
+                    match args with
+                    | (r, Val (String [[StringKind locName]]))::_ ->
+                        let r =
+                            { r with
+                                Column1 = r.Column1 + 1L // чтобы `'` или `"` пропустить
+                                Column2 = r.Column2 - 1L
+                            }
+                        let locNameLower = String.toLower locName
+                        appendLocHighlight r locNameLower VarHighlightKind.ReadAccess
+                        >>. pGetDefLocPos locNameLower
+                            >>= function
+                                | None ->
+                                    updateUserState (fun st ->
+                                        { st with
+                                            LocsThatNeedCheck =
+                                                st.LocsThatNeedCheck
+                                                |> Map.addOrMod locNameLower [r] (fun xs -> r::xs)
+                                        }
+                                    )
+                                | Some _ -> preturn ()
+                    | _ -> preturn ()
+                else
+                    preturn ()
             args
             |> Array.ofList
             |> Defines.getFuncByOverloadType x
@@ -134,46 +177,12 @@ let pcallProc =
                     let msg =
                         Defines.Show.printSignature name x
                         |> sprintf "Ожидается одна из перегрузок:\n%s"
-                    updateUserState (fun st ->
-                        { st with SemanticErrors =
-                                    (range, msg) :: st.SemanticErrors })
+                    appendSemanticError range msg
                 | Some () ->
                     preturn ()
-            >>% CallSt(name, args)
-let pcallProcBySemantic =
-    // да-да, это именно так нужно было сделать в самом начале, но увы.
-    let ident =
-        Defines.procs
-        |> Seq.sortByDescending (fun (KeyValue(name, _)) -> name) // для жадности
-        |> Seq.map (fun (KeyValue(name, (dscr, sign))) ->
-            let p = pstringCI name .>> notFollowedVarCont
-            getPosition .>>.? p .>>. getPosition
-            >>= fun ((p1, name), p2) ->
-                let range = toRange (p1, p2)
-                appendToken2 TokenType.Procedure p1 p2
-                >>. appendHover2 dscr p1 p2
-                >>% (name, range, sign)
-        )
-        |> List.ofSeq
-        |> choice
-    ident .>> ws
-    .>>. ((followedBy (skipNewline <|> skipChar '&' <|> eof)) >>% []
-          <|> bet_ws '(' ')' (sepBy pexpr (pchar ',' >>. ws)))
-    >>= fun ((name, range, sign), args) ->
-            args
-            |> Array.ofList
-            |> Defines.getFuncByOverloadType sign
-            |> function
-                | None ->
-                    let msg =
-                        Defines.Show.printSignature name sign
-                        |> sprintf "Ожидается одна из перегрузок:\n%s"
-                    updateUserState (fun st ->
-                        { st with SemanticErrors =
-                                    (range, msg) :: st.SemanticErrors })
-                | Some () ->
-                    preturn ()
-            >>% CallSt(name, args)
+            >>. pLoc
+            >>% CallSt(name, List.map snd args)
+
 let pcomment : _ Parser =
     let stringLiteralWithToken : _ Parser =
         let bet tokenType openedChar closedChar =
@@ -400,7 +409,6 @@ let pstmt =
             pAct
             pAssign pstmts
             pcallProc
-            pcallProcBySemantic
             attempt (pexpr |>> StarPl) // `attempt` — только ради одного единственного случая: `-`, который завершает локацию
         ]
     pstmt
@@ -415,14 +423,51 @@ let pminusKeyword : _ Parser =
 let ploc =
     pipe2
         (psharpKeyword .>> ws
-         >>. appendToken TokenType.StringQuotedSingle // надо же как-то подчеркнуть название локации
-                (many1Satisfy ((<>) '\n'))
+         >>. (applyRange
+                (many1Strings
+                    (many1Satisfy (isNoneOf " \t\n")
+                     <|> (many1Satisfy (isAnyOf " \t") .>>? notFollowedByNewline))
+                 <?> "location name")
+              >>= fun (r, name) ->
+                let checkLocsWhatNeedToCheck locName = // да-да, название шикарное
+                    updateUserState (fun st ->
+                        { st with
+                            LocsThatNeedCheck =
+                                Map.remove locName st.LocsThatNeedCheck // ну да, к чему проверки? И так удалит
+                        }
+                    )
+                let pCheckLocExists r2 locName =
+                    pGetDefLocPos locName
+                    >>= function
+                        | Some r ->
+                            sprintf "Локация уже определена в\n%A" r
+                            |> appendSemanticError r2
+                        | None -> preturn ()
+
+                let locNameLower = String.toLower name
+                pCheckLocExists r locNameLower
+                >>. checkLocsWhatNeedToCheck locNameLower
+                >>. appendLocHighlight r locNameLower VarHighlightKind.WriteAccess // и все равно добавить, даже в случае семантической ошибки? Хм, ¯\_(ツ)_/¯
+                >>. appendToken2 TokenType.StringQuotedSingle r
+                >>. preturn name
+             )
          .>> spaces)
         (pstmts
          .>> (pminusKeyword .>> ws
               .>> appendToken TokenType.Comment
                     (skipManySatisfy ((<>) '\n'))))
         (fun name body -> Location(name, body))
+let pAfterAll =
+    updateUserState (fun st ->
+        let errors =
+            st.LocsThatNeedCheck
+            |> Map.fold (fun st locNameLower ->
+                List.fold (fun st range ->
+                    let msg = sprintf "'%s' — эта локация не определена" locNameLower
+                    (range, msg) :: st) st
+            ) st.SemanticErrors
+        { st with SemanticErrors = errors }
+    )
 
 let start str =
     let p =
@@ -430,7 +475,7 @@ let start str =
         .>> (getPosition >>= fun p ->
                 updateUserState (fun st ->
                     { st with LastSymbolPos = p}))
-    runParserOnString (p .>> eof)
+    runParserOnString (p .>> pAfterAll .>> eof)
         emptyState
         ""
         str
@@ -440,7 +485,7 @@ let startOnFile enc path =
         .>> (getPosition >>= fun p ->
                 updateUserState (fun st ->
                     { st with LastSymbolPos = p}))
-    runParserOnFile (p .>> eof)
+    runParserOnFile (p .>> pAfterAll .>> eof)
         emptyState
         path
         enc
