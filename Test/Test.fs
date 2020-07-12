@@ -26,7 +26,7 @@ let pexprTest =
     let runExprShow str =
         runExpr str
         |> Either.map
-            (Qsp.Show.simpleShowExpr
+            (Qsp.Show.simpleShowExpr (failwithf "showStmtsInline not implemented %A")
              >> FsharpMyExtension.ShowList.show)
     testList "pexpr test" [
         testCase "строчные бинарные операторы и названия переменных, которые начинаются с них" <| fun () ->
@@ -196,7 +196,12 @@ let stringLiteralTest =
 [<Tests>]
 let stringLiteralWithTokenTest =
     let runEither str =
-        Qsp.Parser.Generic.runStateEither (stringLiteralWithToken pexpr) Qsp.Parser.Generic.emptyState str
+        Qsp.Parser.Generic.runStateEither
+            (stringLiteralWithToken pexpr)
+            { Qsp.Parser.Generic.emptyState with
+                PStmts = Parser.Main.pstmts
+            }
+            str
         |> snd
     let f str =
         [[StringKind str]]
@@ -245,11 +250,48 @@ let stringLiteralWithTokenTest =
                     []
                 ]
             Assert.Equal("", Right exp, runEither input)
+        testCase "test '<<''x''>>'" <| fun () ->
+            let input = "'<<''x''>>'"
+            let exp = [[ExprKind (Val (String [[StringKind "x"]]))]]
+            Assert.Equal("", Right exp, runEither input)
+        testCase "test '<<''<<''''x''''>>''>>'" <| fun () ->
+            let input = "'<<''<<''''x''''>>''>>'"
+            let exp = [[ExprKind (Val (String [[ExprKind (Val (String [[StringKind "x"]]))]]))]]
+            Assert.Equal("", Right exp, runEither input)
+        testCase "test '<<''<<''''<<''''''''x''''''''>>''''>>''>>'" <| fun () ->
+            let input = "'<<''<<''''<<''''''''x''''''''>>''''>>''>>'"
+            let exp =
+              [[ExprKind
+                  (Val
+                     (String
+                        [[ExprKind
+                            (Val (String [[ExprKind (Val (String [[StringKind "x"]]))]]))]]))]]
+            Assert.Equal("", Right exp, runEither input)
+        testCase "test \"<<'x'>>\"" <| fun () ->
+            let input = "\"<<'x'>>\""
+            let exp = [[ExprKind (Val (String [[StringKind "x"]]))]]
+            Assert.Equal("", Right exp, runEither input)
+
+        testCase "test '<a href=\"exec:GT ''changes''\">changes</a>'" <| fun () ->
+            let input = "'<a href=\"exec:GT ''changes''\">changes</a>'"
+            let exp =
+              [[HyperLinkKind
+                  (StaticStmts [CallSt ("GT", [Val (String [[StringKind "changes"]])])],
+                   [[StringKind "changes"]])]]
+            Assert.Equal("", Right exp, runEither input)
+        testCase "test '<a href=\"exec: ''<<''x''>>''\">action</a>'" <| fun () ->
+            let input = "'<a href=\"exec: ''<<''x''>>''\">action</a>'"
+            let exp =
+                [[HyperLinkKind (Raw " '<<'x'>>'", [[StringKind "action"]])]]
+            Assert.Equal("", Right exp, runEither input)
     ]
 [<Tests>]
 let pbracesTests =
     let runEither str =
-        Qsp.Parser.Generic.runStateEither (pbraces Tokens.TokenType.StringBraced) Qsp.Parser.Generic.emptyState str
+        Qsp.Parser.Generic.runStateEither
+            (pbraces Tokens.TokenType.StringBraced)
+            Qsp.Parser.Generic.emptyState
+            str
         |> snd
     testList "stringLiteralWithTokenTest" [
         testCase "base" <| fun () ->

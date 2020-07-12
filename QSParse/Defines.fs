@@ -276,6 +276,11 @@ let vars =
         ("$backimage":VarName), (dscr:Description)
         let dscr =
             [
+                "Название выделенного действия."
+            ] |> String.concat "\n"
+        "$selact", dscr
+        let dscr =
+            [
                 "содержит название локации-счётчика. Локация-счётчик полезна для проверки выделенных предметов, введённого текста..."
             ] |> String.concat "\n"
         "$counter", dscr
@@ -414,7 +419,12 @@ let functions =
             [
                 "`RAND([#выражение 1],[#выражение 2])` - возвращает случайное число между числами `[#выражение 1]` и `[#выражение 2]`. Параметр `[#выражение 2]` может отсутствовать, при этом он принимается равным 0."
             ] |> String.concat "\n"
-        "rand", dscr, args [Numeric; Numeric] Numeric
+        let os =
+            [
+                [| Numeric; Numeric |], ()
+                [| Numeric |], ()
+            ] |> JustOverloads
+        "rand", dscr, (os, Numeric)
         let dscr =
             [
                 "возвращает название текущей локации, также можно использовать переменную `$curloc`"

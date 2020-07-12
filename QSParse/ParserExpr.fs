@@ -77,10 +77,7 @@ let notFollowedByBinOpIdent =
     // runStateEither p2 emptyState "no " // нельзя
     // runStateEither p2 emptyState "node" // можно
     // runStateEither p2 emptyState "foobar" // можно
-
     p2
-    // notFollowedByL (keywords >>. p) "нельзя использовать здесь ключевое слово"
-    // let keys = notFollowedByL ((choice <| List.map pstringCI ["let"; "set"; "if"; "end"; "elseif"; "else"; "act"; "no"; "obj"]) >>. (spaces1 <|> eof <|> skipChar '"' <|> skipChar ''')) "some excess"
 
 let pexpr : _ Parser =
     let opp = new OperatorPrecedenceParser<Expr, unit, _>()

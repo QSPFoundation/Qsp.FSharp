@@ -21,34 +21,68 @@ let showVarType = function
 let showVar (typ:VarType, varName:string) =
     showVarType typ << showString varName
 
-let showStringLines showExpr (lines:list<Line>) =
+let rec showStringLines showExpr showStmtsInline (lines:list<Line>) =
     lines
     |> List.map (
-        List.map (
+        List.collect (
             function
             | StringKind x ->
                 showString (x.Replace("'", "''"))
+                |> List.singleton
             | ExprKind x ->
                 showExpr x
                 |> show
-                |> fun x -> x.Replace("'", "''")
-                |> showString // м-да, но иначе непонятно, как экранировать string в выражениях
+                |> fun x -> x.Replace("'", "''") // TODO: стоит ли говорить, что все эти былины с `.Replace("'", "''")` нужно превратить в нормальный код?
+                |> showString
                 |> bet "<<" ">>"
+                |> List.singleton
+            | HyperLinkKind(x, body) ->
+                let attValue =
+                    match x with
+                    | Raw x ->
+                        x.Replace("'", "''")
+                        |> showString
+                    | StaticStmts(x) ->
+                        showStmtsInline x
+                        |> show
+                        |> fun x -> x.Replace("'", "''")
+                        |> showString
+                let header =
+                    showString "<a href=\"exec: "
+                    << attValue
+                    << showString "\">"
+                match showStringLines showExpr showStmtsInline body with
+                | [] ->
+                    header
+                    << showString "</a>"
+                    |> List.singleton
+                | [x] ->
+                    header
+                    << x
+                    << showString "</a>"
+                    |> List.singleton
+                | xs ->
+                    xs
+                    |> List.mapStartMidEnd
+                        (fun x -> header << x)
+                        id
+                        (fun x -> x << showString "</a>")
+                    |> fun x -> x // TODO: и все строки позже соединятся воедино, даже пробелов не удостоятся, ага.
         ) >> joinsEmpty empty
     )
-let showValue showExpr = function
+let showValue showExpr showStmtsInline = function
     | Int x -> shows x
     | String lines ->
-        showStringLines showExpr lines
+        showStringLines showExpr showStmtsInline lines
         |> joinsEmpty (showString "\n")
         |> bet "'" "'"
 let ops = Op.toString >> showString
 
 let unar = function No -> "no" | Obj -> "obj" | Neg -> "-"
 
-let rec simpleShowExpr expr: ShowS =
+let rec simpleShowExpr showStmtsInline expr : ShowS =
     let rec f = function
-        | Val v -> showValue simpleShowExpr v
+        | Val v -> showValue (simpleShowExpr showStmtsInline) showStmtsInline v
         | Var v -> showVar v
         | Func(name, es) ->
             showString name << showParen true (List.map f es |> join ", ")
@@ -82,25 +116,28 @@ let rec simpleShowExpr expr: ShowS =
         | Arr(var, es) ->
             showVar var << bet "[" "]" (List.map f es |> join ", ")
     f expr
-let rec showExpr = function
-    | Val v -> showValue showExpr v
+let rec showExpr showStmtsInline = function
+    | Val v -> showValue (showExpr showStmtsInline) showStmtsInline v
     | Var v -> showVar v
-    | Func(name, es) -> showString name << showParen true (List.map showExpr es |> join ", ")
+    | Func(name, es) ->
+        showString name
+        << showParen true
+            (List.map (showExpr showStmtsInline) es |> join ", ")
     | UnarExpr(op, e) ->
         let space = function Obj | No -> showSpace | Neg -> id
-        showString (unar op) << space op << showExpr e
+        showString (unar op) << space op << showExpr showStmtsInline e
     | Expr(op, e1, e2) ->
         let prec = Precedences.OpB >> Precedences.prec
         let f = function
             | Expr(op', _, _) -> showParen (prec op > prec op')
             | UnarExpr _ -> showParen true | _ -> id
-        let f x = f x (showExpr x)
+        let f x = f x (showExpr showStmtsInline x)
         f e1 << showSpace << ops op << showSpace << f e2
-    | Arr(var, es) -> showVar var << bet "[" "]" (List.map showExpr es |> join ", ")
+    | Arr(var, es) -> showVar var << bet "[" "]" (List.map (showExpr showStmtsInline) es |> join ", ")
 
 
-let showAssign = function
-    | Assign.AssignArr(var, key) -> showVar var << bet "[" "]" (showExpr key)
+let showAssign showStmtsInline = function
+    | Assign.AssignArr(var, key) -> showVar var << bet "[" "]" (showExpr showStmtsInline key)
     | Assign.AssignVar v -> showVar v
 
 let (|OneStmt|_|) = function
@@ -133,6 +170,9 @@ let showStmt indentsOption (formatConfig:FormatConfig) =
         let showStmtsInline xs : ShowS =
             List.collect f' xs // TODO
             |> join "&"
+        let showAssign = showAssign showStmtsInline
+        let showExpr = showExpr showStmtsInline
+        let showStringLines = showStringLines showExpr showStmtsInline
         match stmt with
         | Assign(AssingName name' as ass, Expr((Plus|Minus) as op, Var name, e)) when name' = name ->
             [showAssign ass << spaceBetween (ops op << showChar '=') << showExpr e]
@@ -161,7 +201,7 @@ let showStmt indentsOption (formatConfig:FormatConfig) =
                             )
                         else
                             str
-                    showStringLines showExpr str
+                    showStringLines str
                     |> List.map (bet "'" "'")
                 | _ ->
                     [ showExpr e ]

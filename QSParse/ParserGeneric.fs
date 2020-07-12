@@ -98,7 +98,9 @@ let highlightsEmpty =
         VarHighlights = varHighlightsEmpty
         LocHighlights = locHighlightsEmpty
     }
-type State =
+type 'a Parser = Parser<'a, State>
+
+and State =
     {
         Tokens: Tokens.Token list
         /// Здесь ошибки только те, что могут определиться во время поверхностного семантического разбора, то есть это то, что не нуждается в нескольких проходах. Например, можно определить, что в коде пытаются переопределить встроенную функцию, и это будет ошибкой.
@@ -113,6 +115,12 @@ type State =
         LastSymbolPos : FParsec.Position
         /// К ним обращаются раньше, чем она определена, потому проверяется по ходу дела
         LocsThatNeedCheck: Map<Ast.LocationName, Tokens.InlineRange list>
+        // Я тут, это самое, оставлю. Никто не возражает?
+        PStmts: Parser<Ast.Statement list>
+        /// `&lt;a gt ''x''>`
+        SingleQuotNestedCount: int
+        DoubleQuotNestedCount: int
+        HtmlAttDoubleNested: int
     }
 let emptyState =
     {
@@ -123,8 +131,11 @@ let emptyState =
         LastSymbolPos = FParsec.Position("", 0L, 1L, 1L)
         Highlights = highlightsEmpty
         LocsThatNeedCheck = Map.empty
+        PStmts = FParsec.Primitives.failFatally "PStmts not implemented"
+        SingleQuotNestedCount = 0
+        DoubleQuotNestedCount = 0
+        HtmlAttDoubleNested = 0
     }
-type 'a Parser = Parser<'a, State>
 
 let pGetDefLocPos locName =
     getUserState
@@ -227,29 +238,117 @@ let appendTokenHover tokenType msg p =
         appendToken2 tokenType r
         >>. appendHover2 msg r
         >>. preturn p
+
+let pSingleNested =
+    updateUserState (fun st ->
+        { st with
+            SingleQuotNestedCount = st.SingleQuotNestedCount + 1
+        })
+let pSingleUnnested =
+    updateUserState (fun st ->
+        { st with
+            SingleQuotNestedCount = st.SingleQuotNestedCount - 1
+        })
+let pGetSingleNested =
+    getUserState |>> fun x -> x.SingleQuotNestedCount
+let pDoubleNested =
+    updateUserState (fun st ->
+        { st with
+            DoubleQuotNestedCount = st.DoubleQuotNestedCount + 1
+        })
+let pDoubleUnnested =
+    updateUserState (fun st ->
+        { st with
+            DoubleQuotNestedCount = st.DoubleQuotNestedCount - 1
+        })
+let pGetDoubleNested =
+    getUserState |>> fun x -> x.DoubleQuotNestedCount
+let pHtmlAttDoubleNested =
+    updateUserState (fun st ->
+        { st with
+            HtmlAttDoubleNested = st.HtmlAttDoubleNested + 1
+        })
+let pHtmlAttDoubleUnnested =
+    updateUserState (fun st ->
+        { st with
+            HtmlAttDoubleNested = st.HtmlAttDoubleNested - 1
+        })
+let pGetHtmlAttDoubleNested =
+    getUserState |>> fun x -> x.HtmlAttDoubleNested
+
 open Tokens
 
+let charsReplicate n (c:char) =
+    System.String.Concat (Array.replicate n c)
+
+// Это такой фокус, чтобы напрочь во всем запутаться. А кто говорил, что это чисто функциональное программирование? Ну-ну.
+let pstmts : _ Parser =
+    getUserState >>= fun st -> st.PStmts
 let stringLiteralWithToken pexpr : _ Parser =
-    let bet tokenType openedChar closedChar =
-        let p =
+    let bet tokenType openedChar closedChar pnested punnested pgetNested =
+        let p nestedCount =
             many1Satisfy (fun c' -> not (c' = closedChar || c' = '\n' || c' = '<'))
-            <|> (attempt(skipChar closedChar >>. skipChar closedChar)
-                  >>% string closedChar)
-            <|> (skipChar '<' >>? notFollowedBy (skipChar '<') >>% "<")
-        let plineKind =
-            appendToken tokenType (many1Strings p) |>> Ast.StringKind
-            <|> (appendToken TokenType.InterpolationBegin (pstring "<<")
-                 >>. (ws >>. pexpr |>> Ast.ExprKind)
-                 .>> ws .>> appendToken TokenType.InterpolationEnd (pstring ">>"))
-        pipe2
-            (appendToken tokenType (pchar openedChar)
-             >>. many plineKind)
-            (many
-                (newline >>. many plineKind)
-             .>> appendToken tokenType (pchar closedChar)) // TODO: Здесь самое то использовать `PunctuationDefinitionStringEnd`
-            (fun x xs -> (x:Ast.Line)::xs)
-    bet TokenType.StringQuotedSingle '\'' '\''
-    <|> bet TokenType.StringQuotedDouble '"' '"'
+            <|> (pstring (charsReplicate (pown 2 nestedCount) closedChar) // 1 2, 2 4
+                 >>% string closedChar)
+            <|> (skipChar '<' >>? notFollowedBy (skipChar '<' <|> skipChar 'a' <|> skipString "/a>") >>% "<")
+        let pattValBody nestedCount closedCharAtt =
+            many1Satisfy (fun c' -> not (c' = closedChar || c' = '\n' || c' = '&' || c' = closedCharAtt))
+            <|> (pstring (charsReplicate (pown 2 nestedCount) closedChar)
+                 >>% string closedChar)
+            <|> (pchar '&'
+                 >>. ((pstring "quot" >>% "\"" <|> pstring "apos" >>% "'") .>> pchar ';'
+                      <|>% "&") )
+            // <|> (skipChar '<' >>? notFollowedBy (skipChar '<' <|> skipChar 'a' <|> skipString "/a>") >>% "<")
+        let plineKind nestedCount =
+            let plineKind, plineKindRef = createParserForwardedToRef()
+            let plineKind2 =
+                pipe2
+                    (many plineKind)
+                    (many
+                        (newline >>. many plineKind))
+                    (fun x xs -> x::xs)
+            plineKindRef :=
+                appendToken tokenType (many1Strings (p nestedCount)) |>> Ast.StringKind
+                <|> (appendToken TokenType.InterpolationBegin (pstring "<<")
+                     >>. (ws >>. pexpr |>> Ast.ExprKind) // это может *немного* запутать, но, эм, но есть какое-то "но", да... Никакого "но" нету — код безнадежно запутанный 😭. Так, здесь экранизация — внутри экранизации, поэтому порождает в два раза больше открывающих скобок. Я сделал всего два уровня и наивно надеюсь, что этого хватит. То есть сейчас он обрабатывает вот эту зверюгу: `'<<''<<''''x''''>>''>>'`. Страшно, правда? Но что-то мне подсказывает, что это так не работает. Проверил, работает, что еще больше ужасает. И `'<<''<<''''<<''''''''это чудовище''''''''>>''''>>''>>'` работает...
+                     // (pexpr (stringLiteralWithToken2 (pexpr stringLiteral)
+                     .>> ws .>> appendToken TokenType.InterpolationEnd (pstring ">>"))
+                // А вот здесь вообще начинается прелюбопытная штука:
+                // 1. Все `"` экранируются в `&quot;`, а сам `&` — в `&amp;`
+                // 2. Если нужно еще вложить, то используется `&quot;&quot;`
+                <|> (pstring "<a href=\"exec:"
+                     >>. (attempt // TODO: Если в значении аттрибута нету подстановки, тогда нужно пытататься разобрать его статически. К черту производительность, главное, понятность
+                            (pHtmlAttDoubleNested
+                             >>. spaces >>. notEmpty pstmts
+                             .>> pHtmlAttDoubleUnnested
+                             |>> Ast.StaticStmts)
+                          <|> (appendToken tokenType (many1Strings (pattValBody nestedCount '"')) // TODO: здесь можно и нужно отобразить подстановки.
+                               |>> Ast.Raw))
+                     .>> pchar '"' .>> spaces .>> pchar '>' // что ж, не всё так просто. Дело в том, что во вложенном `pstmts` все `stringLiteral` заместо привычных `"` и `'` использует либо `&quot;` и `''`, либо `&apos;`. Да еще и `&` экранирует в `&amp;`. И всё это кучу раз вкладывается и перевкладывается. Честно сказать, голова пухнет от всех этих страстей. А еще на `if` жаловался, ну-ну.
+                     .>>. plineKind2 .>> pstring "</a>"
+                     |>> fun (stmts, line) -> Ast.HyperLinkKind( stmts, line) // Вот смотрю я на эти былины и диву даюсь, право слово. Это ж надо было до такого додуматься. Метаметамета...программирование какое-то
+                )
+            plineKind
+        pgetNested >>=? fun nestedCount ->
+        let pOpened = pstring (charsReplicate (pown 2 nestedCount) openedChar)
+        let pClosed = pstring (charsReplicate (pown 2 nestedCount) closedChar)
+        let plineKind = plineKind (nestedCount + 1)
+
+        appendToken tokenType (pOpened .>> pnested)
+        >>. pipe2
+                (many plineKind)
+                (many
+                    (newline >>. many plineKind)
+                 .>> punnested
+                 .>> appendToken tokenType pClosed) // TODO: Здесь самое то использовать `PunctuationDefinitionStringEnd`
+                (fun x xs -> (x:Ast.Line)::xs)
+    bet TokenType.StringQuotedSingle '\'' '\'' pSingleNested pSingleUnnested pGetSingleNested
+    <|>
+        (pGetHtmlAttDoubleNested >>=? fun x ->
+         if x > 0 then
+            fail "not implemented HtmlAttDoubleNested"
+         else
+            bet TokenType.StringQuotedDouble '"' '"' pDoubleNested pDoubleUnnested pGetDoubleNested)
 
 let pbraces tokenType : _ Parser =
     let pbraces, pbracesRef = createParserForwardedToRef()

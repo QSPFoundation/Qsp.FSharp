@@ -119,10 +119,15 @@ type VarType =
     /// `$varName`, к такой переменной можно смело присваивать и число, и строку
     | StringType
 type Var = VarType * string
-type LineKind =
+type StmtsOrRaw =
+    | Raw of string
+    | StaticStmts of Statement list
+and LineKind =
     | StringKind of string
     /// Это то, что заключено между `&lt;&lt; >>`
     | ExprKind of Expr
+    /// `&lt;a href="exec: ...">some text&lt;/a>`
+    | HyperLinkKind of StmtsOrRaw * Line list
 /// Без переносов
 and Line = LineKind list
 
@@ -138,12 +143,12 @@ and Expr =
     | UnarExpr of UnarOp * Expr
     | Expr of Op * Expr * Expr
 
-type Assign =
+and Assign =
     | AssignVar of var:Var
     /// Ключом массива может быть значение любого типа
     | AssignArr of var:Var * key:Expr
 
-type Statement =
+and Statement =
     | Assign of Assign * Expr
     | AssingCode of Assign * Statement list
     | CallSt of string * Expr list

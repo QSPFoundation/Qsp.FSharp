@@ -148,10 +148,18 @@ let pcallProc =
                 if Set.contains procNameLower Defines.transferOperatorsSet then
                     match args with
                     | (r, Val (String [[StringKind locName]]))::_ ->
+                        getUserState
+                        >>= fun (x:State) ->
+                        let nested =
+                            if x.SingleQuotNestedCount > x.DoubleQuotNestedCount then // TODO: ничего хорошего из этого не получится
+                                x.SingleQuotNestedCount
+                            else
+                                x.DoubleQuotNestedCount
+                            |> (+) 1
                         let r =
                             { r with
-                                Column1 = r.Column1 + 1L // чтобы `'` или `"` пропустить
-                                Column2 = r.Column2 - 1L
+                                Column1 = r.Column1 + int64 nested // чтобы `'` или `"` пропустить
+                                Column2 = r.Column2 - int64 nested
                             }
                         let locNameLower = String.toLower locName
                         appendLocHighlight r locNameLower VarHighlightKind.ReadAccess
@@ -409,7 +417,7 @@ let pstmt =
             pAct
             pAssign pstmts
             pcallProc
-            attempt (pexpr |>> StarPl) // `attempt` — только ради одного единственного случая: `-`, который завершает локацию
+            notFollowedBy (pchar '-' >>. ws >>. (skipNewline <|> skipChar '-')) >>. (pexpr |>> StarPl) // `-` завершает локацию
         ]
     pstmt
 let pstmts =
@@ -470,6 +478,8 @@ let pAfterAll =
     )
 
 let start str =
+    let emptyState =
+        { emptyState with PStmts = pstmts }
     let p =
         spaces >>. many (ploc .>> spaces)
         .>> (getPosition >>= fun p ->
@@ -480,6 +490,8 @@ let start str =
         ""
         str
 let startOnFile enc path =
+    let emptyState =
+        { emptyState with PStmts = pstmts }
     let p =
         spaces >>. many (ploc .>> spaces)
         .>> (getPosition >>= fun p ->
