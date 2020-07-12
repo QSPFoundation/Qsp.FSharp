@@ -240,17 +240,21 @@ let pexit : _ Parser =
 
 let pendKeyword : _ Parser =
     genKeywordParser "end"
-
+let pstmts' pstmt =
+    many
+        (pstmt .>> spaces
+         .>> (skipMany (ppunctuationTerminator .>> spaces)))
+let pstmts1' pstmt =
+    many1
+        (pstmt .>> spaces
+         .>> (skipMany (ppunctuationTerminator .>> spaces)))
 let pstmt =
     let pstmt, pstmtRef = createParserForwardedToRef<Statement, _>()
     let pInlineStmts =
         many (pstmt .>> ws .>> skipMany (ppunctuationTerminator .>> ws))
     let pInlineStmts1 =
         many1 (pstmt .>> ws .>> skipMany (ppunctuationTerminator .>> ws))
-    let pstmts =
-        many
-            (pstmt .>> spaces
-             .>> (skipMany (ppunctuationTerminator .>> spaces)))
+    let pstmts = pstmts' pstmt
 
     let pcolonKeyword : _ Parser =
         appendToken TokenType.KeywordControl (pchar ':')
@@ -417,18 +421,24 @@ let pstmt =
             pAct
             pAssign pstmts
             pcallProc
-            notFollowedBy (pchar '-' >>. ws >>. (skipNewline <|> skipChar '-')) >>. (pexpr |>> StarPl) // `-` завершает локацию
+            notFollowedBy (pchar '-' >>. ws >>. (skipNewline <|> skipChar '-' <|> eof)) >>. (pexpr |>> StarPl) // `-` завершает локацию
+            // pstring "end"
         ]
     pstmt
-let pstmts =
-    many
-        (pstmt .>> spaces
-         .>> (skipMany (ppunctuationTerminator .>> spaces)))
+
+let pstmts = pstmts' pstmt
+let pstmts1 = pstmts1' pstmt
+
 let psharpKeyword : _ Parser =
     appendToken TokenType.KeywordControl (pchar '#')
 let pminusKeyword : _ Parser =
     appendToken TokenType.KeywordControl (pchar '-') // хотя здесь больше подошел бы обычный `end`
 let ploc =
+    let pendKeyword =
+        applyRange (pstringCI "end" .>>? notFollowedVarCont)
+        >>= fun (range, _) ->
+            appendToken2 TokenType.KeywordControl range
+            >>. appendSemanticError range "Лишний `end`"
     pipe2
         (psharpKeyword .>> ws
          >>. (applyRange
@@ -460,11 +470,12 @@ let ploc =
                 >>. preturn name
              )
          .>> spaces)
-        (pstmts
+        (many (pstmts1 .>> many (pendKeyword .>> spaces)) |>> List.concat
          .>> (pminusKeyword .>> ws
               .>> appendToken TokenType.Comment
                     (skipManySatisfy ((<>) '\n'))))
         (fun name body -> Location(name, body))
+
 let pAfterAll =
     updateUserState (fun st ->
         let errors =

@@ -206,7 +206,8 @@ let pexpr : _ Parser =
         let unarOp = UnarOp.toString unT
         let prec = Precedences.prec <| Precedences.PrefB unT
         // TODO: @low в QSP все операторы case-insensitive
-        PrefixOperator(unarOp, afterStringParser unarOp, prec, false, fun x -> UnarExpr(unT, x))
+        // Унарные операторы ассоциативные, по крайней мере такое выражение `no obj 'мандрагора'` точно допустимо
+        PrefixOperator(unarOp, afterStringParser unarOp, prec, true, fun x -> UnarExpr(unT, x))
         |> opp.AddOperator
     )
     expr <?> "expr"
