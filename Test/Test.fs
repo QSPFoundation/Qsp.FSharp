@@ -396,6 +396,21 @@ let pcallProcTests =
                    ("*pl",
                     [Var (ImplicitNumericType, "arg1"); Var (ImplicitNumericType, "arg2")]))
             Assert.Equal("", Right exp, runStmts input)
+        testCase "call `p2 x`, который начинается на заданный оператор `p`, но образует новый" <| fun () ->
+            let input = "p2 x"
+            let exp =
+                CallSt ("p2", [Var (ImplicitNumericType, "x")])
+            Assert.Equal("", Right exp, runStmts input)
+        testCase "call ad-hoc `add obj`" <| fun () ->
+            let input = "add obj"
+            let exp =
+                CallSt ("addobj", [])
+            Assert.Equal("", Right exp, runStmts input)
+        testCase "call ad-hoc `close all`" <| fun () ->
+            let input = "close all"
+            let exp =
+                CallSt ("close all", [])
+            Assert.Equal("", Right exp, runStmts input)
     ]
 
 let printStmts stmts =
@@ -722,7 +737,9 @@ module TestOnMocks =
             if replaceOrNot showExpPath showActPath then ()
             else failwithf "not pass"
 
+    // #if FULL
     [<Tests>]
+    // #endif
     let showTests =
         let mocksDir = @"..\..\..\..\Output\Mocks"
         System.IO.Directory.GetFiles(mocksDir, "*.qsps")

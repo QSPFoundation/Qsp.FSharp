@@ -119,7 +119,7 @@ let pcallProc =
         Defines.procs
         |> Seq.sortByDescending (fun (KeyValue(name, _)) -> name) // для жадности
         |> Seq.map (fun (KeyValue(name, (dscr, sign))) ->
-            applyRange (pstringCI name .>> notFollowedVarCont)
+            applyRange (pstringCI name .>>? notFollowedVarCont)
             >>= fun (range, name) ->
                 appendToken2 TokenType.Procedure range
                 >>. appendHover2 dscr range
@@ -127,17 +127,34 @@ let pcallProc =
         )
         |> List.ofSeq
         |> choice
-
+    /// Особый случай, который ломает к чертям весь заявленный синтаксис
+    let adhoc =
+        let createIdent name =
+            pstringCI name .>>? notFollowedVarCont
+        let p name name2 =
+            createIdent name .>>? ws1 .>>.? createIdent name2
+        applyRange
+            ((p "add" "obj"
+              <|> (createIdent "del" .>>? ws1 .>>.? (createIdent "obj" <|> createIdent "act"))
+              |>> fun (name1, name2) -> name1 + name2)
+             <|> (p "close" "all" |>> fun (name1, name2) -> sprintf "%s %s" name1 name2))
+        >>= fun (range, name) ->
+            match Map.tryFind (String.toLower name) Defines.procs with
+            | Some (dscr, sign) ->
+                appendToken2 TokenType.Procedure range
+                >>. appendHover2 dscr range
+                >>% (name, range, sign)
+            | None -> failwithf "'%s' not found in predef procs" name
     pProcWithAsterix
     .>> ws .>>. sepBy (applyRange pexpr) (char_ws ',') // Кстати, `,` — "punctuation.separator.parameter.js"
-    <|> (pDefProc .>> ws
+    <|> (adhoc <|> pDefProc .>> ws
          .>>. (followedBy (skipNewline <|> skipChar '&' <|> eof) >>% []
                <|> bet_ws '(' ')' (sepBy (applyRange pexpr) (pchar ',' >>. ws))
                <|> sepBy1 (applyRange pexpr) (char_ws ','))
          |>> fun ((name, range, sign), args) -> ((name, range, Some sign), args))
     <|> (procHoverAndToken
-          .>>? (ws1 <|> followedBy (satisfy (isAnyOf "'\"")))
-          .>>.? sepBy1 (applyRange pexpr) (char_ws ','))
+         .>>? (ws1 <|> followedBy (satisfy (isAnyOf "'\"")))
+         .>>.? sepBy1 (applyRange pexpr) (char_ws ','))
     >>= fun ((name, range, sign), args) ->
         match sign with
         | None ->
