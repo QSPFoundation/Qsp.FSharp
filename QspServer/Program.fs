@@ -5,9 +5,114 @@ open LanguageServerProtocol
 open LanguageServerProtocol.Server
 open LanguageServerProtocol.Types
 
-// type Msg = { Value: string }
-type SourceFilePath = string
+// берётся — `FSharp.Compiler.Range.range`
+type VscodeRange =
+    { StartColumn : int
+      StartLine : int
+      EndColumn : int
+      EndLine : int }
+let toVscodeRange ((p1, p2):Qsp.Tokens.Range) =
+    { StartColumn = int p1.Column
+      StartLine = int p1.Line
+      EndColumn = int p2.Column
+      EndLine = int p2.Line }
 
+let toVscodeRange2 (r:Qsp.Tokens.InlineRange) =
+    { StartColumn = int r.Column1
+      StartLine = int r.Line
+      EndColumn = int r.Column2
+      EndLine = int r.Line }
+module Position =
+    let ofRange ((p1, p2):Qsp.Tokens.Range) =
+        {
+            Start = { Line = int p1.Line - 1
+                      Character = int p1.Column - 1 }
+            End = { Line = int p2.Line - 1
+                    Character = int p2.Column - 1 }
+        }
+    let ofInlineRange (r:Qsp.Tokens.InlineRange) =
+        {
+            Start = { Line = int r.Line - 1
+                      Character = int r.Column1 - 1 }
+            End = { Line = int r.Line - 1
+                    Character = int r.Column2 - 1 }
+        }
+type SourceFilePath = string
+type HighlightingRequest = { FileName: string }
+type Serializer = obj -> string
+
+type PlainNotification= { Content: string }
+
+module CommandResponse =
+    type ResponseMsg<'T> =
+        {
+            Kind: string
+            Data: 'T
+        }
+
+    type HighlightingRange = { Range: VscodeRange; TokenType: string }
+
+    type HighlightingResponse = { Highlights: HighlightingRange [] }
+    open Qsp.Tokens
+
+    let highlighting ranges =
+        let map (t: TokenType): string =
+            match t with
+            | ConstantNumericInteger -> "constantNumericInteger"
+            | NameLabel -> "string"
+            | LabelColon -> "punctuationSeparatorColon"
+            | InterpolationEnd -> "interpolationEnd"
+            | InterpolationBegin -> "interpolationBegin"
+            | Procedure -> "procedure"
+            | Type -> "storage"
+            | Variable -> "variable"
+            | Keyword -> "keyword"
+            | Comment -> "comment"
+            | Function -> "function"
+            | KeywordControl -> "keywordControl"
+            | OperatorArithmetic -> "operatorArithmetic"
+            | OperatorAssignment -> "operatorAssignment"
+            | OperatorComparison -> "operatorComparison"
+            | OperatorRelational -> "operatorRelational"
+            | PunctuationTerminatorStatement -> "punctuationTerminatorStatement"
+            | StringQuotedSingle
+            | StringQuotedDouble
+            | StringBraced -> "string"
+        {
+            Kind = "highlighting"
+            Data =
+              { Highlights =
+                  ranges
+                  |> Array.map (fun (struct ((pos:Qsp.Tokens.InlineRange), tk)) ->
+                      { Range = toVscodeRange2 pos; TokenType = map tk }) }
+        }
+
+
+type Commands() =
+    member x.GetHighlighting documentText = // (file: SourceFilePath) =
+        // let file = Path.GetFullPath file
+        // async {
+        //     let! res = x.TryGetLatestTypeCheckResultsForFile file
+        //     let res =
+        //         match res with
+        //         | Some res ->
+        //             let r = res.GetCheckResults.GetSemanticClassification(None)
+        //             Some r
+        //         | None -> None
+        //     return CoreResponse.Res res
+
+            // return
+        // }
+        Qsp.Parser.Main.start documentText
+let isValidDoc uri =
+    // git-файлы лучше обходить стороной, чтобы не смущать пространство лишний раз
+    let uri = System.Uri uri
+    uri.Scheme <> "git"
+
+type WorkspaceLoadParms = {
+    /// Project files to load
+    TextDocuments: TextDocumentIdentifier []
+}
 
 type FsacClient(sendServerRequest: ClientNotificationSender) =
     inherit LspClient ()
@@ -20,7 +125,8 @@ type FsacClient(sendServerRequest: ClientNotificationSender) =
 
     override __.TextDocumentPublishDiagnostics(p) =
         sendServerRequest "textDocument/publishDiagnostics" (box p) |> Async.Ignore
-
+    override __.WorkspaceWorkspaceFolders () = // TODO
+        failwith ""
 type State = {
     DicPath : string
 }
@@ -31,13 +137,21 @@ type UpdateFileParms = {
     Version: int
 }
 
-type YASpellChecker =
-    { SpellcheckIgnore : DocumentUri Set }
-type Config =
-    { YASpellChecker : YASpellChecker option }
+
+type QspConfig =
+    {
+        FormatConfig: Qsp.Show.FormatConfig
+    }
     static member Default =
         {
-            YASpellChecker = None
+            FormatConfig = Qsp.Show.FormatConfig.Default
+        }
+
+type Config =
+    { Qsp : QspConfig option }
+    static member Default =
+        {
+            Qsp = None
         }
 /// Перезапускающийся таймер: как только подаются новые данные, старый счетчик сбрасывается, и наступает вновь отсчет, но уже с новыми данными. Если счетчик дойдет до нуля, то вызовется функция.
 let restartableTimer interval f =
@@ -65,19 +179,48 @@ let test () =
     time("2", 1)
     time("3", 1)
 
+
 type BackgroundServiceServer(state: State, client: FsacClient) =
     inherit LspServer()
     let mutable clientCapabilities = None
 
-    let mutable documentVersion : int option = None
-    let mutable lastWords = Map.empty
-    let publishDiagnostics uri (text:string) =
-        let publishDiagnostics (res:list<_>) =
+    let mutable currentDocument : TextDocumentItem option = None
+    let mutable currentWorkspacePath = ""
+    let mutable lastCharPos = None
+    let mutable parserResult = None
+
+    let mutable hovers = []
+    let mutable highlights = Qsp.Parser.Generic.highlightsEmpty
+    let mutable config = QspConfig.Default
+    let getVarHighlight (pos:Position) =
+        highlights.VarHighlights.Ranges
+        |> List.tryFind (fun (r, _) ->
+            if (int (r.Line - 1L) = pos.Line) then
+                int (r.Column1 - 1L) <= pos.Character && pos.Character <= int (r.Column2 - 1L)
+            else
+                false
+        )
+        |> Option.map (fun (_, var) ->
+            Map.find var highlights.VarHighlights.Ma) // находить должно всегда
+    let getLocHighlight (pos:Position) =
+        highlights.LocHighlights.Ranges
+        |> List.tryFind (fun (r, _) ->
+            if (int (r.Line - 1L) = pos.Line) then
+                int (r.Column1 - 1L) <= pos.Character && pos.Character <= int (r.Column2 - 1L)
+            else
+                false
+        )
+        |> Option.map (fun (_, var) ->
+            Map.find var highlights.LocHighlights.Ma) // находить должно всегда
+    let commands = Commands()
+
+    let publishDiagnostics uri (res:list<_>) =
+        let diagnostics =
             res
             |> List.map (fun (range, word) ->
                 {
                     Range = range
-                    Severity = Some (DiagnosticSeverity.Hint)
+                    Severity = Some (DiagnosticSeverity.Error)
                     Code = None
                     Source = "qsp"
                     Message = sprintf "unknown '%s'" word
@@ -85,88 +228,161 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
                     Tags = None
                 })
             |> Array.ofList
-        async {
-            match parser text with
-            | Right res2 ->
-                let res =
-                    res2
-                    |> List.map (fun (word, pos) ->
-                        let range =
-                            {
-                                Start = { Line = int pos.StartLine - 1
-                                          Character = int pos.StartColumn - 1 }
-                                End = { Line = int pos.EndLine - 1
-                                        Character = int pos.EndColumn - 1 }
-                            }
-                        range, word
-                    )
-                lastWords <- Map.ofList res
-                do! client.TextDocumentPublishDiagnostics {
-                    Uri = uri
-                    Diagnostics = publishDiagnostics res
-                }
-
-                do! client.SpellcheckDecorate (res2 |> List.map snd)
-            | Left x ->
-                do! client.WindowLogMessage {
-                    Type = MessageType.Error
-                    Message = sprintf "Parser error:\n%A" x
-                }
+        client.TextDocumentPublishDiagnostics {
+            Uri = uri
+            Diagnostics = diagnostics
         }
-    let interval = 500.
-    let reactor =
-        restartableTimer interval
-            (fun e (uri, text) ->
-                publishDiagnostics uri text
-                |> Async.RunSynchronously
+
+    // let interval = 500.
+    // let reactor =
+    //     restartableTimer interval
+    //         (fun e (uri, text) ->
+    //             publishDiagnostics uri text
+    //             |> Async.RunSynchronously
+    //         )
+    let parse uri documentText =
+        let res = commands.GetHighlighting documentText
+        parserResult <- Some res
+        let genericFromState (st:Qsp.Parser.Generic.State) =
+            hovers <- st.Hovers |> List.map (mapFst Position.ofInlineRange)
+            highlights <- st.Highlights
+
+            lastCharPos <- Some st.LastSymbolPos
+
+        match res with
+        | FParsec.CharParsers.Success(_, st, _) ->
+            genericFromState st
+
+            st.SemanticErrors
+            |> List.map (mapFst Position.ofInlineRange)
+            |> publishDiagnostics uri
+            |> Async.RunSynchronously
+
+            st.Tokens
+            |> List.map (fun x -> struct (x.Range, x.TokenType) )
+            |> Array.ofList
+        | FParsec.CharParsers.Failure(msg, err, st) ->
+            // client.WindowLogMessage {
+            //     Type = MessageType.Error
+            //     Message = sprintf "%A" msg
+            // }
+            // |> Async.RunSynchronously
+
+            genericFromState st
+
+            let pos = err.Position
+
+            let range =
+                {
+                    Start = { Line = int pos.Line - 1
+                              Character = int pos.Column - 1 }
+                    End = { Line = int pos.Line - 1
+                            Character = int pos.Column + 1000 }
+                }
+            // client.WindowLogMessage {
+            //     Type = MessageType.Error
+            //     Message = sprintf "%A\n%A\n%A" pos range pos.Index
+            // }
+            // |> Async.RunSynchronously
+            // TODO: придется лезть в документацию, чтобы постичь всю боль
+            // FParsec.ErrorMessageList.ToSortedArray err.Messages // TODO
+            // |> Array.map (function
+            //     | FParsec.Error.CompoundError(msg, pos, someMagicObj, errs) ->
+
+            //         failwith ""
+            //     // | FParsec.Error.Unexpected
+            //     // x.Type
+            // )
+            let xs =
+                st.SemanticErrors
+                |> List.map (mapFst Position.ofInlineRange)
+            (range, msg) :: xs
+            |> publishDiagnostics uri
+            |> Async.RunSynchronously
+
+
+            st.Tokens
+            |> List.map (fun x -> struct (x.Range, x.TokenType) )
+            |> Array.ofList
+    member __.GetHighlighting(p : HighlightingRequest) =
+        let uri = sprintf "file:///%s" p.FileName
+        let res =
+            currentDocument
+            |> Option.map (fun x ->
+                let res = parse uri x.Text
+                { Content =
+                    CommandResponse.highlighting res
+                    |> FSharpJsonType.SerializeOption.serNotIndent }
             )
+        async {
+            return LspResult.success res
+        }
 
     override __.TextDocumentDidChange(p) = async {
-        if Set.contains (p.TextDocument.Uri.ToLower()) spellcheckIgnore then
-            // Удаляет ошибки, если были проставлены до того, как документ попал в фильтр
-            do! client.TextDocumentPublishDiagnostics {
-                Uri = p.TextDocument.Uri
-                Diagnostics = [||]
-            }
-            do! client.SpellcheckDecorate []
-        else
-            do! client.WindowLogMessage {
-                Type = MessageType.Info
-                Message = sprintf "TextDocumentDidChange\n%A" p.TextDocument
-            }
-
-            documentVersion <- p.TextDocument.Version
-            match Array.tryExactlyOne p.ContentChanges with
-            | Some x ->
-                reactor (p.TextDocument.Uri, x.Text)
-            | None ->
-                do! client.WindowLogMessage {
-                    Type = MessageType.Error
-                    Message = sprintf "Array.tryExactlyOne p.ContentChanges error:\n%A" p.ContentChanges
-                }
+        if isValidDoc p.TextDocument.Uri then
+            currentDocument <-
+                currentDocument
+                |> Option.map (fun x ->
+                    { x with
+                            Uri = p.TextDocument.Uri
+                            Version = Option.defaultValue x.Version p.TextDocument.Version
+                            Text =
+                                match Array.tryExactlyOne p.ContentChanges with
+                                | Some x ->
+                                    // documentRange <- x.Range // увы, но при `TextDocumentSyncKind.Full` он всегда равен `None`
+                                    x.Text
+                                | None ->
+                                    // do! client.WindowLogMessage {
+                                    //     Type = MessageType.Error
+                                    //     Message = sprintf "Array.tryExactlyOne p.ContentChanges error:\n%A" p.ContentChanges
+                                    // }
+                                    failwith "Array.tryExactlyOne p.ContentChanges = None"
+                    }
+                )
     }
     override __.TextDocumentDidOpen(p: DidOpenTextDocumentParams) = async {
         // Вот что, этот негодяй одновременно открывает целую кучу всего: здесь и git, и обычный файл, и даже output. Надо бы как-то за всем этим уследить.
-        // TODO: когда найду способ выделять именно текущий документ, тогда и раскомментирую
-        // do! client.WindowLogMessage {
-        //     Type = MessageType.Info
-        //     Message =
-        //         let txt = p.TextDocument
-        //         sprintf "TextDocumentDidOpen\n%A"
-        //             ( txt.LanguageId, txt.Uri, txt.Version)
-        // }
-        // if Set.contains (p.TextDocument.Uri.ToLower()) spellcheckIgnore then
-        //     do! client.SpellcheckDecorate []
-        // else
-        //     let textDoc = p.TextDocument
-        //     documentVersion <- Some textDoc.Version
-        //     do! client.WindowLogMessage {
-        //         Type = MessageType.Info
-        //         Message = "TextDocumentDidOpen"
-        //     }
-        //     reactor (textDoc.Uri, textDoc.Text)
-        ()
+        // "git:/e%3A/Project/Qsp/QspSyntax/sample-code/Sandbox.qsps?%7B%22path%22%3A%22e%3A%5C%5CProject%5C%5CQsp%5C%5CQspSyntax%5C%5Csample-code%5C%5CSandbox.qsps%22%2C%22ref%22%3A%22~%22%7D"
+        // p.TextDocument
+        if p.TextDocument.LanguageId = "qsp" && isValidDoc p.TextDocument.Uri then
+            currentDocument <- Some p.TextDocument
+            // documentUri <- p.TextDocument.Uri
+            // documentVersion <- Some p.TextDocument.Version
+            // documentText <- p.TextDocument.Text
+
+            do! client.WindowLogMessage {
+                Type = MessageType.Info
+                Message =
+                    let txt = p.TextDocument
+                    sprintf "TextDocumentDidOpen\n%A"
+                        ( txt.LanguageId, txt.Uri, txt.Version)
+            }
+            // if Set.contains (p.TextDocument.Uri.ToLower()) spellcheckIgnore then
+            //     do! client.SpellcheckDecorate []
+            // else
+            //     let textDoc = p.TextDocument
+            //     documentVersion <- Some textDoc.Version
+            //     do! client.WindowLogMessage {
+            //         Type = MessageType.Info
+            //         Message = "TextDocumentDidOpen"
+            //     }
+            //     reactor (textDoc.Uri, textDoc.Text)
     }
+    override __.TextDocumentDidClose p = async {
+        do! client.WindowLogMessage {
+            Type = MessageType.Info
+            Message =
+                sprintf "TextDocumentDidClose\n%A" p
+        }
+    }
+    override __.WorkspaceDidChangeWatchedFiles p = async {
+        do! client.WindowLogMessage {
+            Type = MessageType.Info
+            Message =
+                sprintf "WorkspaceDidChangeWatchedFiles\n%A" p
+        }
+    }
+
     member private __.IfDiagnostic (str: string) handler p =
         let diag =
             p.Context.Diagnostics |> Seq.tryFind (fun n -> n.Message.Contains str)
@@ -197,73 +413,402 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
           Edit = we
           Command = None}
 
-    override this.TextDocumentCodeAction p = async {
-        if Set.contains (p.TextDocument.Uri.ToLower()) spellcheckIgnore then
-            // TODO: если текущий файл отсеивается, то самое время как-то избавить весь документ от ошибок, вот только как это сделать?
-            // return LspResult.Ok None // Пробовал — выбивает ошибку
-            return LspResult.success (Some (TextDocumentCodeActionResult.CodeActions [||]))
-        else
-            let! res =
-                p
-                |> this.IfDiagnostic "unknown " (fun d ->
-                    async {
-                        do! client.WindowLogMessage {
-                            Type = MessageType.Info
-                            Message = (sprintf "TextDocumentCodeAction 'unknown ...'")
-                        }
-                        match Map.tryFind d.Range lastWords with
-                        | Some word ->
-                            let words =
-                                Suggestion.LevenshteinDistance.suggestions3 word dic
-                                |> Suggestion.LevenshteinDistance.mapTruncate 10
+    // override this.TextDocumentCodeAction p = async {
+    //     if Set.contains (p.TextDocument.Uri.ToLower()) spellcheckIgnore then
+    //         // TODO: если текущий файл отсеивается, то самое время как-то избавить весь документ от ошибок, вот только как это сделать?
+    //         // return LspResult.Ok None // Пробовал — выбивает ошибку
+    //         return LspResult.success (Some (TextDocumentCodeActionResult.CodeActions [||]))
+    //     else
+    //         let! res =
+    //             p
+    //             |> this.IfDiagnostic "unknown " (fun d ->
+    //                 async {
+    //                     do! client.WindowLogMessage {
+    //                         Type = MessageType.Info
+    //                         Message = (sprintf "TextDocumentCodeAction 'unknown ...'")
+    //                     }
+    //                     match Map.tryFind d.Range lastWords with
+    //                     | Some word ->
+    //                         let words =
+    //                             Suggestion.LevenshteinDistance.suggestions3 word dic
+    //                             |> Suggestion.LevenshteinDistance.mapTruncate 10
 
-                            let actions =
-                                words
-                                |> List.map (fun word ->
-                                    this.CreateFix p.TextDocument.Uri documentVersion (sprintf "replace on '%s'" word) (Some d) d.Range word)
-                            return actions
-                        | None ->
-                            do! client.WindowLogMessage {
-                                Type = MessageType.Info
-                                Message = (sprintf "range not found:\n%A" d.Range)
-                            }
-                            return []
-                    }
-                )
-            return res |> Array.ofList |> TextDocumentCodeActionResult.CodeActions |> Some |> LspResult.success
-    }
+    //                         let actions =
+    //                             words
+    //                             |> List.map (fun word ->
+    //                                 this.CreateFix p.TextDocument.Uri documentVersion (sprintf "replace on '%s'" word) (Some d) d.Range word)
+    //                         return actions
+    //                     | None ->
+    //                         do! client.WindowLogMessage {
+    //                             Type = MessageType.Info
+    //                             Message = (sprintf "range not found:\n%A" d.Range)
+    //                         }
+    //                         return []
+    //                 }
+    //             )
+    //         return res |> Array.ofList |> TextDocumentCodeActionResult.CodeActions |> Some |> LspResult.success
+    // }
 
 
     override __.WorkspaceDidChangeConfiguration (x) = async {
-            do! client.WindowLogMessage {
-                Type = MessageType.Info
-                Message = sprintf "WorkspaceDidChangeConfiguration\n%A" (x.Settings.ToString())
-            }
+        do! client.WindowLogMessage {
+            Type = MessageType.Info
+            Message = sprintf "WorkspaceDidChangeConfiguration\n%A" (x.Settings.ToString())
+        }
 
-            let config : Either<_, Config> =
-                let ser = Newtonsoft.Json.JsonSerializer()
-                ser.Converters.Add FSharpJsonType.SerializeOption.converter
-                try
-                    x.Settings.ToObject(ser)
-                    |> Right
-                with
-                    e -> Left e.Message
-            match config with
-            | Right x ->
-                x.YASpellChecker
-                |> Option.iter (fun x ->
-                    spellcheckIgnore <- x.SpellcheckIgnore
-                )
-            | Left msg ->
+        let configResult : Either<_, Config> =
+            let ser = Newtonsoft.Json.JsonSerializer()
+            ser.Converters.Add FSharpJsonType.SerializeOption.converter
+            try
+                x.Settings.ToObject(ser)
+                |> Right
+            with
+                e -> Left e.Message
+        match configResult with
+        | Right x ->
+            x.Qsp
+            |> Option.iter (fun x ->
+                config <- x
+            )
+        | Left msg ->
+            do! client.WindowLogMessage {
+                Type = MessageType.Error
+                Message = sprintf "%s\n%s" (x.Settings.ToString()) msg
+            }
+    }
+    override x.TextDocumentFormatting p = async {
+        // p.Options.AdditionalData // версия 1.46.1, и их всё еще не завезли https://code.visualstudio.com/api/references/vscode-api#FormattingOptions
+        match currentDocument with
+        | Some currentDocument ->
+            if p.TextDocument.Uri = currentDocument.Uri then
+                match lastCharPos with
+                | Some lastCharPos ->
+                    match parserResult with
+                    | Some r ->
+                        match r with
+                        | FParsec.CharParsers.Success(x, _, _) ->
+                            return
+                                { TextEdit.Range =
+                                    {
+                                        Start = { Line = 0
+                                                  Character = 0 }
+                                        End = { Line = int lastCharPos.Line - 1
+                                                Character = int lastCharPos.Column - 1 } // а быть может, даже `- 2`
+                                    }
+                                  NewText =
+                                    if p.Options.InsertSpaces then
+                                        Qsp.Show.UsingSpaces p.Options.TabSize
+                                    else
+                                        Qsp.Show.UsingTabs
+                                    |> fun indentsOpt -> Qsp.Show.printLocs indentsOpt config.FormatConfig x }
+                                |> Array.singleton
+                                |> Some
+                                |> LspResult.success
+                        | FParsec.CharParsers.Failure(_, _, _) ->
+                            do! client.WindowShowMessage {
+                                Type = MessageType.Error
+                                Message = sprintf "Синтаксис содержит ошибки, потому форматировать его невозможно"
+                            }
+                            return LspResult.success None
+                    | None ->
+                        do! client.WindowLogMessage {
+                            Type = MessageType.Error
+                            Message = sprintf "lastSymbolPos = None"
+                        }
+                        return LspResult.success None
+                | None ->
+                    do! client.WindowLogMessage {
+                        Type = MessageType.Error
+                        Message = sprintf "documentRange = None"
+                    }
+                    return LspResult.success None
+            else
                 do! client.WindowLogMessage {
                     Type = MessageType.Error
-                    Message = sprintf "%s\n%s" (x.Settings.ToString()) msg
+                    Message = sprintf "p.TextDocument.Uri <> documentUri"
                 }
+                return LspResult.success None
+        | None ->
+            return LspResult.success None
+    }
+    override __.TextDocumentDocumentHighlight(x) = async {
+        // do! client.WindowLogMessage {
+        //     Type = MessageType.Error
+        //     Message = sprintf "%A" (varHovers, x.Position)
+        // }
+        let f fn =
+            match fn x.Position with
+            | None -> None
+            | Some xs ->
+                xs // должно находить всегда
+                |> List.map (fun (r, kind) ->
+                    {
+                        DocumentHighlight.Range = Position.ofInlineRange r
+                        Kind =
+                            match kind with
+                            | Qsp.Parser.Generic.WriteAccess -> DocumentHighlightKind.Write
+                            | Qsp.Parser.Generic.ReadAccess -> DocumentHighlightKind.Read
+                            |> Some
+                    }
+                )
+                |> Array.ofList
+                |> Some
+        let x =
+            f getVarHighlight
+            |> Option.orElseWith (fun () ->
+                f getLocHighlight
+            )
+        return LspResult.success x
+    }
+
+    override __.TextDocumentRename renameParams = async {
+        let f fn =
+            match fn renameParams.Position with
+            | None -> None
+            | Some xs ->
+                let edits =
+                    [|
+                        {
+                            Edits =
+                                xs
+                                |> List.map (fun (r, _) ->
+                                    {
+                                        TextEdit.Range = Position.ofInlineRange r
+                                        NewText = renameParams.NewName
+                                    }
+                                )
+                                |> Array.ofList
+                            TextDocument =
+                                {
+                                    Version = currentDocument |> Option.map (fun x -> x.Version)
+                                    Uri = renameParams.TextDocument.Uri
+                                }
+                        }
+                    |]
+                WorkspaceEdit.Create(edits, clientCapabilities.Value) // TODO: а если `None`?
+                |> Some
+        let x =
+            f getVarHighlight
+            |> Option.orElseWith (fun () ->
+                f getLocHighlight
+            )
+        return LspResult.success x
+    }
+    override __.TextDocumentDefinition textDocumentPositionParams = async {
+        let f fn =
+            match fn textDocumentPositionParams.Position with
+            | None -> None
+            | Some xs ->
+                xs
+                |> List.choose (fun (r, kind) ->
+                    match kind with
+                    | Qsp.Parser.Generic.WriteAccess ->
+                        {
+                            Location.Uri = textDocumentPositionParams.TextDocument.Uri
+                            Location.Range = Position.ofInlineRange r
+                        }
+                        |> Some
+                    | _ -> None
+                )
+                |> Array.ofList
+                |> GotoResult.Multiple
+                |> Some
+        let x =
+            f getVarHighlight
+            |> Option.orElseWith (fun () ->
+                f getLocHighlight
+            )
+        return LspResult.success x
+    }
+
+    override __.TextDocumentHover textDocumentPositionParams =
+        async {
+            let res =
+                hovers
+                |> List.tryFind (fun (r, _) ->
+                    if (r.Start.Line = textDocumentPositionParams.Position.Line) && (r.Start.Line = r.End.Line) then
+                        r.Start.Character <= textDocumentPositionParams.Position.Character && textDocumentPositionParams.Position.Character <= r.End.Character
+                    elif r.Start.Line <= textDocumentPositionParams.Position.Line && textDocumentPositionParams.Position.Line <= r.End.Line then
+                        false // TODO: @high ¯\_(ツ)_/¯
+                    else
+                        false // TODO: @high ¯\_(ツ)_/¯
+                )
+            // do! client.WindowLogMessage {
+            //     Type = MessageType.Error
+            //     Message = sprintf "%A" (hovers, x.Position)
+            // }
+            let x =
+                match res with
+                | None -> None
+                | Some(r, msg) ->
+                    {
+                        Hover.Contents =
+                            HoverContent.MarkupContent (markdown msg)
+                        Range = Some r
+                    }
+                    |> Some
+            return LspResult.success x
         }
-    override x.TextDocumentDocumentHighlight(p) =
-        // p.Position
-        // p.TextDocument.Uri
-        ()
+    override __.TextDocumentReferences refParams = async {
+        // refParams.Context.IncludeDeclaration // загадочный параметр
+        let f fn =
+            match fn refParams.Position with
+            | None -> None
+            | Some xs ->
+                xs
+                |> List.map (fun (r, _) ->
+                    {
+                        Location.Uri = refParams.TextDocument.Uri
+                        Location.Range = Position.ofInlineRange r
+                    }
+                )
+                |> Array.ofList
+                |> Some
+        let x =
+            f getVarHighlight
+            |> Option.orElseWith (fun () ->
+                f getLocHighlight
+            )
+        return LspResult.success x
+    }
+    override __.TextDocumentFoldingRange foldingRangeParams =
+        // let x =
+        //     {
+        //         FoldingRange.StartLine = 0
+        //         StartCharacter = failwith "Not Implemented"
+        //         EndLine = failwith "Not Implemented"
+        //         EndCharacter = failwith "Not Implemented"
+        //         Kind = Some FoldingRangeKind.Region
+
+        //     }
+        // foldingRangeParams.TextDocument.Uri
+        async {
+            return LspResult.success None
+        }
+    override __.WorkspaceDidChangeWorkspaceFolders p = async {
+        do! client.WindowLogMessage {
+            Type = MessageType.Info
+            Message = sprintf "WorkspaceDidChangeWorkspaceFolders:\n%A" p
+        }
+    }
+    // override __.WorkspaceWorkspaceFolders p = async {
+
+    // }
+    member __.FSharpWorkspaceLoad (p:WorkspaceLoadParms) = async {
+        // Возвращает что-то в духе "e:\Project\Qsp\QspSyntax\sample-code", а не Uri, как там написано
+
+        // currentWorkspacePath <- p.TextDocuments.[0].Uri
+
+        // let dir = @"e:\Project\Qsp\QspSyntax\sample-code"
+        // let projFiles = System.IO.Directory.GetFiles(dir, "*.qproj", System.IO.SearchOption.AllDirectories)
+        // match projFiles with
+        // | [||] -> () // "`.qproj` не найден"
+        // | [|projFile|] ->
+        //     projFile <- System.IO.Path.GetDirectoryName projFile
+        // | projFiles ->
+        //     // TODO: ошибкой было бы, если бы в одной и той же папке (или подпапке) было бы несколько файлов .qproj. Для всех остальных случаев нужно организовать работу с несколькими проектами. А ведь есть еще WorkspaceFolders.
+        //     do! client.WindowShowMessage {
+        //         Type = MessageType.Error
+        //         Message = sprintf "`.qproj` должен быть только один на весь проект, однако:\n%A" projFiles
+        //     }
+
+
+        // do! client.WindowLogMessage {
+        //     Type = MessageType.Info
+        //     Message = sprintf "FSharpWorkspaceLoad:\n%A" p
+        // }
+        return LspResult.success None
+    }
+
+    override __.TextDocumentDocumentSymbol documentSymbolParams = async {
+        let x =
+            match currentDocument with
+            | Some currentDocument ->
+                let documentUri = currentDocument.Uri
+                if documentUri = documentSymbolParams.TextDocument.Uri then
+                    client.WindowLogMessage {
+                        Type = MessageType.Info
+                        Message = sprintf "TextDocumentDocumentSymbol"
+                    }
+                    |> Async.RunSynchronously
+
+                    let symbolInfo =
+                        {
+                            ContainerName = None
+                            Name = "someVar"
+                            Kind = SymbolKind.Variable
+                            Location =
+                                {
+                                    Location.Uri = documentUri
+                                    Range =
+                                        {
+                                            Range.Start =
+                                                {
+                                                    Position.Line = 0
+                                                    Character = 0
+                                                }
+                                            Range.End =
+                                                {
+                                                    Position.Line = 0
+                                                    Character = 1000
+                                                }
+                                        }
+                                }
+                        }
+                    let symbolInfo2 =
+                        {
+                            ContainerName = None
+                            Name = "someVar2"
+                            Kind = SymbolKind.Variable
+                            Location =
+                                {
+                                    Location.Uri = documentUri
+                                    Range =
+                                        {
+                                            Range.Start =
+                                                {
+                                                    Position.Line = 1
+                                                    Character = 0
+                                                }
+                                            Range.End =
+                                                {
+                                                    Position.Line = 1
+                                                    Character = 1000
+                                                }
+                                        }
+                                }
+                        }
+                    Some [|symbolInfo; symbolInfo2|]
+                else None
+            | None -> None
+        return LspResult.success x
+    }
+
+    override __.CompletionItemResolve completionItem = async {
+        do! client.WindowLogMessage {
+            Type = MessageType.Info
+            Message = sprintf "CompletionItemResolve:\n%A" completionItem
+        }
+
+        return LspResult.success completionItem
+    }
+    // override __.TextDocumentCompletion completionParams = async {
+    //     do! client.WindowLogMessage {
+    //         Type = MessageType.Info
+    //         Message = sprintf "TextDocumentCompletion:\n%A" completionParams
+    //     }
+    //     let x =
+    //         {
+    //             CompletionList.IsIncomplete = false
+    //             Items = [
+    //                 CompletionItem.Label = ""
+
+    //             ]
+    //         }
+    //     return LspResult.success None
+    // }
+    // АрбузДыняДыраБородаБор ода
+
     override __.Initialize p =
         async {
             clientCapabilities <- p.Capabilities
@@ -276,15 +821,15 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
                 { Types.InitializeResult.Default with
                     Capabilities =
                         { Types.ServerCapabilities.Default with
-                            HoverProvider = None
+                            HoverProvider = Some true
                             RenameProvider = Some true
                             DefinitionProvider = Some true
                             TypeDefinitionProvider = Some true
                             ImplementationProvider = Some true
                             ReferencesProvider = Some true
                             DocumentHighlightProvider = Some true
-                            DocumentSymbolProvider = None
-                            WorkspaceSymbolProvider = Some true
+                            DocumentSymbolProvider = Some false
+                            WorkspaceSymbolProvider = Some false
                             DocumentFormattingProvider = Some true
                             DocumentRangeFormattingProvider = Some false
                             SignatureHelpProvider =
@@ -293,19 +838,17 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
                             // }
                                 None
                             CompletionProvider =
-                                None
-                                // Some {
-                                //     ResolveProvider = Some true
-                                //     TriggerCharacters = Some ([| "."; "'"; |])
-                                // }
+                                Some {
+                                    ResolveProvider = Some true
+                                    TriggerCharacters = Some ([| "."; "'"; |])
+                                }
                             CodeLensProvider =
                             // Some {
                             //     CodeLensOptions.ResolveProvider = Some true
                             // }
                                 None
-                            CodeActionProvider = Some true
+                            CodeActionProvider = Some false
                             TextDocumentSync =
-                                // None
                                 Some { TextDocumentSyncOptions.Default with
                                          OpenClose = Some true
                                          Change = Some TextDocumentSyncKind.Full
@@ -335,7 +878,9 @@ let main argv =
 
     let requestsHandlings =
         defaultRequestHandlings<BackgroundServiceServer>()
-        // |> Map.add "spellcheck/setSpellcheckIgnore" (requestHandling (fun (s) p -> s.SetSpellcheckIgnore(p) ))
+        |> Map.add "fsharp/highlighting" (requestHandling (fun s p -> s.GetHighlighting(p) ))
+        |> Map.add "fsharp/workspaceLoad" (requestHandling (fun s p -> s.FSharpWorkspaceLoad(p) ))
+        // |> Map.add "fsharp/workspacePeek" (requestHandling (fun s p -> s.FSharpWorkspacePeek(p) ))
 
     Server.start requestsHandlings input output FsacClient (fun lspClient -> BackgroundServiceServer(state, lspClient))
     |> printfn "%A"
