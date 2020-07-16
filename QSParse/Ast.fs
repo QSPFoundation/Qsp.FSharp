@@ -143,19 +143,20 @@ and Expr =
     | UnarExpr of UnarOp * Expr
     | Expr of Op * Expr * Expr
 
-and Assign =
+and AssignWhat =
     | AssignVar of var:Var
     /// Ключом массива может быть значение любого типа
     | AssignArr of var:Var * key:Expr
-
+    | AssignArrAppend of var:Var
 and Statement =
-    | Assign of Assign * Expr
-    | AssingCode of Assign * Statement list
+    | Assign of AssignWhat * Expr
+    | AssignCode of AssignWhat * Statement list
     | CallSt of string * Expr list
     /// Вычисляется `expr` и посылается в `*pl`
     | StarPl of Expr
     | If of Expr * Statement list * Statement list
     | Act of Expr list * Statement list
+    | For of var:Var * from:Expr * to':Expr * body:Statement list
     | Label of string
     | Comment of string
     | Exit

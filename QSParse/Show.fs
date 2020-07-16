@@ -84,8 +84,13 @@ let rec simpleShowExpr showStmtsInline expr : ShowS =
     let rec f = function
         | Val v -> showValue (simpleShowExpr showStmtsInline) showStmtsInline v
         | Var v -> showVar v
-        | Func(name, es) ->
-            showString name << showParen true (List.map f es |> join ", ")
+        | Func(name, args) ->
+            let args =
+                if List.isEmpty args then
+                    empty
+                else
+                    showParen true (List.map f args |> join ", ")
+            showString name << args
         | UnarExpr(op, e) ->
             let space = function Obj | No -> showSpace | Neg -> id
             let x =
@@ -119,10 +124,14 @@ let rec simpleShowExpr showStmtsInline expr : ShowS =
 let rec showExpr showStmtsInline = function
     | Val v -> showValue (showExpr showStmtsInline) showStmtsInline v
     | Var v -> showVar v
-    | Func(name, es) ->
-        showString name
-        << showParen true
-            (List.map (showExpr showStmtsInline) es |> join ", ")
+    | Func(name, args) ->
+        let args =
+            if List.isEmpty args then
+                empty
+            else
+                showParen true
+                    (List.map (showExpr showStmtsInline) args |> join ", ")
+        showString name << args
     | UnarExpr(op, e) ->
         let space = function Obj | No -> showSpace | Neg -> id
         showString (unar op) << space op << showExpr showStmtsInline e
@@ -137,8 +146,9 @@ let rec showExpr showStmtsInline = function
 
 
 let showAssign showStmtsInline = function
-    | Assign.AssignArr(var, key) -> showVar var << bet "[" "]" (showExpr showStmtsInline key)
-    | Assign.AssignVar v -> showVar v
+    | AssignWhat.AssignArr(var, key) -> showVar var << bet "[" "]" (showExpr showStmtsInline key)
+    | AssignWhat.AssignVar var -> showVar var
+    | AssignWhat.AssignArrAppend var -> showVar var << showString "[]"
 
 let (|OneStmt|_|) = function
     | [x] ->
@@ -146,13 +156,14 @@ let (|OneStmt|_|) = function
         // | StarPl(Val (String _)) -> None
         | StarPl _ -> None // Как правило, строки очень длинные, потому пусть лучше будет так
         | Assign _ | CallSt _ | Comment _ -> Some x
-        | AssingCode _ -> None // спорно
+        | AssignCode _ -> None // спорно
         | Act _ | If _ -> None
         | Label _ -> None // эту нечисть нужно как можно более нагляднее подчеркнуть. Да странно будет, если она окажется одна в списке инструкций.
         | Exit -> None // ¯\_(ツ)_/¯
+        | For _ -> None
     | _ -> None
 
-let (|AssingName|) = function AssignArr(x, _) -> x | AssignVar x -> x
+let (|AssingName|) = function AssignArr(x, _) -> x | AssignVar x -> x | AssignArrAppend x -> x
 type IndentsOption =
     | UsingSpaces of int
     | UsingTabs
@@ -260,8 +271,29 @@ let showStmt indentsOption (formatConfig:FormatConfig) =
                             (f' >> List.map ((<<) tabs))
                     yield showString "end"
             ]
+        | For(var, fromExpr, toExpr, body) ->
+            let header =
+                showString "for"
+                << showSpace << showVar var
+                << showSpace << showChar '='
+                << showSpace << showExpr fromExpr
+                << showSpace << showString "to"
+                << showSpace << showExpr toExpr
+                << showChar ':'
+            [
+                match body with
+                | OneStmt x ->
+                    yield header << showSpace << showStmtsInline [x]
+                | _ ->
+                    yield header
+                    yield!
+                        body
+                        |> List.collect
+                            (f' >> List.map ((<<) tabs))
+                    yield showString "end"
+            ]
         | Comment s -> [showChar '!' << showString s]
-        | AssingCode(ass, stmts) ->
+        | AssignCode(ass, stmts) ->
             let header = showAssign ass << spaceBetween (showChar '=') << showChar '{'
             [
                 if List.isEmpty stmts then

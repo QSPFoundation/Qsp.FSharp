@@ -93,52 +93,30 @@ let pexpr : _ Parser =
                     match arr with
                     | Some args -> Arr(var, args)
                     | None -> Var var
+            let pBracesArgs =
+                bet_ws '(' ')' (sepBy expr (pchar ',' >>. ws))
             let pcallFunctionOrArrOrVar =
-                let pfuncCall =
-                    bet_ws '(' ')' (sepBy expr (pchar ',' >>. ws))
-                    |>> fun args name -> Func(name, args)
-
                 tuple2
-                    (getPosition .>>.? notFollowedByBinOpIdent .>>. getPosition
+                    (applyRange notFollowedByBinOpIdent
                      .>> ws)
-                    ((pfuncCall |>> fun f -> TokenType.Function, f)
+                    ((pBracesArgs |>> fun args -> TokenType.Function, fun name -> Func(name, args))
                       <|> (pbraket
                            |>> fun arg ->
                                 let f name = Arr((ImplicitNumericType, name), arg)
                                 TokenType.Variable, f)
                       <|>% (TokenType.Variable, fun name -> Var(ImplicitNumericType, name)))
-                >>= fun (((p1, name), p2), (tokenType, f)) ->
-                        let range = toRange p1 p2
+                >>= fun ((range, name), (tokenType, f)) ->
                         match tokenType with
                         | TokenType.Function ->
                             match f name with
                             | Func(name, args) as func ->
                                 let p =
-                                    Defines.functions
-                                    |> Map.tryFind (name.ToLower())
-                                    |> function
-                                        | Some (dscr, (sign, returnType)) ->
-                                            let p =
-                                                args
-                                                |> Array.ofList
-                                                |> Defines.getFuncByOverloadType sign
-                                                |> function
-                                                    | None ->
-                                                        let msg =
-                                                            Defines.Show.printFuncSignature name returnType sign
-                                                            |> sprintf "Ожидается одна из перегрузок:\n%s"
-                                                        appendSemanticError range msg
-                                                    | Some () ->
-                                                        preturn ()
-                                            p
-                                            >>. appendHover2 dscr range
-                                        | None ->
-                                            [
-                                                "Такой функции нет, а если есть, то напишите мне, автору расширения, пожалуйста, и я непременно добавлю."
-                                                "Когда-нибудь добавлю: 'Возможно, вы имели ввиду: ...'"
-                                            ]
-                                            |> String.concat "\n"
-                                            |> appendSemanticError range
+                                    [
+                                        "Такой функции нет, а если есть, то напишите мне, автору расширения, пожалуйста, и я непременно добавлю."
+                                        "Когда-нибудь добавлю: 'Возможно, вы имели ввиду: ...'"
+                                    ]
+                                    |> String.concat "\n"
+                                    |> appendSemanticError range
                                 p
                                 >>. appendToken2 tokenType range
                                 >>% func
@@ -160,8 +138,36 @@ let pexpr : _ Parser =
                         | tokenType ->
                             appendToken2 tokenType range
                             >>% f name
-
-            pexplicitVar <|> pcallFunctionOrArrOrVar
+            let pPreDefFunc =
+                Defines.functions
+                |> Seq.sortByDescending (fun (KeyValue(name, _)) -> name) // для жадности
+                |> Seq.map (fun (KeyValue(name, (dscr, sign))) ->
+                    applyRange (pstringCI name .>>? notFollowedVarCont)
+                    >>= fun (range, name) ->
+                        appendToken2 TokenType.Function range
+                        >>. appendHover2 dscr range
+                        >>% (name, range, sign)
+                )
+                |> List.ofSeq
+                |> choice
+            pPreDefFunc .>> ws .>>. (opt pBracesArgs |>> Option.defaultValue [])
+            >>= fun ((name, range, (sign, returnType)), args) ->
+                    let p =
+                        args
+                        |> Array.ofList
+                        |> Defines.getFuncByOverloadType sign
+                        |> function
+                            | None ->
+                                let msg =
+                                    Defines.Show.printFuncSignature name returnType sign
+                                    |> sprintf "Ожидается одна из перегрузок:\n%s"
+                                appendSemanticError range msg
+                            | Some () ->
+                                preturn ()
+                    p
+                    >>% Func(name, args)
+            <|> pexplicitVar
+            <|> pcallFunctionOrArrOrVar
         let pval =
             choice [
                 // TODO: `pbraces` — он точно нужен?

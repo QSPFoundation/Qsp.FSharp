@@ -519,6 +519,20 @@ let functions =
         "func", dscr, argList Any Any
         let dscr =
             [
+                "То же, что и `FUNC`, только возвращает строчный тип:"
+                "```qsp"
+                "# start"
+                "$func('toString', 1) & ! -> '1'"
+                "-"
+                ""
+                "# toString"
+                "$result = ARGS[0]"
+                "-"
+                "```"
+            ] |> String.concat "\n"
+        "$func", dscr, argList Any String
+        let dscr =
+            [
                 "`DYNEVAL([$выражение],[параметр 1],[параметр 2], ...)` - возвращает значение указанного выражения. Функция позволяет вычислять значения динамически сгенерированных выражений. Указанные параметры передаются в массиве `ARGS`, а после вычисления выражения предыдущие значения `ARGS` восстанавливаются. Примеры:"
                 "```qsp"
                 "DYNEVAL('3+4')"
@@ -705,6 +719,9 @@ let functions =
             ] |> String.concat "\n"
         "replace", dscr, (argsAndOptional [ String; String ] String, String)
         let dscr =
+            "Синоним `REPLACE`"
+        "$replace", dscr, (argsAndOptional [ String; String ] String, String)
+        let dscr =
             [
                 "`STR([#выражение])` - переводит число (числовое выражение) `[#выражение]` в соответствующую строку. Например,"
                 "`PL STR(56)` выведет строку `56`."
@@ -776,10 +793,18 @@ let procedures =
             ] |> String.concat "\n"
         "addqst", dscr, arg String
         let dscr =
+            "Синоним `addqst`"
+        "addlib", dscr, arg String
+        let dscr =
+            "Синоним `addqst`"
+        "inclib", dscr, arg String
+        let dscr =
             [
                 "KILLQST - удаляет все локации, добавленные с помощью оператора `ADDQST`"
             ] |> String.concat "\n"
         "killqst", dscr, unit'
+        "freelib", dscr, unit'
+        "dellib", dscr, unit'
         let dscr =
             [
                 "`DELACT [$название]` или `DEL ACT [$название]` - удаляет действие из списка действий на локации (если такое действие существует). Например:"
@@ -1065,13 +1090,7 @@ let procs =
     jump::(procedures @ transferOperators)
     |> List.map (fun (name, dscr, sign) -> name, ((dscr:Description), sign))
     |> Map.ofList
-let unknown =
-    [
-        "freelib"
-        "inclib"
-        "dellib"
-        "addlib"
-    ]
+
 let binaryOperators =
     let arg x (return':VarType) = arg x, return'
     let unit' (return':VarType) = unit', return'
@@ -1124,7 +1143,7 @@ let keywords =
         "if", dscr
         "else", dscr
         "elseif", dscr
-        "end", "Завершает конструкции `ACT` или `IF`."
+        "end", "Завершает конструкции `ACT`, `IF` или `FOR`."
         let dscr =
             [
                 "`ACT [$название],[$путь к файлу изображения]:[оператор] & [оператор] & ...` - добавление действия к существующим на локации."
@@ -1154,4 +1173,39 @@ let keywords =
                 "завершение выполнения текущего кода (преждевременный выход из подпрограммы / обработчика какого-либо события...)."
             ] |> String.concat "\n"
         "exit", dscr
+        let dscr =
+            [
+                "**FOR** `[#переменная]` **=** `[#выражение]` **TO** `[#выражение]`**:** `[операторы]` - Выполняет `[#операторы]` несколько раз, по очереди присваивая `[#переменной]` все численные значения от первого до второго `[#выражения]`."
+                ""
+                "Однострочная форма записи:"
+                "```qsp"
+                "for номер_нпц = 1 to количество_нпц: gs 'инициализировать нпц', номер_нпц"
+                "стоимость['меч'] = 10"
+                "стоимость['доспех'] = 250"
+                "стоимость['щит'] = 15"
+                "стоимость_снаряжения = 0"
+                "for номер_предмета = 0 to arrsize('стоимость')-1: стоимость_снаряжения += стоимость[номер предмета]"
+                "```"
+                ""
+                "Многострочная форма записи:"
+                "* После символа `:` ставится перенос строки"
+                "* Заканчивается FOR строкой `END`"
+                "* Допускается вложенность неограниченной глубины. Каждый уровень вложения должен заканчиваться своей строкой `END`."
+                "* Пример:"
+                "    ```qsp"
+                "    for i = 0 to arrsize('arr')-1:"
+                "        *pl arr[i]"
+                "        if arr[i] > 10:"
+                "            jump конец"
+                "        end"
+                "    end"
+                "    ```"
+                ""
+                "Можно еще задать шаг цикла, для этого используется **STEP**:"
+                "```qsp"
+                "for нечётные = 1 to 10 step 2: *pl нечётные"
+                "```"
+            ] |> String.concat "\n"
+        "for", dscr
+        "to", "**TO** — ключевое слово для конструкции FOR"
     ]

@@ -134,6 +134,11 @@ let assignTest =
                    (AssignVar (ExplicitNumericType, "x"),
                     Expr (Plus, Val (Int 21), Val (Int 21))))
             Assert.Equal("", Right exp, runExpr input)
+        testCase "`x[] = 1`" <| fun () ->
+            let input = "x[] = 1"
+            let exp =
+                Assign (AssignArrAppend (ImplicitNumericType, "x"), Val (Int 1))
+            Assert.Equal("", Right exp, runExpr input)
         // ложные случаи:
         testCase "attempt assign function" <| fun () ->
             let input = "f(expr) = 42" // поскольку `=` — это одновременно и оператор присваивания и оператор равности, так что сойдет за выражение
@@ -438,7 +443,7 @@ let ifTests =
             let input =
                 [
                     "if expr: gt 'hall'"
-                    "'инструкция, которая не принадлежит конструкции'"
+                    "'statement that not belong to construction'"
                 ] |> String.concat "\n"
             let exp =
                 (If
@@ -619,6 +624,52 @@ let ifTests =
                        StarPl (Var (ImplicitNumericType, "stmt6"))], [])]))
             Assert.Equal("", Right exp, runStmtsEof input)
     ]
+
+[<Tests>]
+let forTests =
+    let runStmts str =
+        Qsp.Parser.Generic.runStateEither
+            Qsp.Parser.Main.pstmt
+            Qsp.Parser.Generic.emptyState str
+        |> snd
+    let runStmtsEof str =
+        Qsp.Parser.Generic.runStateEither
+            (Qsp.Parser.Main.pstmt .>> eof)
+            Qsp.Parser.Generic.emptyState str
+        |> snd
+    testList "forTests" [
+        testCase "multiline `for i = 4 + x to 45 / x + y:`" <| fun () ->
+            let input =
+                [
+                    "for i = 4 + x to 45 / x + y:"
+                    "    stmt"
+                    "end"
+                ] |> String.concat "\n"
+            let exp =
+              (For
+                 ((ImplicitNumericType, "i"),
+                  Expr (Plus, Val (Int 4), Var (ImplicitNumericType, "x")),
+                  Expr
+                    (Plus, Expr (Divide, Val (Int 45), Var (ImplicitNumericType, "x")),
+                     Var (ImplicitNumericType, "y")),
+                  [StarPl (Var (ImplicitNumericType, "stmt"))]))
+            Assert.Equal("", Right exp, runStmtsEof input)
+        testCase "inline `for i = 4 + x to 45 / x + y: stmt`" <| fun () ->
+            let input =
+                [
+                    "for i = 4 + x to 45 / x + y: stmt"
+                    "'statement that not belong to construction'"
+                ] |> String.concat "\n"
+            let exp =
+              (For
+                 ((ImplicitNumericType, "i"),
+                  Expr (Plus, Val (Int 4), Var (ImplicitNumericType, "x")),
+                  Expr
+                    (Plus, Expr (Divide, Val (Int 45), Var (ImplicitNumericType, "x")),
+                     Var (ImplicitNumericType, "y")),
+                  [StarPl (Var (ImplicitNumericType, "stmt"))]))
+            Assert.Equal("", Right exp, runStmts input)
+    ]
 [<Tests>]
 let stmtTests =
     let runStmts str =
@@ -636,7 +687,7 @@ let stmtTests =
             let input =
                 [
                     "act 'some act': gt 'hall'"
-                    "'инструкция, которая не принадлежит конструкции'"
+                    "'statement that not belong to construction'"
                 ] |> String.concat "\n"
             let exp =
                 Act ([Val (String [[StringKind "some act"]])], [CallSt ("gt", [Val (String [[StringKind "hall"]])])])
