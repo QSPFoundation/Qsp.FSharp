@@ -77,11 +77,13 @@ type UnarOp =
     | Obj
     /// `no`
     | No
+    /// `loc`
+    | Loc
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 [<RequireQualifiedAccess>]
 module UnarOp =
     [<ReflectedDefinition>]
-    let toString = function | Obj -> "obj" | Neg -> "-" | No -> "no"
+    let toString = function | Obj -> "obj" | Neg -> "-" | No -> "no" | Loc -> "loc"
     let ops =
         Reflection.Reflection.unionEnum<UnarOp>
         |> Array.map (fun x -> x, toString x)
@@ -103,13 +105,14 @@ module Precedences =
     let prec = function
         | OpB Or -> 1
         | OpB And -> 2
-        | PrefB Obj | PrefB No -> 3
+        | PrefB No -> 3
+        | PrefB Loc | PrefB Obj -> 4 // `no obj 'apple'` equal `no (obj 'apple')`
         // =     | <      | >      | !        | <>     | <=     | >=     | =>     | =<
-        | OpB Eq | OpB Lt | OpB Gt | OpB Bang | OpB Ne | OpB Le | OpB Ge | OpB Eg | OpB El-> 4
-        | OpB Plus | OpB Minus -> 5
-        | OpB Mod -> 6
-        | OpB Times | OpB Divide -> 7
-        | PrefB Neg -> 8
+        | OpB Eq | OpB Lt | OpB Gt | OpB Bang | OpB Ne | OpB Le | OpB Ge | OpB Eg | OpB El-> 5
+        | OpB Plus | OpB Minus -> 6
+        | OpB Mod -> 7
+        | OpB Times | OpB Divide -> 8
+        | PrefB Neg -> 9
 
 type VarType =
     /// `varName`, если к такой присвоить строковое значение, то интерпретатор попытается преобразовать ее в число. Если не получится, выбьет ошибку.

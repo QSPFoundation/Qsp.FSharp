@@ -11,6 +11,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="OldAndNewExprTests.fs" />
     <Compile Include="Test.fs" />
     <None Include="App.config" />
   </ItemGroup>

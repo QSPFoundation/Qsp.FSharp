@@ -113,8 +113,8 @@ and State =
         /// Нужен для `elseif` конструкции. Эх, если бы ее можно было как-то именно там оставить, но увы.
         IsEndOptional : bool
         LastSymbolPos : FParsec.Position
-        /// К ним обращаются раньше, чем она определена, потому проверяется по ходу дела
-        LocsThatNeedCheck: Map<Ast.LocationName, Tokens.InlineRange list>
+        /// Локации, которые неопределенны именно в этом документе, но переходы к ним есть
+        NotDefinedLocs: Map<Ast.LocationName, Tokens.InlineRange list>
         // Я тут, это самое, оставлю. Никто не возражает?
         PStmts: Parser<Ast.Statement list>
         /// `&lt;a gt ''x''>`
@@ -130,7 +130,7 @@ let emptyState =
         IsEndOptional = false
         LastSymbolPos = FParsec.Position("", 0L, 1L, 1L)
         Highlights = highlightsEmpty
-        LocsThatNeedCheck = Map.empty
+        NotDefinedLocs = Map.empty
         PStmts = FParsec.Primitives.failFatally "PStmts not implemented"
         SingleQuotNestedCount = 0
         DoubleQuotNestedCount = 0

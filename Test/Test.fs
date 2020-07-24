@@ -23,11 +23,22 @@ let pexprTest =
     let runExpr str =
         runStateEither pexpr Qsp.Parser.Generic.emptyState str
         |> snd
+    let sprintExpr =
+        Show.simpleShowExpr (failwithf "showStmtsInline not implemented %A")
+        >> FsharpMyExtension.ShowList.show
     let runExprShow str =
         runExpr str
-        |> Either.map
-            (Qsp.Show.simpleShowExpr (failwithf "showStmtsInline not implemented %A")
-             >> FsharpMyExtension.ShowList.show)
+        |> Either.map sprintExpr
+    let equalWithShow (exp:Expr) (act:Either<_, Expr>) =
+        match act with
+        | Left _ ->
+            failtestf "%A" act
+        | Right act ->
+            if exp <> act then
+                failtestf "Expected:\n%A\n\"%s\"\n\nActual:\n%A\n\"%s\"" exp (sprintExpr exp) act (sprintExpr act)
+    let testf input exp =
+        testCase input <| fun () ->
+            equalWithShow exp (runExpr input)
     testList "pexpr test" [
         testCase "строчные бинарные операторы и названия переменных, которые начинаются с них" <| fun () ->
             let input = "notFollowedBy" // Уж точно не должно быть "no tFollowedBy"
@@ -45,11 +56,19 @@ let pexprTest =
                 UnarExpr (Obj, Var (ImplicitNumericType, "something"))
             Assert.Equal("", Right exp, runExpr input)
 
-        testCase "1" <| fun () ->
-            let input = "var1 and var2 and no var3 and obj var4"
-            let exp = "((var1 and var2) and (no var3)) and (obj var4)"
+        let input = "var1 and var2 and no var3 and obj var4"
+        let exp =
+            Expr
+              (And,
+               Expr
+                 (And,
+                  Expr
+                    (And, Var (ImplicitNumericType, "var1"),
+                     Var (ImplicitNumericType, "var2")),
+                  UnarExpr (No, Var (ImplicitNumericType, "var3"))),
+               UnarExpr (Obj, Var (ImplicitNumericType, "var4")))
+        testf input exp
 
-            Assert.Equal("", Right exp, runExprShow input)
         testCase "2" <| fun () ->
             let input = "var1[var1 + var2] and func(arg1, arg2[expr], x + y)"
             let exp = "var1[var1 + var2] and func(arg1, arg2[expr], x + y)"
@@ -62,6 +81,23 @@ let pexprTest =
             let input = "a = pstam> (pmaxstam/4)*2 and pstam <= (pmaxstam/4)*3"
             let exp = "((a = pstam) > ((pmaxstam / 4) * 2)) and (pstam <= ((pmaxstam / 4) * 3))"
             Assert.Equal("", Right exp, runExprShow input)
+        testCase "no obj 'apple'" <| fun () ->
+            let input = "no obj 'apple'"
+            let exp =
+                UnarExpr (No, UnarExpr (Obj, Val (String [[StringKind "apple"]])))
+            Assert.Equal("", Right exp, runExpr input)
+
+        let input = "- x"
+        let exp =
+            UnarExpr (Neg, Var (ImplicitNumericType, "x"))
+        testf input exp
+
+        let input = "-x + -y"
+        let exp =
+            Expr
+              (Plus, UnarExpr (Neg, Var (ImplicitNumericType, "x")),
+               UnarExpr (Neg, Var (ImplicitNumericType, "y")))
+        testf input exp
     ]
 // #load "Parsec.fs"
 
@@ -787,10 +823,8 @@ module TestOnMocks =
 
             if replaceOrNot showExpPath showActPath then ()
             else failwithf "not pass"
-
-    // #if FULL
+    let mockTestList = "mock tests"
     [<Tests>]
-    // #endif
     let showTests =
         let mocksDir = @"..\..\..\..\Output\Mocks"
         System.IO.Directory.GetFiles(mocksDir, "*.qsps")
@@ -799,8 +833,31 @@ module TestOnMocks =
                 showTest path
                 Assert.Equal("", true, true)
         )
-        |> testList "mock tests"
+        |> testList mockTestList
 
 [<EntryPoint;System.STAThread>]
-let main arg =
-    defaultMainThisAssembly arg
+let main args =
+    let isFullTest () =
+        let rec whileYOrN () =
+            match System.Console.ReadKey().Key with
+            | System.ConsoleKey.Y -> true
+            | System.ConsoleKey.N -> false
+            | x ->
+                printfn "`y` or `n` but %A" x
+                whileYOrN ()
+        printfn "Full test? (`y` or `n`)"
+        whileYOrN ()
+    let f isFullTest =
+        if isFullTest then
+            defaultMainThisAssembly args
+        else
+            defaultMainThisAssemblyFilter args
+                (fun x ->
+                    x.Where(fun x -> not <| x.StartsWith TestOnMocks.mockTestList))
+    match args with
+    | [|"--full"|] -> f true
+    | [||] ->
+        f (isFullTest ())
+    | _ ->
+        printfn "`--full` or pass args but: %A" args
+        1

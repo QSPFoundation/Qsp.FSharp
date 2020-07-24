@@ -189,8 +189,8 @@ let pcallProc =
                                 | None ->
                                     updateUserState (fun st ->
                                         { st with
-                                            LocsThatNeedCheck =
-                                                st.LocsThatNeedCheck
+                                            NotDefinedLocs =
+                                                st.NotDefinedLocs
                                                 |> Map.addOrMod locNameLower [r] (fun xs -> r::xs)
                                         }
                                     )
@@ -400,13 +400,6 @@ let ploc =
                      <|> (many1Satisfy (isAnyOf " \t") .>>? notFollowedByNewline))
                  <?> "location name")
               >>= fun (r, name) ->
-                let checkLocsWhatNeedToCheck locName = // да-да, название шикарное
-                    updateUserState (fun st ->
-                        { st with
-                            LocsThatNeedCheck =
-                                Map.remove locName st.LocsThatNeedCheck // ну да, к чему проверки? И так удалит
-                        }
-                    )
                 let pCheckLocExists r2 locName =
                     pGetDefLocPos locName
                     >>= function
@@ -417,7 +410,12 @@ let ploc =
 
                 let locNameLower = String.toLower name
                 pCheckLocExists r locNameLower
-                >>. checkLocsWhatNeedToCheck locNameLower
+                >>. updateUserState (fun st ->
+                        { st with
+                            NotDefinedLocs =
+                                Map.remove locNameLower st.NotDefinedLocs // ну да, к чему проверки? И так удалит
+                        }
+                    )
                 >>. appendLocHighlight r locNameLower VarHighlightKind.WriteAccess // и все равно добавить, даже в случае семантической ошибки? Хм, ¯\_(ツ)_/¯
                 >>. appendToken2 TokenType.StringQuotedSingle r
                 >>. preturn name
@@ -430,17 +428,7 @@ let ploc =
         (fun name body -> Location(name, body))
 
 let pAfterAll =
-    updateUserState (fun st ->
-        let errors =
-            st.LocsThatNeedCheck
-            |> Map.fold (fun st locNameLower ->
-                List.fold (fun st range ->
-                    let msg = sprintf "'%s' — эта локация не определена" locNameLower
-                    (range, msg) :: st) st
-            ) st.SemanticErrors
-        { st with SemanticErrors = errors }
-    )
-
+    preturn ()
 let start str =
     let emptyState =
         { emptyState with PStmts = pstmts }

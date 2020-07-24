@@ -87,12 +87,6 @@ type VarType =
     | String
     | Numeric
 
-let notStringBinaryOperators =
-    let str =
-        "`[$выражение 1] & [$выражение 2]` - операция объединения строковых выражений."
-    "&", str
-// parse()
-
 // type X () =
 //     member __.F(x:string, [<System.ParamArray>] args: string[]) =
 //         printfn "first"
@@ -891,12 +885,6 @@ let procedures =
         "copyarr", dscr, args [String; String]
         let dscr =
             [
-                "В документации не нашел, но вывел опытно:"
-                "`LOC [$выражение]`, если локация с таким выражением существует, то возращает `-1`, в противном случае — `0`"
-            ] |> String.concat "\n"
-        "loc", dscr, arg String
-        let dscr =
-            [
                 "`CLEAR` или `CLR` - очистка окна пользователя."
             ] |> String.concat "\n"
         "clear", dscr, unit'
@@ -1091,7 +1079,19 @@ let procs =
     |> List.map (fun (name, dscr, sign) -> name, ((dscr:Description), sign))
     |> Map.ofList
 
-let binaryOperators =
+let exprSymbolicOperators =
+    let arg x (return':VarType) = arg x, return'
+    let unit' (return':VarType) = unit', return'
+    let args xs (return':VarType) = args xs, return'
+    let argList typ (return':VarType) = argList typ, return'
+    let argAndArgList x typ (return':VarType) = argAndArgList x typ, return'
+    [
+        let dscr =
+            "`[$выражение 1] & [$выражение 2]` - операция объединения строковых выражений."
+        "&", dscr, args [String; String] String
+    ]
+
+let exprNamedOperators =
     let arg x (return':VarType) = arg x, return'
     let unit' (return':VarType) = unit', return'
     let args xs (return':VarType) = args xs, return'
@@ -1124,6 +1124,11 @@ let binaryOperators =
                 "`OBJ [$выражение]` - верно, если в рюкзаке есть предмет `[$выражение]`."
             ] |> String.concat "\n"
         "obj", dscr, arg String Numeric
+        let dscr =
+            [
+                "`LOC [$выр]` - верно, если в игре есть локация с названием `[$выр]`."
+            ] |> String.concat "\n"
+        "loc", dscr, arg String Numeric
     ]
 let keywords =
     [

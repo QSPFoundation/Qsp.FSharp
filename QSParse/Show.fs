@@ -78,7 +78,7 @@ let showValue showExpr showStmtsInline = function
         |> bet "'" "'"
 let ops = Op.toString >> showString
 
-let unar = function No -> "no" | Obj -> "obj" | Neg -> "-"
+let unar = function No -> "no" | Obj -> "obj" | Neg -> "-" | Loc -> "loc"
 
 let rec simpleShowExpr showStmtsInline expr : ShowS =
     let rec f = function
@@ -92,7 +92,7 @@ let rec simpleShowExpr showStmtsInline expr : ShowS =
                     showParen true (List.map f args |> join ", ")
             showString name << args
         | UnarExpr(op, e) ->
-            let space = function Obj | No -> showSpace | Neg -> id
+            let space = function Obj | No | Loc -> showSpace | Neg -> id
             let x =
                 match e with
                 | Expr(_, _, _) ->
@@ -133,7 +133,7 @@ let rec showExpr showStmtsInline = function
                     (List.map (showExpr showStmtsInline) args |> join ", ")
         showString name << args
     | UnarExpr(op, e) ->
-        let space = function Obj | No -> showSpace | Neg -> id
+        let space = function Obj | No | Loc -> showSpace | Neg -> id
         showString (unar op) << space op << showExpr showStmtsInline e
     | Expr(op, e1, e2) ->
         let prec = Precedences.OpB >> Precedences.prec
