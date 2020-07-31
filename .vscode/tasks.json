@@ -16,14 +16,6 @@
             }
         },
         {
-            "label": "build&run",
-            "type": "shell",
-            "command": "build.cmd",
-            "args": [
-                "RunMainProj"
-            ]
-        },
-        {
             "label": "TrimTrailingWhitespace",
             "type": "shell",
             "command": "build.cmd",

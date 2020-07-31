@@ -57,10 +57,6 @@ Target.create "RunTest" (fun _ ->
         raise <| Fake.Testing.Common.FailedTestsException "test error"
 )
 
-Target.create "RunMainProj" (fun _ ->
-    run mainProjName mainProjPath |> ignore
-)
-
 Target.create "TrimTrailingWhitespace" (fun _ ->
     // по-хорошему, нужно использовать .gitignore, но и так пока сойдет
     let files =
@@ -123,5 +119,4 @@ open Fake.Core.TargetOperators
 
 "BuildTest"
   ==> "RunTest"
-  ==> "RunMainProj"
-Target.runOrDefault "RunMainProj"
+Target.runOrDefault "RunTest"
