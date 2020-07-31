@@ -18,7 +18,7 @@
   <ItemGroup>
     <None Include="App.config" />
     <Reference Include="System.Runtime" />
-	<Reference Include="$(FsharpMyExtension)" />
+    <!-- <Reference Include="$(FsharpMyExtension)" /> -->
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

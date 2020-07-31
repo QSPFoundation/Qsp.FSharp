@@ -7,6 +7,9 @@ nuget FSharp.Core
 nuget Fuchu
 nuget FParsec
 
+git https://github.com/gretmn102/FsharpMyExtension.git build:"build.cmd NuGet", Packages: /FsharpMyExtension/FsharpMyExtension/bin/Release/
+nuget FsharpMyExt
+
 group Build
   source https://nuget.org/api/v2
 
