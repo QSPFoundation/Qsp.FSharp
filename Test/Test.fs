@@ -787,7 +787,7 @@ module TestOnMocks =
     let addExpToPath path =
         path
         |> Path.changeFileNameWithoutExt (sprintf "%sExp")
-    let outputDir = @"..\..\..\..\Output"
+    let outputDir = @"..\..\..\Mocks"
     let copyAsExp path =
         System.IO.File.Copy(path, addExpToPath path, true)
     let getPathActLocal pathAct =
@@ -826,14 +826,17 @@ module TestOnMocks =
     let mockTestList = "mock tests"
     [<Tests>]
     let showTests =
-        let mocksDir = @"..\..\..\..\Output\Mocks"
-        System.IO.Directory.GetFiles(mocksDir, "*.qsps")
-        |> Array.map (fun path ->
-            testCase (sprintf "'%s' test" (System.IO.Path.GetFullPath path)) <| fun () ->
-                showTest path
-                Assert.Equal("", true, true)
-        )
-        |> testList mockTestList
+        let mocksDir = outputDir + @"\Src"
+        let tests =
+            if System.IO.Directory.Exists mocksDir then
+                System.IO.Directory.GetFiles(mocksDir, "*.qsps")
+                |> Array.map (fun path ->
+                    testCase (sprintf "'%s' test" (System.IO.Path.GetFullPath path)) <| fun () ->
+                        showTest path
+                        Assert.Equal("", true, true)
+                )
+            else [||]
+        testList mockTestList tests
 
 [<EntryPoint;System.STAThread>]
 let main args =

@@ -394,3 +394,5 @@ paket-files/
 /Output/
 /.ionide/
 /Utils/
+
+/Test/Mocks/
