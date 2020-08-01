@@ -6,11 +6,6 @@
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
   </PropertyGroup>
-  <!-- <ItemGroup>
-    <ProjectReference Include="..\LevenshteinDistance\LevenshteinDistance.csproj">
-      <Name>LevenshteinDistance.csproj</Name>
-    </ProjectReference>
-  </ItemGroup> -->
   <ItemGroup>
     <Compile Include="..\paket-files\fsharp\FsAutoComplete\src\LanguageServerProtocol\LanguageServerProtocol.fs">
       <Paket>True</Paket>
@@ -20,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="$(FsharpMyExtension)" />
+    <Reference Include="E:\Project\Qsp\QspParser\QSParse\bin\Debug\net461\QSParse.dll" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>
