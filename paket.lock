@@ -15,8 +15,8 @@ GITHUB
   remote: fsharp/FsAutoComplete
     src/LanguageServerProtocol/LanguageServerProtocol.fs (07a0e745eea71f347040efc5f8c72c1d42ddf117)
 GIT
-  remote: https://github.com/gretmn102/FParserQSP.git
-     (353e7a7ff66cf412c2c16759a2bbf3fc7c4f23ff)
+  remote: https://github.com/gretmn102/FsharpMyExtension.git
+     (eff1014adc2f0aca97a72af5c28235ac34cf30d7)
       build: build.cmd
 GROUP Build
 NUGET

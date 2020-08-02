@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net461</TargetFramework>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <Compile Include="Tokens.fs" />
+    <Compile Include="Ast.fs" />
+    <Compile Include="Defines.fs" />
+    <Compile Include="Show.fs" />
+    <Compile Include="ParserGeneric.fs" />
+    <Compile Include="ParserExpr.fs" />
+    <Compile Include="Parsec.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <Reference Include="System.Runtime" />
+    <Reference Include="..\paket-files\github.com\gretmn102\FsharpMyExtension\FsharpMyExtension\FsharpMyExtension\bin\Debug\net461\FsharpMyExtension.dll" />
+  </ItemGroup>
+  <Import Project="..\.paket\Paket.Restore.targets" />
+</Project>

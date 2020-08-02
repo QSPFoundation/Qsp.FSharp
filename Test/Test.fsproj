@@ -7,17 +7,21 @@
     <Tailcalls>true</Tailcalls>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\QSParse\QSParse.fsproj">
+      <Name>QSParse.fsproj</Name>
+    </ProjectReference>
     <ProjectReference Include="..\QspServer\QspServer.fsproj">
       <Name>QspServer.fsproj</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <Compile Include="OldAndNewExprTests.fs" />
     <Compile Include="Test.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Runtime" />
-    <Reference Include="..\paket-files\github.com\gretmn102\FParserQSP\paket-files\github.com\gretmn102\FsharpMyExtension\FsharpMyExtension\FsharpMyExtension\bin\Release\net461\FsharpMyExtension.dll" />
+    <Reference Include="..\paket-files\github.com\gretmn102\FsharpMyExtension\FsharpMyExtension\FsharpMyExtension\bin\Debug\net461\FsharpMyExtension.dll" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

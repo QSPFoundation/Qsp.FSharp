@@ -1,1 +1,1 @@
-QSP LSP for VS Code extension.
+[QSP](http://wiki.qsp.su/) LSP for VS Code extension.

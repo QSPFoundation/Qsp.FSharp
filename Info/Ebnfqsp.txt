@@ -1,0 +1,12 @@
+ws = " " {" "}
+"a" = "a" ws
+'a' = 'a' {" "}
+Если нечто в кавычках - то после него обязательно следует как минимум один пробел, если в апострофах - 0 или больше пробелов
+escape symbol - "\"
+
+ident = ["*" | "$"] (underscore | letter) {letter | digit | underscore}
+
+assign = ["set" | "let"] ident ['[' expr ']'] ('=' ['+'|'-'] | ('+'|'-') '=') exprNotStartWithNeg
+call = ident exprNotStartWithNeg {"," expr}
+
+commentOp = "!" { ^("'"| nl | '"') | "'" { ^"'" | "''" } "'" | '"' { ^'"' | '""' } '"' }

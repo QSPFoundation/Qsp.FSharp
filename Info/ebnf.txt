@@ -1,0 +1,27 @@
+start = location {nl location};
+location = "#" anyExceptNl nl [statements nl] "-" anyExceptNl;
+statements = statement {nl statement | "&" stmtsOneLine};
+comment = "!" (stringConst | anyExceptNlOrStrStart);
+stmtsOneLine = expr {"&" expr} ["&" (assign | comment)];
+statement = assign | comment | expr | if | ifOneLine | act | actOneLine;
+actDef = "act" stringConst ["," stringConst] ":"
+actOneLine = actDef stmtsOneLine;
+act = actDef nl statements nl "end";
+ifDef = "if" expr ":"
+//ifOneLine = ifDef expr {"&" expr} ("&" ifOneLine | ["else" stmtsOneLine]);
+if = ifDef nl statements [nl "else" nl statements];
+varName = ["$"] letter {digit | letter}
+assign = ["set" | "let"] varName ["[" expr "]"] "=" expr;
+
+*PL ('The '&'door '&'is closed.')
+В строковые константы, в базовые описания локаций и названия базовых действий существует возможность вставлять значения выражений.
+
+Такие "подвыражения" должны находиться между двойных угловых скобок: "<<" и ">>", до и после которых может идти любой текст, включая подобные "подвыражения".
+
+Например, вместо оператора
+       pl 'i='+str(i)
+можно написать
+       pl 'i=<<i>>'
+PL STR(56)
+
+*p mid($s,i,1)
