@@ -18,7 +18,7 @@ let f projName =
         |> failwithf "'%s' expected exactly one but:\n%A" pattern
     )
 let testProjName = "Test"
-let testProjPath = f testProjName
+let testProjPath = @"Test\Test.fsproj"
 let mainProjName = "QspServer"
 let mainProjPath = f mainProjName
 // --------------------------------------------------------------------------------------

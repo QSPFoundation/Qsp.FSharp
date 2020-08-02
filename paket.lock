@@ -13,7 +13,11 @@ NUGET
     System.ValueTuple (4.5)
 GITHUB
   remote: fsharp/FsAutoComplete
-    src/LanguageServerProtocol/LanguageServerProtocol.fs (f59b0112d59c9b3440b7e174505804e4dee52ad3)
+    src/LanguageServerProtocol/LanguageServerProtocol.fs (07a0e745eea71f347040efc5f8c72c1d42ddf117)
+GIT
+  remote: https://github.com/gretmn102/FParserQSP.git
+     (353e7a7ff66cf412c2c16759a2bbf3fc7c4f23ff)
+      build: build.cmd
 GROUP Build
 NUGET
   remote: https://www.nuget.org/api/v2

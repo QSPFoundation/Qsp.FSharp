@@ -14,8 +14,8 @@
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="$(FsharpMyExtension)" />
-    <Reference Include="E:\Project\Qsp\QspParser\QSParse\bin\Debug\net461\QSParse.dll" />
+    <Reference Include="..\paket-files\github.com\gretmn102\FParserQSP\paket-files\github.com\gretmn102\FsharpMyExtension\FsharpMyExtension\FsharpMyExtension\bin\Release\net461\FsharpMyExtension.dll" />
+    <Reference Include="..\paket-files\github.com\gretmn102\FParserQSP\QSParse\bin\Debug\net461\QSParse.dll" />    
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>
