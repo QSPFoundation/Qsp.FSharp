@@ -127,9 +127,7 @@ type FsacClient(sendServerRequest: ClientNotificationSender) =
         sendServerRequest "textDocument/publishDiagnostics" (box p) |> Async.Ignore
     override __.WorkspaceWorkspaceFolders () = // TODO
         failwith ""
-type State = {
-    DicPath : string
-}
+type State = unit
 
 type UpdateFileParms = {
     // File: BackgroundFileCheckType
@@ -866,13 +864,6 @@ type LocalSetting = {
 open FsharpMyExtension
 [<EntryPoint>]
 let main argv =
-    let localSettingPath = @"E:\Project\YetAnotherSpellCheckerServer\YacsServer\bin\Debug\net461\setting.json"
-    // Json.serf localSettingPath { DicPath = @"E:\Project\YetAnotherSpellCheckerServer\fullRussian.txt"}
-    let localSetting : LocalSetting = Json.desf localSettingPath
-    let state = {
-        State.DicPath = localSetting.DicPath
-    }
-
     use input = System.Console.OpenStandardInput()
     use output = System.Console.OpenStandardOutput()
 
@@ -882,7 +873,7 @@ let main argv =
         |> Map.add "fsharp/workspaceLoad" (requestHandling (fun s p -> s.FSharpWorkspaceLoad(p) ))
         // |> Map.add "fsharp/workspacePeek" (requestHandling (fun s p -> s.FSharpWorkspacePeek(p) ))
 
-    Server.start requestsHandlings input output FsacClient (fun lspClient -> BackgroundServiceServer(state, lspClient))
+    Server.start requestsHandlings input output FsacClient (fun lspClient -> BackgroundServiceServer((), lspClient))
     |> printfn "%A"
 
     0
