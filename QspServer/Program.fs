@@ -87,17 +87,19 @@ module CommandResponse =
                   |> Array.map (fun (struct ((pos:Qsp.Tokens.InlineRange), tk)) ->
                       { Range = toVscodeRange2 pos; TokenType = map tk }) }
         }
+let changeExtensionToQsp path =
+    System.IO.Path.ChangeExtension(path, ".qsp")
 let txt2qspPath = @"3rd\txt2gam.exe"
 let buildQsp src =
-    let dst = System.IO.Path.ChangeExtension(src, ".qsp")
+    let dst = changeExtensionToQsp src
     let args = sprintf "%s %s" src dst
-
     let startProcString path args =
         let drivenOutput = new System.Text.StringBuilder()
         Proc.startProc (fun e ->
             drivenOutput.AppendLine(e) |> ignore
         ) path args
         |> fun code -> code, drivenOutput.ToString()
+    // TODO: so, how to make sure the compilation finished successfully?
     Proc.startProcString txt2qspPath args
 let buildQspTest () =
     let src = @"E:\Project\Qsp\QspSyntax\sample-code\Sandbox.qsps"
@@ -820,7 +822,7 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
     //         }
     //     return LspResult.success None
     // }
-    member __.BuildSource (uriStr:UriString) =
+    member __.BuildSource (uriStr:UriString) isRun =
         async {
             // let uri = "file:///e:/Project/Qsp/QSP-LSP/3rd/txt2gam.exe"
             let uri =
@@ -834,7 +836,12 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
                 match uri with
                 | Right path ->
                     try
-                        buildQsp path |> ignore
+                        let code, _ = buildQsp path
+                        if isRun then
+                            changeExtensionToQsp path
+                            |> System.Diagnostics.Process.Start
+                            |> ignore
+
                         Choice2Of2 "Ok"
                     with e ->
                         Choice1Of2 e.Message
@@ -907,7 +914,8 @@ let main argv =
         defaultRequestHandlings<BackgroundServiceServer>()
         |> Map.add "fsharp/highlighting" (requestHandling (fun s p -> s.GetHighlighting(p) ))
         |> Map.add "fsharp/workspaceLoad" (requestHandling (fun s p -> s.FSharpWorkspaceLoad(p) ))
-        |> Map.add "qsp/build" (requestHandling (fun s p -> s.BuildSource(p) ))
+        |> Map.add "qsp/build" (requestHandling (fun s p -> s.BuildSource p false ))
+        |> Map.add "qsp/buildAndRun" (requestHandling (fun s p -> s.BuildSource p true ))
 
     Server.start requestsHandlings input output FsacClient (fun lspClient -> BackgroundServiceServer((), lspClient))
     |> printfn "%A"
