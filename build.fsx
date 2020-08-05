@@ -40,6 +40,15 @@ Target.create "BuildTest" (fun _ ->
         |> dtntSmpl)
 )
 
+Target.create "Copy3rd" <| fun _ ->
+    let srcDir = @"3rd"
+    if not <| System.IO.Directory.Exists srcDir then
+        failwithf "'%s' not found" srcDir
+    let localPath = sprintf "bin/%A/net461" buildConf
+    let dstDir = sprintf "%s/%s/%s" mainProjName localPath srcDir
+    // printfn "%s\n%s" srcDir dstDir
+    Fake.IO.Shell.copyDir dstDir srcDir (fun _ -> true)
+
 let run projName projPath =
     let dir = Fake.IO.Path.getDirectory projPath
     let localpath = sprintf "bin/%A/net461/%s.exe" buildConf projName
@@ -77,41 +86,11 @@ Target.create "TrimTrailingWhitespace" (fun _ ->
     )
 )
 
-open Fake.IO
-// TODO: скачать и распаковать http://qsp.su/attachments/txt2gam011.zip в "Utils\txt2gam"
-let compilerPath =
-    Lazy.Create (fun _ ->
-        let compilerPath = "Utils/txt2gam/txt2gam.exe"
-        if System.IO.File.Exists compilerPath then compilerPath
-        else
-            failwithf "Compiler not found at '%A'" compilerPath
-    )
-let compiler src =
-    let dst = Path.changeExtension ".qsp" src
-
-    Command.RawCommand(compilerPath.Value, Arguments.ofList [src; dst])
-    |> CreateProcess.fromCommand
-    |> CreateProcess.withWorkingDirectory (Path.getDirectory compilerPath.Value)
-    |> Proc.run
-    |> fun x -> x.ExitCode
-
-Target.create "Watch" (fun _ ->
-    use watcher =
-       !! "Utils/txt2gam/*.qsps"
-       |> Fake.IO.ChangeWatcher.run (fun changes ->
-           changes
-           |> Seq.iter (fun x ->
-               Trace.trace "Compilation..."
-               let code = compiler x.FullPath
-               Trace.trace (sprintf "Compilation completed with code %d" code)
-           )
-    )
-
-    System.Console.ReadLine() |> ignore
-
-    watcher.Dispose() // по-идеи, и так должен выгрузиться
+Target.create "CopyToMainProj" (fun _ ->
+    let srcDir = @"QspServer\bin\Debug\net461"
+    let dstDir = @"e:\Project\Qsp\QspVscodeExtension\release\bin"
+    Fake.IO.Shell.copyDir dstDir srcDir (fun _ -> true)
 )
-
 
 // --------------------------------------------------------------------------------------
 // Build order
@@ -119,5 +98,7 @@ Target.create "Watch" (fun _ ->
 open Fake.Core.TargetOperators
 
 "BuildTest"
+  ==> "Copy3rd"
+//   ==> "CopyToMainProj"
   ==> "RunTest"
 Target.runOrDefault "RunTest"

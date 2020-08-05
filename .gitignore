@@ -10,7 +10,7 @@ obj
 bin
 *.exe
 !/.paket/paket.bootstrapper.exe
-
+!3rd/txt2gam.exe
 
 ### Linux ###
 *~

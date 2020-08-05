@@ -37,6 +37,7 @@ module Position =
             End = { Line = int r.Line - 1
                     Character = int r.Column2 - 1 }
         }
+type UriString = string
 type SourceFilePath = string
 type HighlightingRequest = { FileName: string }
 type Serializer = obj -> string
@@ -86,7 +87,21 @@ module CommandResponse =
                   |> Array.map (fun (struct ((pos:Qsp.Tokens.InlineRange), tk)) ->
                       { Range = toVscodeRange2 pos; TokenType = map tk }) }
         }
+let txt2qspPath = @"3rd\txt2gam.exe"
+let buildQsp src =
+    let dst = System.IO.Path.ChangeExtension(src, ".qsp")
+    let args = sprintf "%s %s" src dst
 
+    let startProcString path args =
+        let drivenOutput = new System.Text.StringBuilder()
+        Proc.startProc (fun e ->
+            drivenOutput.AppendLine(e) |> ignore
+        ) path args
+        |> fun code -> code, drivenOutput.ToString()
+    Proc.startProcString txt2qspPath args
+let buildQspTest () =
+    let src = @"E:\Project\Qsp\QspSyntax\sample-code\Sandbox.qsps"
+    buildQsp src
 
 type Commands() =
     member x.GetHighlighting documentText = // (file: SourceFilePath) =
@@ -805,7 +820,28 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
     //         }
     //     return LspResult.success None
     // }
-    // АрбузДыняДыраБородаБор ода
+    member __.BuildSource (uriStr:UriString) =
+        async {
+            // let uri = "file:///e:/Project/Qsp/QSP-LSP/3rd/txt2gam.exe"
+            let uri =
+                try
+                    let uri = System.Uri uriStr
+                    uri.LocalPath
+                    |> Right
+                with e ->
+                    Left e.Message
+            let res =
+                match uri with
+                | Right path ->
+                    try
+                        buildQsp path |> ignore
+                        Choice2Of2 "Ok"
+                    with e ->
+                        Choice1Of2 e.Message
+                | Left err ->
+                    Choice1Of2 (sprintf "'%s'\n%A" uriStr err)
+            return LspResult.success res
+        }
 
     override __.Initialize p =
         async {
@@ -871,7 +907,7 @@ let main argv =
         defaultRequestHandlings<BackgroundServiceServer>()
         |> Map.add "fsharp/highlighting" (requestHandling (fun s p -> s.GetHighlighting(p) ))
         |> Map.add "fsharp/workspaceLoad" (requestHandling (fun s p -> s.FSharpWorkspaceLoad(p) ))
-        // |> Map.add "fsharp/workspacePeek" (requestHandling (fun s p -> s.FSharpWorkspacePeek(p) ))
+        |> Map.add "qsp/build" (requestHandling (fun s p -> s.BuildSource(p) ))
 
     Server.start requestsHandlings input output FsacClient (fun lspClient -> BackgroundServiceServer((), lspClient))
     |> printfn "%A"
