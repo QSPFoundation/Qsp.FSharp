@@ -92,15 +92,14 @@ let changeExtensionToQsp path =
 let txt2qspPath = @"3rd\txt2gam.exe"
 let buildQsp src =
     let dst = changeExtensionToQsp src
-    let args = sprintf "%s %s" src dst
+    let args = sprintf "\"%s\" \"%s\"" src dst
     let startProcString path args =
         let drivenOutput = new System.Text.StringBuilder()
         Proc.startProc (fun e ->
             drivenOutput.AppendLine(e) |> ignore
         ) path args
         |> fun code -> code, drivenOutput.ToString()
-    // TODO: so, how to make sure the compilation finished successfully?
-    Proc.startProcString txt2qspPath args
+    startProcString txt2qspPath args
 let buildQspTest () =
     let src = @"E:\Project\Qsp\QspSyntax\sample-code\Sandbox.qsps"
     buildQsp src
@@ -836,13 +835,16 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
                 match uri with
                 | Right path ->
                     try
-                        let code, _ = buildQsp path
-                        if isRun then
-                            changeExtensionToQsp path
-                            |> System.Diagnostics.Process.Start
-                            |> ignore
+                        let code, output = buildQsp path
+                        if code = 0 then
+                            if isRun then
+                                changeExtensionToQsp path
+                                |> System.Diagnostics.Process.Start
+                                |> ignore
 
-                        Choice2Of2 "Ok"
+                            Choice2Of2 "Ok"
+                        else
+                            Choice1Of2 (sprintf "txt2gam returned:\n%s" output)
                     with e ->
                         Choice1Of2 e.Message
                 | Left err ->
