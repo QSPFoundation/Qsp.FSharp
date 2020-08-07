@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Library</OutputType>
-    <TargetFramework>net461</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -18,7 +18,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <Reference Include="System.Runtime" />
     <Reference Include="..\paket-files\github.com\gretmn102\FsharpMyExtension\FsharpMyExtension\FsharpMyExtension\bin\Debug\net461\FsharpMyExtension.dll" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />

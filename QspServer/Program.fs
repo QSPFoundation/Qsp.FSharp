@@ -823,33 +823,37 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
     // }
     member __.BuildSource (uriStr:UriString) isRun =
         async {
-            // let uri = "file:///e:/Project/Qsp/QSP-LSP/3rd/txt2gam.exe"
-            let uri =
-                try
-                    let uri = System.Uri uriStr
-                    uri.LocalPath
-                    |> Right
-                with e ->
-                    Left e.Message
-            let res =
-                match uri with
-                | Right path ->
+            if System.Environment.OSVersion.Platform = System.PlatformID.Win32NT then
+                // let uri = "file:///e:/Project/Qsp/QSP-LSP/3rd/txt2gam.exe"
+                let uri =
                     try
-                        let code, output = buildQsp path
-                        if code = 0 then
-                            if isRun then
-                                changeExtensionToQsp path
-                                |> System.Diagnostics.Process.Start
-                                |> ignore
-
-                            Choice2Of2 "Ok"
-                        else
-                            Choice1Of2 (sprintf "txt2gam returned:\n%s" output)
+                        let uri = System.Uri uriStr
+                        uri.LocalPath
+                        |> Right
                     with e ->
-                        Choice1Of2 e.Message
-                | Left err ->
-                    Choice1Of2 (sprintf "'%s'\n%A" uriStr err)
-            return LspResult.success res
+                        Left e.Message
+                let res =
+                    match uri with
+                    | Right path ->
+                        try
+                            let code, output = buildQsp path
+                            if code = 0 then
+                                if isRun then
+                                    changeExtensionToQsp path
+                                    |> System.Diagnostics.Process.Start
+                                    |> ignore
+
+                                Choice2Of2 "Ok"
+                            else
+                                Choice1Of2 (sprintf "txt2gam returned:\n%s" output)
+                        with e ->
+                            Choice1Of2 e.Message
+                    | Left err ->
+                        Choice1Of2 (sprintf "'%s'\n%A" uriStr err)
+                return LspResult.success res
+            else
+                let res = Choice1Of2 (sprintf "Пока что txt2gam есть только Windows")
+                return LspResult.success res
         }
 
     override __.Initialize p =

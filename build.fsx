@@ -26,9 +26,10 @@ let mainProjPath = f mainProjName
 // Helpers
 // --------------------------------------------------------------------------------------
 open Fake.DotNet
-let buildConf = DotNet.BuildConfiguration.Debug
+let buildConf = DotNet.BuildConfiguration.Release
 let dotnetSdk = lazy DotNet.install DotNet.Versions.FromGlobalJson
 let inline dtntSmpl arg = DotNet.Options.lift dotnetSdk.Value arg
+let targetFramework = "netcoreapp3.1"
 // --------------------------------------------------------------------------------------
 // Targets
 // --------------------------------------------------------------------------------------
@@ -44,14 +45,14 @@ Target.create "Copy3rd" <| fun _ ->
     let srcDir = @"3rd"
     if not <| System.IO.Directory.Exists srcDir then
         failwithf "'%s' not found" srcDir
-    let localPath = sprintf "bin/%A/net461" buildConf
+    let localPath = sprintf "bin/%A/%s" buildConf targetFramework
     let dstDir = sprintf "%s/%s/%s" mainProjName localPath srcDir
     // printfn "%s\n%s" srcDir dstDir
     Fake.IO.Shell.copyDir dstDir srcDir (fun _ -> true)
 
 let run projName projPath =
     let dir = Fake.IO.Path.getDirectory projPath
-    let localpath = sprintf "bin/%A/net461/%s.exe" buildConf projName
+    let localpath = sprintf "bin/%A/%s/%s.exe" buildConf targetFramework projName
     let path = Fake.IO.Path.combine dir localpath
     if not <| Fake.IO.File.exists path then
         failwithf "not found %s" path
@@ -87,7 +88,7 @@ Target.create "TrimTrailingWhitespace" (fun _ ->
 )
 
 Target.create "CopyToMainProj" (fun _ ->
-    let srcDir = @"QspServer\bin\Debug\net461"
+    let srcDir = sprintf @"QspServer\bin\%A\%s" buildConf targetFramework
     let dstDir = @"e:\Project\Qsp\QspVscodeExtension\release\bin"
     Fake.IO.Shell.copyDir dstDir srcDir (fun _ -> true)
 )

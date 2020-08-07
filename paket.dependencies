@@ -1,7 +1,7 @@
 storage: none
 source https://www.nuget.org/api/v2
 
-framework: >= net461
+framework: net461, netstandard2.0, netcoreapp3.1
 nuget FAKE
 nuget FParsec
 nuget FSharp.Core

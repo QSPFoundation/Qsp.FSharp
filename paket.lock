@@ -1,16 +1,16 @@
 STORAGE: NONE
-RESTRICTION: >= net461
+RESTRICTION: || (== net461) (== netcoreapp3.1) (== netstandard2.0)
 NUGET
   remote: https://www.nuget.org/api/v2
     FAKE (5.16)
     FParsec (1.1.1)
       FSharp.Core (>= 4.3.4)
-      System.ValueTuple (>= 4.4)
+      System.ValueTuple (>= 4.4) - restriction: || (== net461) (&& (== netcoreapp3.1) (>= net45)) (&& (== netstandard2.0) (>= net45))
     FSharp.Core (4.7.2)
     Fuchu (1.1)
       FSharp.Core (>= 4.3.4)
     Newtonsoft.Json (12.0.3)
-    System.ValueTuple (4.5)
+    System.ValueTuple (4.5) - restriction: || (== net461) (&& (== netcoreapp3.1) (>= net45)) (&& (== netstandard2.0) (>= net45))
 GITHUB
   remote: fsharp/FsAutoComplete
     src/LanguageServerProtocol/LanguageServerProtocol.fs (07a0e745eea71f347040efc5f8c72c1d42ddf117)

@@ -790,14 +790,14 @@ module TestOnMocks =
     let outputDir = @"..\..\..\Mocks"
     let copyAsExp path =
         System.IO.File.Copy(path, addExpToPath path, true)
-    let getPathActLocal pathAct =
+    let getPathActLocal (pathAct:string) =
         sprintf "%s\\%s" outputDir (System.IO.Path.GetFileName pathAct)
         |> fun x -> System.IO.Path.ChangeExtension(x, ".json")
     let showTest path =
         let srcPath = path
         let parseActPath = getPathActLocal srcPath
         let parseExpPath = addExpToPath parseActPath
-        let getPath path =
+        let getPath (path:string) =
             sprintf "%s\\%s" outputDir (System.IO.Path.GetFileName path)
             |> fun x -> System.IO.Path.ChangeExtension(x, ".qsps")
         let showActPath = getPath srcPath
