@@ -19,9 +19,9 @@ let f projName =
     )
 let testProjName = "Test"
 let testProjPath = @"Test\Test.fsproj"
-let mainProjName = "QspServer"
-let mainProjName2 = "QSParse"
-let mainProjPath = f mainProjName
+let serverProjName = "QspServer"
+let parserProjName = "QSParse"
+let serverProjPath = f serverProjName
 // --------------------------------------------------------------------------------------
 // Helpers
 // --------------------------------------------------------------------------------------
@@ -29,10 +29,18 @@ open Fake.DotNet
 let buildConf = DotNet.BuildConfiguration.Release
 let dotnetSdk = lazy DotNet.install DotNet.Versions.FromGlobalJson
 let inline dtntSmpl arg = DotNet.Options.lift dotnetSdk.Value arg
-let targetFramework = "netcoreapp3.1"
+let targetFrameworks = ["net461"; "netcoreapp3.1"]
 // --------------------------------------------------------------------------------------
 // Targets
 // --------------------------------------------------------------------------------------
+Target.create "BuildServer" (fun _ ->
+    serverProjPath
+    |> Fake.IO.Path.getDirectory
+    |> DotNet.build (fun x ->
+        { x with Configuration = buildConf }
+        |> dtntSmpl)
+)
+
 Target.create "BuildTest" (fun _ ->
     testProjPath
     |> Fake.IO.Path.getDirectory
@@ -45,12 +53,13 @@ Target.create "Copy3rd" <| fun _ ->
     let srcDir = @"3rd"
     if not <| System.IO.Directory.Exists srcDir then
         failwithf "'%s' not found" srcDir
-    let localPath = sprintf "bin/%A/%s" buildConf targetFramework
-    let dstDir = sprintf "%s/%s/%s" mainProjName localPath srcDir
-    // printfn "%s\n%s" srcDir dstDir
-    Fake.IO.Shell.copyDir dstDir srcDir (fun _ -> true)
-
-let run projName projPath =
+    targetFrameworks
+    |> List.iter (fun targetFramework ->
+        let localPath = sprintf "bin/%A/%s" buildConf targetFramework
+        let dstDir = sprintf "%s/%s/%s" serverProjName localPath srcDir
+        Fake.IO.Shell.copyDir dstDir srcDir (fun _ -> true)
+    )
+let run projName targetFramework projPath =
     let dir = Fake.IO.Path.getDirectory projPath
     let localpath = sprintf "bin/%A/%s/%s.exe" buildConf targetFramework projName
     let path = Fake.IO.Path.combine dir localpath
@@ -63,7 +72,8 @@ let run projName projPath =
     |> Proc.run
 
 Target.create "RunTest" (fun _ ->
-    let x = run testProjName testProjPath
+    let targetFramework = targetFrameworks.[0]
+    let x = run testProjName targetFramework testProjPath
     if x.ExitCode <> 0 then
         raise <| Fake.Testing.Common.FailedTestsException "test error"
 )
@@ -88,7 +98,7 @@ Target.create "TrimTrailingWhitespace" (fun _ ->
 )
 
 Target.create "CopyToMainProj" (fun _ ->
-    let srcDir = sprintf @"QspServer\bin\%A\%s" buildConf targetFramework
+    let srcDir = sprintf @"QspServer\bin\%A" buildConf
     let dstDir = @"e:\Project\Qsp\QspVscodeExtension\release\bin"
     Fake.IO.Shell.copyDir dstDir srcDir (fun _ -> true)
 )
@@ -98,8 +108,14 @@ Target.create "CopyToMainProj" (fun _ ->
 // --------------------------------------------------------------------------------------
 open Fake.Core.TargetOperators
 
+Target.create "Default" ignore
+
+"BuildServer"
+  ==> "Copy3rd"
+  ==> "Default"
+
 "BuildTest"
   ==> "Copy3rd"
-//   ==> "CopyToMainProj"
+  ==> "CopyToMainProj"
   ==> "RunTest"
-Target.runOrDefault "RunTest"
+Target.runOrDefault "Default"
