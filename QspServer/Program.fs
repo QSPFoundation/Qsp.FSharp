@@ -885,10 +885,7 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
                             // }
                                 None
                             CompletionProvider =
-                                Some {
-                                    ResolveProvider = Some true
-                                    TriggerCharacters = Some ([| "."; "'"; |])
-                                }
+                                None
                             CodeLensProvider =
                             // Some {
                             //     CodeLensOptions.ResolveProvider = Some true
