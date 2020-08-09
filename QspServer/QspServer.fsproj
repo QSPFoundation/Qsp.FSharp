@@ -13,7 +13,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\paket-files\fsharp\FsAutoComplete\src\LanguageServerProtocol\LanguageServerProtocol.fs">
+    <Compile Include="..\paket-files\gretmn102\LSP-API\src\LanguageServerProtocol.fs">
       <Paket>True</Paket>
       <Link>paket-files/LanguageServerProtocol.fs</Link>
     </Compile>

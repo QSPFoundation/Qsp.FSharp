@@ -9,7 +9,7 @@ nuget Fuchu
 nuget Newtonsoft.Json
 
 // https://github.com/fsharp/FsAutoComplete/tree/master/src/LanguageServerProtocol
-github fsharp/FsAutoComplete src/LanguageServerProtocol/LanguageServerProtocol.fs
+github gretmn102/LSP-API src/LanguageServerProtocol.fs
 git https://github.com/gretmn102/FsharpMyExtension.git build:"build.cmd"
 
 group Build

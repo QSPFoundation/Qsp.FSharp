@@ -12,8 +12,8 @@ NUGET
     Newtonsoft.Json (12.0.3)
     System.ValueTuple (4.5) - restriction: || (== net461) (&& (== netcoreapp3.1) (>= net45)) (&& (== netstandard2.0) (>= net45))
 GITHUB
-  remote: fsharp/FsAutoComplete
-    src/LanguageServerProtocol/LanguageServerProtocol.fs (07a0e745eea71f347040efc5f8c72c1d42ddf117)
+  remote: gretmn102/LSP-API
+    src/LanguageServerProtocol.fs (00797a8541ae01b7fa0631cd9bc8fdfd6923caf5)
 GIT
   remote: https://github.com/gretmn102/FsharpMyExtension.git
      (eff1014adc2f0aca97a72af5c28235ac34cf30d7)
