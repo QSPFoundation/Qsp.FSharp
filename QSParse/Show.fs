@@ -271,7 +271,7 @@ let showStmt indentsOption (formatConfig:FormatConfig) =
                             (f' >> List.map ((<<) tabs))
                     yield showString "end"
             ]
-        | For(var, fromExpr, toExpr, body) ->
+        | For(var, fromExpr, toExpr, stepExpr, body) ->
             let header =
                 showString "for"
                 << showSpace << showVar var
@@ -279,6 +279,11 @@ let showStmt indentsOption (formatConfig:FormatConfig) =
                 << showSpace << showExpr fromExpr
                 << showSpace << showString "to"
                 << showSpace << showExpr toExpr
+                << (stepExpr
+                    |> Option.map (fun expr ->
+                        showSpace << showString "step"
+                        << showSpace << showExpr expr
+                    ) |> Option.defaultValue empty)
                 << showChar ':'
             [
                 match body with

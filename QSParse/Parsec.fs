@@ -301,14 +301,16 @@ let pstmt =
             .>> ws .>>. pexpr
             .>> genKeywordParser "to"
             .>> ws .>>. pexpr
+            .>>. opt (genKeywordParser "step"
+                      .>> ws >>. pexpr)
             .>> pcolonKeyword
 
         pipe2
             pForHeader
             ((ws >>? skipNewline >>. spaces >>. pstmts .>> pendKeyword)
               <|> (spaces >>. pInlineStmts .>> optional pendKeyword))
-            (fun ((var, fromExpr), toExpr) body ->
-                For(var, fromExpr, toExpr, body))
+            (fun (((var, fromExpr), toExpr), stepExpr) body ->
+                For(var, fromExpr, toExpr, stepExpr, body))
     let pIf =
         let pifKeyword : _ Parser =
             genKeywordParser "if"

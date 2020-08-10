@@ -159,7 +159,7 @@ and Statement =
     | StarPl of Expr
     | If of Expr * Statement list * Statement list
     | Act of Expr list * Statement list
-    | For of var:Var * from:Expr * to':Expr * body:Statement list
+    | For of var:Var * from:Expr * to':Expr * step:Expr option * body:Statement list
     | Label of string
     | Comment of string
     | Exit

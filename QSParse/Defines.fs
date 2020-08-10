@@ -1213,4 +1213,5 @@ let keywords =
             ] |> String.concat "\n"
         "for", dscr
         "to", "**TO** — ключевое слово для конструкции FOR"
+        "step", "**STEP** — ключевое слово для конструкции FOR"
     ]

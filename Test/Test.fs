@@ -688,6 +688,7 @@ let forTests =
                   Expr
                     (Plus, Expr (Divide, Val (Int 45), Var (ImplicitNumericType, "x")),
                      Var (ImplicitNumericType, "y")),
+                  None,
                   [StarPl (Var (ImplicitNumericType, "stmt"))]))
             Assert.Equal("", Right exp, runStmtsEof input)
         testCase "inline `for i = 4 + x to 45 / x + y: stmt`" <| fun () ->
@@ -703,6 +704,23 @@ let forTests =
                   Expr
                     (Plus, Expr (Divide, Val (Int 45), Var (ImplicitNumericType, "x")),
                      Var (ImplicitNumericType, "y")),
+                  None,
+                  [StarPl (Var (ImplicitNumericType, "stmt"))]))
+            Assert.Equal("", Right exp, runStmts input)
+        testCase "inline `for i = 4 + x to 45 / x + y step x + 1: stmt`" <| fun () ->
+            let input =
+                [
+                    "for i = 4 + x to 45 / x + y step x + 1: stmt"
+                    "'statement that not belong to construction'"
+                ] |> String.concat "\n"
+            let exp =
+              (For
+                 ((ImplicitNumericType, "i"),
+                  Expr (Plus, Val (Int 4), Var (ImplicitNumericType, "x")),
+                  Expr
+                    (Plus, Expr (Divide, Val (Int 45), Var (ImplicitNumericType, "x")),
+                     Var (ImplicitNumericType, "y")),
+                  Some (Expr (Plus, Var (ImplicitNumericType, "x"), Val (Int 1))),
                   [StarPl (Var (ImplicitNumericType, "stmt"))]))
             Assert.Equal("", Right exp, runStmts input)
     ]
