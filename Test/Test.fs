@@ -98,6 +98,22 @@ let pexprTest =
               (Plus, UnarExpr (Neg, Var (ImplicitNumericType, "x")),
                UnarExpr (Neg, Var (ImplicitNumericType, "y")))
         testf input exp
+
+        let input =
+            [
+                "x + _"
+                "         "
+                "         _"
+                "    _"
+                ""
+                "    z + y"
+            ] |> String.concat "\n"
+        let exp =
+            Expr
+              (Plus,
+               Expr (Plus, Var (ImplicitNumericType, "x"), Var (ImplicitNumericType, "z")),
+               Var (ImplicitNumericType, "y"))
+        testf input exp
     ]
 // #load "Parsec.fs"
 
@@ -189,7 +205,7 @@ let assignTest =
                     "  Error in Ln: 1 Col: 2"
                     "  f(expr) = 42"
                     "   ^"
-                    "  Expecting: '+=', '-=', '=', '=+', '=-' or '['"
+                    "  Expecting: '+=', '-=', '=', '=+', '=-', '[' or '_'"
                     ""
                 ] |> String.concat "\r\n"
             Assert.Equal("", Left exp, runExpr input)

@@ -78,6 +78,9 @@ let notFollowedByBinOpIdent =
     // runStateEither p2 emptyState "node" // можно
     // runStateEither p2 emptyState "foobar" // можно
     p2
+let ws =
+    ws
+    >>. skipMany (pchar '_' >>? ((ws1 >>? skipNewline) <|> skipNewline) >>. spaces)
 
 let term expr =
     let pcallFuncOrArrOrVar =
