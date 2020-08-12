@@ -114,6 +114,12 @@ let pexprTest =
                Expr (Plus, Var (ImplicitNumericType, "x"), Var (ImplicitNumericType, "z")),
                Var (ImplicitNumericType, "y"))
         testf input exp
+
+        let input =
+            "input 'How do you do?'"
+        let exp =
+            Func ("input", [Val (String [[StringKind "How do you do?"]])])
+        testf input exp
     ]
 // #load "Parsec.fs"
 

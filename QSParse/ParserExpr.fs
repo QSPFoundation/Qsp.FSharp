@@ -83,30 +83,39 @@ let ws =
     >>. skipMany (pchar '_' >>? ((ws1 >>? skipNewline) <|> skipNewline) >>. spaces)
 
 let term expr =
+    let pterm, ptermRef = createParserForwardedToRef()
     let pcallFuncOrArrOrVar =
         let pbraket = bet_ws '[' ']' (sepBy expr (skipChar ',' >>. ws))
-        let pexplicitVar =
-            pexplicitVar VarHighlightKind.ReadAccess .>> ws .>>. opt pbraket
-            |>> fun (var, arr) ->
-                match arr with
-                | Some args -> Arr(var, args)
-                | None -> Var var
         let pBracesArgs =
             bet_ws '(' ')' (sepBy expr (pchar ',' >>. ws))
         let pcallFunctionOrArrOrVar =
+            let pimplicitVar =
+                notFollowedByBinOpIdent |>> fun x -> ImplicitNumericType, x
+            let pexplicitVar =
+                let isIdentifierFirstChar c = isLetter c || c = '_'
+                let p = many1Satisfy2L isIdentifierFirstChar isIdentifierChar "identifier"
+                // TODO: или просто `many1Satisfy isIdentifierChar` ?
+                let varType =
+                    choice [
+                        pchar '#' >>% ExplicitNumericType
+                        pchar '$' >>% StringType
+                    ]
+                varType .>>. p
+
             tuple2
-                (applyRange notFollowedByBinOpIdent
-                 .>> ws)
-                ((pBracesArgs |>> fun args -> TokenType.Function, fun name -> Func(name, args))
+                (applyRange (pexplicitVar <|> pimplicitVar) .>> ws)
+                ((pBracesArgs |>> fun args -> TokenType.Function, fun (typ', name) -> Func(name, args))
+                //   Невозможно, поскольку неоднозначно трактуется `f+1` => `f(+1)` или `f + 1`
+                //   <|> (pterm |>> fun arg -> TokenType.Function, fun (typ', name) -> Func(name, [arg]))
                   <|> (pbraket
                        |>> fun arg ->
-                            let f name = Arr((ImplicitNumericType, name), arg)
+                            let f (varType, nameVar) = Arr((varType, nameVar), arg)
                             TokenType.Variable, f)
-                  <|>% (TokenType.Variable, fun name -> Var(ImplicitNumericType, name)))
-            >>= fun ((range, name), (tokenType, f)) ->
+                  <|>% (TokenType.Variable, fun (varType, nameVar) -> Var(varType, nameVar)))
+            >>= fun ((range, (varType, name)), (tokenType, f)) ->
                     match tokenType with
                     | TokenType.Function ->
-                        match f name with
+                        match f (varType, name) with
                         | Func(name, args) as func ->
                             let p =
                                 [
@@ -120,22 +129,34 @@ let term expr =
                             >>% func
                         | func -> preturn func
                     | TokenType.Variable ->
-                        let p =
-                            Defines.vars
-                            |> Map.tryFind (name.ToLower())
-                            |> function
-                                | Some dscr ->
-                                    appendHover2 dscr range
-                                | None ->
-                                    let dscr = "Пользовательская глобальная переменная числового типа"
-                                    appendHover2 dscr range
-                        p
+                        let desc =
+                            match varType with
+                            | StringType ->
+                                Defines.vars
+                                |> Map.tryFind (sprintf "$%s" (name.ToLower()))
+                                |> function
+                                    | Some dscr -> dscr
+                                    | None -> "Пользовательская глобальная переменная строчного типа"
+                            | ExplicitNumericType ->
+                                Defines.vars
+                                |> Map.tryFind (sprintf "#%s" (name.ToLower()))
+                                |> function
+                                    | Some dscr -> dscr
+                                    | None -> "Пользовательская глобальная переменная числового типа"
+                            | ImplicitNumericType ->
+                                Defines.vars
+                                |> Map.tryFind (name.ToLower())
+                                |> function
+                                    | Some dscr -> dscr
+                                    | None ->
+                                        "Пользовательская глобальная переменная числового типа"
+                        appendHover2 desc range
                         >>. appendToken2 tokenType range
-                        >>. appendVarHighlight range (ImplicitNumericType, name) VarHighlightKind.ReadAccess
-                        >>% f name
+                        >>. appendVarHighlight range (varType, name) VarHighlightKind.ReadAccess
+                        >>% f (varType, name)
                     | tokenType ->
                         appendToken2 tokenType range
-                        >>% f name
+                        >>% f (varType, name)
         let pPreDefFunc =
             Defines.functions
             |> Seq.sortByDescending (fun (KeyValue(name, _)) -> name) // для жадности
@@ -148,7 +169,7 @@ let term expr =
             )
             |> List.ofSeq
             |> choice
-        pPreDefFunc .>> ws .>>. (opt pBracesArgs |>> Option.defaultValue [])
+        pPreDefFunc .>> ws .>>. (pBracesArgs <|> (pterm |>> List.singleton) <|>% [])
         >>= fun ((name, range, (sign, returnType)), args) ->
                 let p =
                     args
@@ -164,7 +185,6 @@ let term expr =
                             preturn ()
                 p
                 >>% Func(name, args)
-        <|> pexplicitVar
         <|> pcallFunctionOrArrOrVar
     let pval =
         choice [
@@ -174,6 +194,7 @@ let term expr =
                 (pint32 |>> Int)
         ]
         |>> Val
+    ptermRef := pval <|> pcallFuncOrArrOrVar
     pval <|> pcallFuncOrArrOrVar <|> bet_ws '(' ')' expr
 
 let pExprOld : _ Parser =
