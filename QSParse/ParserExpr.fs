@@ -80,7 +80,9 @@ let notFollowedByBinOpIdent =
     p2
 let ws =
     ws
-    >>. skipMany (pchar '_' >>? ((ws1 >>? skipNewline) <|> skipNewline) >>. spaces)
+    >>. skipMany
+            (appendToken TokenType.Underscore (pchar '_')
+             >>? ((ws1 >>? skipNewline) <|> skipNewline) >>. spaces)
 
 let term expr =
     let pterm, ptermRef = createParserForwardedToRef()

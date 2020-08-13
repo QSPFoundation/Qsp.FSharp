@@ -2,12 +2,28 @@ module Qsp.Tokens
 
 type Range = FParsec.Position * FParsec.Position
 
+[<Struct>]
 type TokenType =
+    | If
+    | ElseIf
+    | Else
+    | Act
+    | Colon
+    | End
+    | Underscore
+    | Exit
+
+    | For
+    | To
+    | Step
+
     /// в TS `var` называется `storage.type.js`
     | Type
     | Keyword
-    /// `act`, `if`, `:`, `end`
-    | KeywordControl
+
+    | SharpBeginLoc
+    | MinusEndLoc
+
     | Function
     /// В QSP `comment.line` и `comment.block` объединены
     | Comment

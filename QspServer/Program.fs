@@ -70,7 +70,19 @@ module CommandResponse =
             | Keyword -> "keyword"
             | Comment -> "comment"
             | Function -> "function"
-            | KeywordControl -> "keywordControl"
+            | If
+            | ElseIf
+            | Else
+            | Act
+            | Colon
+            | End
+            | Underscore
+            | Exit
+            | For
+            | To
+            | Step
+            | SharpBeginLoc
+            | MinusEndLoc -> "keywordControl"
             | OperatorArithmetic -> "operatorArithmetic"
             | OperatorAssignment -> "operatorAssignment"
             | OperatorComparison -> "operatorComparison"
