@@ -250,37 +250,37 @@ let pExprNew : _ Parser =
         appendToken typ (pstring c)
 
     let pNeg =
-        pchar '-' TokenType.OperatorArithmetic >>. ws >>. term
+        pchar '-' (TokenType.UnaryOperator Neg) >>. ws >>. term
         |>> fun e1 -> UnarExpr(Neg, e1)
     let pProd =
         chainl1 (pNeg <|> term .>> ws)
-            ((pchar '*' TokenType.OperatorArithmetic >>% Times
-              <|> (pchar '/' TokenType.OperatorArithmetic >>% Divide))
+            ((pchar '*' (TokenType.BinaryOperator Times) >>% Times
+              <|> (pchar '/' (TokenType.BinaryOperator Divide) >>% Divide))
              .>> ws |>> fun op e1 e2 -> Expr(op, e1, e2))
     let pMod =
         chainl1 (pProd .>> ws)
-            ((pstringCI "mod" TokenType.OperatorArithmetic >>? notFollowedVarCont >>. ws >>% Mod)
+            ((pstringCI "mod" (TokenType.BinaryOperator Mod) >>? notFollowedVarCont >>. ws >>% Mod)
              .>> ws |>> fun op e1 e2 -> Expr(op, e1, e2))
     let pSum =
         chainl1 (pMod .>> ws)
-            ((pchar '+' TokenType.OperatorArithmetic >>% Plus
-              <|> (pchar '-' TokenType.OperatorArithmetic >>% Minus))
+            ((pchar '+' (TokenType.BinaryOperator Plus) >>% Plus
+              <|> (pchar '-' (TokenType.BinaryOperator Minus) >>% Minus))
              .>> ws |>> fun op e1 e2 -> Expr(op, e1, e2))
     let pCompare pNo =
         chainl1 (pNo <|> pSum .>> ws)
             (choice [
-                pstring "=>" TokenType.OperatorComparison >>% Eg
-                pstring "=<" TokenType.OperatorComparison >>% El
-                pchar '=' TokenType.OperatorRelational >>% Eq
+                pstring "=>" (TokenType.BinaryOperator Eg) >>% Eg
+                pstring "=<" (TokenType.BinaryOperator El) >>% El
+                pchar '=' (TokenType.BinaryOperator Eq) >>% Eq
 
-                pstring "<>" TokenType.OperatorRelational >>% Ne
-                pstring "<=" TokenType.OperatorComparison >>% Le
-                pchar '<' TokenType.OperatorComparison >>% Lt
+                pstring "<>" (TokenType.BinaryOperator Ne) >>% Ne
+                pstring "<=" (TokenType.BinaryOperator Le) >>% Le
+                pchar '<' (TokenType.BinaryOperator Lt) >>% Lt
 
-                pstring ">=" TokenType.OperatorComparison >>% Ge
-                pchar '>' TokenType.OperatorComparison .>>? notFollowedBy (FParsec.CharParsers.pchar '>') >>% Gt // чтобы исключить `>>`
+                pstring ">=" (TokenType.BinaryOperator Ge) >>% Ge
+                pchar '>' (TokenType.BinaryOperator Gt) .>>? notFollowedBy (FParsec.CharParsers.pchar '>') >>% Gt // чтобы исключить `>>`
 
-                pchar '!' TokenType.OperatorRelational >>% Bang
+                pchar '!' (TokenType.BinaryOperator Bang) >>% Bang
              ]
              .>> ws |>> fun op e1 e2 -> Expr(op, e1, e2))
     let pObj pNo =

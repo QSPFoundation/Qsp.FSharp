@@ -2,7 +2,7 @@ module Qsp.Tokens
 
 type Range = FParsec.Position * FParsec.Position
 
-[<Struct>]
+// [<Struct>]
 type TokenType =
     | If
     | ElseIf
@@ -34,22 +34,27 @@ type TokenType =
     ///
     /// `=`
     | OperatorAssignment
-    /// `keyword.operator.arithmetic.js`
-    ///
-    /// `-` `+` `*` `/`
-    | OperatorArithmetic
-    /// `keyword.operator.comparison.js`
-    ///
-    /// `=`
-    | OperatorComparison
-    /// `keyword.operator.relational.js`
-    ///
-    /// `>` `>=` `<` `<=`
-    | OperatorRelational
+    // /// `keyword.operator.arithmetic.js`
+    // ///
+    // /// `-` `+` `*` `/`
+    // | OperatorArithmetic
+    // /// `keyword.operator.comparison.js`
+    // ///
+    // /// `=`
+    // | OperatorComparison
+    // /// `keyword.operator.relational.js`
+    // ///
+    // /// `>` `>=` `<` `<=`
+    // | OperatorRelational
     /// `punctuation.terminator.statement.js`
     ///
     /// `&`
     | PunctuationTerminatorStatement
+
+    // | UnaryOperator of UnaryOperator : Ast.UnarOp
+    // | BinaryOperator of BinaryOperator : Ast.Op
+    | UnaryOperator of Ast.UnarOp
+    | BinaryOperator of Ast.Op
 
     // | PunctuationDefinitionStringBegin
     // | PunctuationDefinitionStringEnd

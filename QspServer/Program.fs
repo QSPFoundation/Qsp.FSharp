@@ -4,6 +4,7 @@ open FsharpMyExtension.Either
 open LanguageServerProtocol
 open LanguageServerProtocol.Server
 open LanguageServerProtocol.Types
+open Qsp
 
 // берётся — `FSharp.Compiler.Range.range`
 type VscodeRange =
@@ -83,10 +84,35 @@ module CommandResponse =
             | Step
             | SharpBeginLoc
             | MinusEndLoc -> "keywordControl"
-            | OperatorArithmetic -> "operatorArithmetic"
+            | BinaryOperator op ->
+                match op with
+                | Ast.Plus
+                | Ast.Minus
+                | Ast.Times
+                | Ast.Divide
+                | Ast.Mod ->
+                    "operatorArithmetic"
+                | Ast.Eq ->
+                    "operatorComparison"
+                | Ast.Gt
+                | Ast.Ge
+                | Ast.Lt
+                | Ast.Le
+                | Ast.Bang
+                | Ast.Ne
+                | Ast.El
+                | Ast.Eg ->
+                    "operatorRelational"
+                | Ast.Or
+                | Ast.And ->
+                    "operatorLogical"
+            | UnaryOperator(unaryOperator) ->
+                match unaryOperator with
+                | Ast.UnarOp.Obj -> "operator"
+                | Ast.UnarOp.Loc -> "operator"
+                | Ast.UnarOp.No -> "operatorLogical"
+                | Ast.UnarOp.Neg -> "operatorArithmetic"
             | OperatorAssignment -> "operatorAssignment"
-            | OperatorComparison -> "operatorComparison"
-            | OperatorRelational -> "operatorRelational"
             | PunctuationTerminatorStatement -> "punctuationTerminatorStatement"
             | StringQuotedSingle
             | StringQuotedDouble
@@ -96,7 +122,7 @@ module CommandResponse =
             Data =
               { Highlights =
                   ranges
-                  |> Array.map (fun (struct ((pos:Qsp.Tokens.InlineRange), tk)) ->
+                  |> Array.map (fun (struct ((pos:Tokens.InlineRange), tk)) ->
                       { Range = toVscodeRange2 pos; TokenType = map tk }) }
         }
 let changeExtensionToQsp path =
