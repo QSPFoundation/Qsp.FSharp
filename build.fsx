@@ -1,7 +1,8 @@
 // --------------------------------------------------------------------------------------
 // FAKE build script
 // --------------------------------------------------------------------------------------
-#r "./packages/build/FAKE/tools/FakeLib.dll"
+#r "paket: groupref build //"
+#load ".fake/build.fsx/intellisense.fsx"
 open Fake.IO.Globbing.Operators
 open Fake.Core
 // --------------------------------------------------------------------------------------
@@ -75,7 +76,7 @@ Target.create "RunTest" (fun _ ->
     let targetFramework = targetFrameworks.[0]
     let x = run testProjName targetFramework testProjPath
     if x.ExitCode <> 0 then
-        raise <| Fake.Testing.Common.FailedTestsException "test error"
+        failwith "test error"
 )
 
 Target.create "TrimTrailingWhitespace" (fun _ ->

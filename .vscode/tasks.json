@@ -8,6 +8,7 @@
             "type": "shell",
             "command": "build.cmd",
             "args": [
+                "-t",
                 "RunTest"
             ],
             "group": {
@@ -21,6 +22,7 @@
             "type": "shell",
             "command": "build.cmd",
             "args": [
+                "-t",
                 "RunMainProj"
             ]
         },
@@ -29,17 +31,10 @@
             "type": "shell",
             "command": "build.cmd",
             "args": [
+                "-t",
                 "TrimTrailingWhitespace"
             ],
             "problemMatcher": []
-        },
-        {
-            "label": "Watch",
-            "type": "shell",
-            "command": "build.cmd",
-            "args": [
-                "Watch"
-            ]
         }
     ]
 }

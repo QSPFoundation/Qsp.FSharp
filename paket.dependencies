@@ -1,5 +1,5 @@
 storage: none
-source https://www.nuget.org/api/v2
+source https://api.nuget.org/v3/index.json
 
 framework: net461, netstandard2.0, netcoreapp3.1
 nuget FAKE
@@ -8,11 +8,23 @@ nuget FSharp.Core
 nuget Fuchu
 nuget Newtonsoft.Json
 
-// https://github.com/fsharp/FsAutoComplete/tree/master/src/LanguageServerProtocol
 github gretmn102/LSP-API src/LanguageServerProtocol.fs
 git https://github.com/gretmn102/FsharpMyExtension.git build:"build.cmd"
 
 group Build
-  source https://nuget.org/api/v2
+  source https://api.nuget.org/v3/index.json
 
-  nuget FAKE
+  nuget Fake.Core.Target
+  nuget Fake.Core.Process
+  nuget Fake.DotNet.Cli
+  nuget Fake.Core.ReleaseNotes
+  nuget Fake.DotNet.AssemblyInfoFile
+  nuget Fake.DotNet.Paket
+  nuget Fake.Tools.Git
+  nuget Fake.Core.Environment
+  nuget Fake.Core.UserInput
+  nuget Fake.IO.FileSystem
+  nuget Fake.IO.Zip
+  nuget Fake.DotNet.MsBuild
+  nuget Fake.Api.GitHub
+  nuget Microsoft.Build
