@@ -8,6 +8,9 @@
     <Tailcalls>true</Tailcalls>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\paket-files\github.com\gretmn102\FsharpMyExtension\FsharpMyExtension\FsharpMyExtension\FsharpMyExtension.fsproj">
+      <Name>FsharpMyExtension.fsproj</Name>
+    </ProjectReference>
     <ProjectReference Include="..\QSParse\QSParse.fsproj">
       <Name>QSParse.fsproj</Name>
     </ProjectReference>
@@ -18,9 +21,6 @@
       <Link>paket-files/LanguageServerProtocol.fs</Link>
     </Compile>
     <Compile Include="Program.fs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="..\paket-files\github.com\gretmn102\FsharpMyExtension\FsharpMyExtension\FsharpMyExtension\bin\Debug\net461\FsharpMyExtension.dll" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

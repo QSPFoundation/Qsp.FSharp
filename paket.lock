@@ -16,8 +16,7 @@ GITHUB
     src/LanguageServerProtocol.fs (00797a8541ae01b7fa0631cd9bc8fdfd6923caf5)
 GIT
   remote: https://github.com/gretmn102/FsharpMyExtension.git
-     (eff1014adc2f0aca97a72af5c28235ac34cf30d7)
-      build: build.cmd
+     (3a96856f4c273d8b6daf9dcd7e6fa1f6a4d959d7)
 GROUP Build
 NUGET
   remote: https://api.nuget.org/v3/index.json

@@ -7,6 +7,11 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\paket-files\github.com\gretmn102\FsharpMyExtension\FsharpMyExtension\FsharpMyExtension\FsharpMyExtension.fsproj">
+      <Name>FsharpMyExtension.fsproj</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
     <None Include="App.config" />
     <Compile Include="Ast.fs" />
     <Compile Include="Tokens.fs" />
@@ -15,10 +20,6 @@
     <Compile Include="ParserGeneric.fs" />
     <Compile Include="ParserExpr.fs" />
     <Compile Include="Parsec.fs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-    <Reference Include="..\paket-files\github.com\gretmn102\FsharpMyExtension\FsharpMyExtension\FsharpMyExtension\bin\Debug\net461\FsharpMyExtension.dll" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>
