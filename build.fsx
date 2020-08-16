@@ -9,7 +9,7 @@ open Fake.Core
 // Build variables
 // --------------------------------------------------------------------------------------
 let f projName =
-    let pattern = sprintf @"**\%s.fsproj" projName
+    let pattern = sprintf @"**/%s.fsproj" projName
     let xs = !! pattern
     xs
     |> Seq.tryExactlyOne
@@ -19,7 +19,7 @@ let f projName =
         |> failwithf "'%s' expected exactly one but:\n%A" pattern
     )
 let testProjName = "Test"
-let testProjPath = @"Test\Test.fsproj"
+let testProjPath = @"Test/Test.fsproj"
 let serverProjName = "QspServer"
 let parserProjName = "QSParse"
 let serverProjPath = f serverProjName
@@ -99,8 +99,8 @@ Target.create "TrimTrailingWhitespace" (fun _ ->
 )
 
 Target.create "CopyToMainProj" (fun _ ->
-    let srcDir = sprintf @"QspServer\bin\%A" buildConf
-    let dstDir = @"e:\Project\Qsp\QspVscodeExtension\release\bin"
+    let srcDir = sprintf @"QspServer/bin/%A" buildConf
+    let dstDir = @"e:/Project/Qsp/QspVscodeExtension/release/bin"
     Fake.IO.Shell.copyDir dstDir srcDir (fun _ -> true)
 )
 
