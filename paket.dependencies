@@ -7,6 +7,7 @@ nuget FParsec
 nuget FSharp.Core
 nuget Fuchu
 nuget Newtonsoft.Json
+nuget Argu
 
 github gretmn102/LSP-API src/LanguageServerProtocol.fs
 git https://github.com/gretmn102/FsharpMyExtension.git

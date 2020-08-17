@@ -3,9 +3,9 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>netcoreapp3.1;net461</TargetFrameworks>
-    <AssemblyName>test</AssemblyName>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\paket-files\github.com\gretmn102\FsharpMyExtension\FsharpMyExtension\FsharpMyExtension\FsharpMyExtension.fsproj">
@@ -14,17 +14,10 @@
     <ProjectReference Include="..\QSParse\QSParse.fsproj">
       <Name>QSParse.fsproj</Name>
     </ProjectReference>
-    <ProjectReference Include="..\QspServer\QspServer.fsproj">
-      <Name>QspServer.fsproj</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Utility\Utility.fsproj">
-      <Name>Utility.fsproj</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <Compile Include="OldAndNewExprTests.fs" />
-    <Compile Include="Test.fs" />
+    <Compile Include="Program.fs" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

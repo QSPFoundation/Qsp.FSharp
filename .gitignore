@@ -396,3 +396,5 @@ paket-files/
 /Utils/
 
 /Test/Mocks/
+
+/RunUtils.cmd

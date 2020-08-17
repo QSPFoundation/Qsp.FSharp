@@ -23,6 +23,8 @@ let testProjPath = @"Test/Test.fsproj"
 let serverProjName = "QspServer"
 let parserProjName = "QSParse"
 let serverProjPath = f serverProjName
+let utilityProjName = "Utility"
+let utilityProjpath = "Utility/Utility.fsproj"
 // --------------------------------------------------------------------------------------
 // Helpers
 // --------------------------------------------------------------------------------------
@@ -34,36 +36,33 @@ let targetFrameworks = ["net461"; "netcoreapp3.1"]
 // --------------------------------------------------------------------------------------
 // Targets
 // --------------------------------------------------------------------------------------
-Target.create "BuildServer" (fun _ ->
-    serverProjPath
-    |> Fake.IO.Path.getDirectory
-    |> DotNet.build (fun x ->
+let dotnetBuild =
+    DotNet.build (fun x ->
         // Чтобы в Linux'е не компилировался net461, дан этот костыль:
         { x with
                 Configuration = buildConf
-                Framework = 
+                Framework =
                     if not Environment.isWindows then
                         Some "netcoreapp3.1"
                     else
                         None
                 }
         |> dtntSmpl)
+Target.create "BuildServer" (fun _ ->
+    serverProjPath
+    |> Fake.IO.Path.getDirectory
+    |> dotnetBuild
 )
 
 Target.create "BuildTest" (fun _ ->
     testProjPath
     |> Fake.IO.Path.getDirectory
-    |> DotNet.build (fun x ->
-        // Чтобы в Linux'е не компилировался net461, дан этот костыль:
-        { x with
-                Configuration = buildConf
-                Framework = 
-                    if not Environment.isWindows then
-                        Some "netcoreapp3.1"
-                    else
-                        None
-                }
-        |> dtntSmpl)
+    |> dotnetBuild
+)
+Target.create "BuildUtility" (fun _ ->
+    utilityProjpath
+    |> Fake.IO.Path.getDirectory
+    |> dotnetBuild
 )
 
 Target.create "Copy3rd" <| fun _ ->

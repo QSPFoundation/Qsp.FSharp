@@ -18,13 +18,14 @@
             "problemMatcher": []
         },
         {
-            "label": "build&run",
+            "label": "BuildUtility",
             "type": "shell",
             "command": "build.cmd",
             "args": [
                 "-t",
-                "RunMainProj"
-            ]
+                "BuildUtility"
+            ],
+            "problemMatcher": []
         },
         {
             "label": "TrimTrailingWhitespace",
