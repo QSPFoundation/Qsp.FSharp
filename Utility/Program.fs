@@ -81,11 +81,10 @@ let patternMatching pattern =
             else
                 match stmt with
                 | Assign(_, _)
-                | CallSt(_, _)
+                | Proc(_, _)
                 | Exit -> acc
                 | Act(_, body)
                 | AssignCode(_, body) -> f acc body
-                | StarPl(_) -> acc
                 | If(_, _, _) -> acc
                 | For(var, from, to', step, body) -> f acc body
                 | Label(_) -> acc

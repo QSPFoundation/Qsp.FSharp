@@ -154,8 +154,8 @@ let (|OneStmt|_|) = function
     | [x] ->
         match x with
         // | StarPl(Val (String _)) -> None
-        | StarPl _ -> None // Как правило, строки очень длинные, потому пусть лучше будет так
-        | Assign _ | CallSt _ | Comment _ -> Some x
+        | Proc(name, _) when name.ToLower() = "*pl" -> None // Как правило, строки очень длинные, потому пусть лучше будет так
+        | Assign _ | Proc _ | Comment _ -> Some x
         | AssignCode _ -> None // спорно
         | Act _ | If _ -> None
         | Label _ -> None // эту нечисть нужно как можно более нагляднее подчеркнуть. Да странно будет, если она окажется одна в списке инструкций.
@@ -191,14 +191,7 @@ let showStmt indentsOption (formatConfig:FormatConfig) =
             [showAssign ass << spaceBetween (showChar '=' << ops op) << showExpr e]
         | Assign(ass, e) ->
             [showAssign ass << spaceBetween (showChar '=') << showExpr e]
-        | CallSt(name, es) ->
-            let args =
-                if List.isEmpty es then
-                    empty
-                else
-                    showSpace << (List.map showExpr es |> join ", ")
-            [ showString name << args ]
-        | StarPl e ->
+        | Proc(name, [e]) when name.ToLower() = "*pl" ->
             if formatConfig.IsSplitStringPl then
                 match e with
                 | Val(String str) ->
@@ -218,6 +211,13 @@ let showStmt indentsOption (formatConfig:FormatConfig) =
                     [ showExpr e ]
             else
                 [ showExpr e ]
+        | Proc(name, e) ->
+            let args =
+                if List.isEmpty e then
+                    empty
+                else
+                    showSpace << (List.map showExpr e |> join ", ")
+            [ showString name << args ]
         | Label s -> [showChar ':' << showString s]
         | If(e, thenBody, elseBody) ->
             let ifHeader e = showString "if" << showSpace << showExpr e << showChar ':'

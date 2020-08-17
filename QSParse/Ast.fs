@@ -154,9 +154,7 @@ and AssignWhat =
 and Statement =
     | Assign of AssignWhat * Expr
     | AssignCode of AssignWhat * Statement list
-    | CallSt of string * Expr list
-    /// Вычисляется `expr` и посылается в `*pl`
-    | StarPl of Expr
+    | Proc of string * Expr list
     | If of Expr * Statement list * Statement list
     | Act of Expr list * Statement list
     | For of var:Var * from:Expr * to':Expr * step:Expr option * body:Statement list

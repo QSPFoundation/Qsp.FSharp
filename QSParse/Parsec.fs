@@ -162,7 +162,7 @@ let pcallProc =
     >>= fun ((name, range, sign), args) ->
         match sign with
         | None ->
-            preturn (CallSt(name, List.map snd args))
+            preturn (Proc(name, List.map snd args))
         | Some x ->
             let procNameLower = String.toLower name
             let pLoc =
@@ -210,7 +210,7 @@ let pcallProc =
                 | Some () ->
                     preturn ()
             >>. pLoc
-            >>% CallSt(name, List.map snd args)
+            >>% Proc(name, List.map snd args)
 
 let pcomment : _ Parser =
     let stringLiteralWithToken : _ Parser =
@@ -377,7 +377,7 @@ let pstmt =
             pAssign pstmts
             pcallProc
             notFollowedBy (pchar '-' >>. ws >>. (skipNewline <|> skipChar '-' <|> eof)) // `-` завершает локацию
-            >>. (pexpr |>> StarPl)
+            >>. (pexpr |>> fun arg -> Proc("*pl", [arg]))
         ]
     pstmt
 

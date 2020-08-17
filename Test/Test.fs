@@ -339,7 +339,7 @@ let stringLiteralWithTokenTest =
             let input = "'<a href=\"exec:GT ''changes''\">changes</a>'"
             let exp =
               [[HyperLinkKind
-                  (StaticStmts [CallSt ("GT", [Val (String [[StringKind "changes"]])])],
+                  (StaticStmts [Proc ("GT", [Val (String [[StringKind "changes"]])])],
                    [[StringKind "changes"]])]]
             Assert.Equal("", Right exp, runEither input)
         testCase "test '<a href=\"exec: ''<<''x''>>''\">action</a>'" <| fun () ->
@@ -393,13 +393,13 @@ let pcallProcTests =
         testCase "pcallProcTests base" <| fun () ->
             let input = "someProc arg1"
             let exp =
-                CallSt ("someProc", [Var (ImplicitNumericType, "arg1")])
+                Proc ("someProc", [Var (ImplicitNumericType, "arg1")])
 
             Assert.Equal("", Right exp, runStmts input)
         testCase "pcallProcTests base many args" <| fun () ->
             let input = "someProc z / 2, x + y"
             let exp =
-                (CallSt
+                (Proc
                    ("someProc",
                     [Expr (Divide, Var (ImplicitNumericType, "z"), Val (Int 2));
                      Expr
@@ -450,29 +450,29 @@ let pcallProcTests =
             Assert.None("", act)
         testCase "*pl" <| fun () ->
             let input = "*pl"
-            let exp = CallSt ("*pl", [])
+            let exp = Proc ("*pl", [])
             Assert.Equal("", Right exp, runStmts input)
         testCase "*pl arg1, arg2" <| fun () ->
             let input = "*pl arg1, arg2"
             let exp =
-                (CallSt
+                (Proc
                    ("*pl",
                     [Var (ImplicitNumericType, "arg1"); Var (ImplicitNumericType, "arg2")]))
             Assert.Equal("", Right exp, runStmts input)
         testCase "call `p2 x`, который начинается на заданный оператор `p`, но образует новый" <| fun () ->
             let input = "p2 x"
             let exp =
-                CallSt ("p2", [Var (ImplicitNumericType, "x")])
+                Proc ("p2", [Var (ImplicitNumericType, "x")])
             Assert.Equal("", Right exp, runStmts input)
         testCase "call ad-hoc `add obj`" <| fun () ->
             let input = "add obj"
             let exp =
-                CallSt ("addobj", [])
+                Proc ("addobj", [])
             Assert.Equal("", Right exp, runStmts input)
         testCase "call ad-hoc `close all`" <| fun () ->
             let input = "close all"
             let exp =
-                CallSt ("close all", [])
+                Proc ("close all", [])
             Assert.Equal("", Right exp, runStmts input)
     ]
 
@@ -484,6 +484,7 @@ let printStmt stmt =
     Qsp.Show.showStmt (Qsp.Show.UsingSpaces 4) Show.FormatConfig.Default stmt
     |> ShowList.joinEmpty "\n"
     |> ShowList.show
+let StarPl arg = Proc("*pl", [arg])
 [<Tests>]
 let ifTests =
     let runStmts str =
@@ -505,7 +506,7 @@ let ifTests =
                 ] |> String.concat "\n"
             let exp =
                 (If
-                   (Var (ImplicitNumericType, "expr"), [CallSt ("gt", [Val (String [[StringKind "hall"]])])],
+                   (Var (ImplicitNumericType, "expr"), [Proc ("gt", [Val (String [[StringKind "hall"]])])],
                     []))
             Assert.Equal("", Right exp, runStmts input)
         testCase "inline if 2" <| fun () ->
@@ -666,7 +667,7 @@ let ifTests =
               (If
                  (Var (ImplicitNumericType, "expr1"),
                   [StarPl (Var (ImplicitNumericType, "stmt1"));
-                   Act ([Val (String [[StringKind "arg"]])], [CallSt ("pl", [])])],
+                   Act ([Val (String [[StringKind "arg"]])], [Proc ("pl", [])])],
                   [If
                      (Var (ImplicitNumericType, "expr2"),
                       [If
@@ -766,7 +767,7 @@ let stmtTests =
                     "'statement that not belong to construction'"
                 ] |> String.concat "\n"
             let exp =
-                Act ([Val (String [[StringKind "some act"]])], [CallSt ("gt", [Val (String [[StringKind "hall"]])])])
+                Act ([Val (String [[StringKind "some act"]])], [Proc ("gt", [Val (String [[StringKind "hall"]])])])
 
             Assert.Equal("", Right exp, runStmts input)
 
@@ -791,7 +792,7 @@ let stmtTests =
         testCase "call procedure" <| fun () ->
             let input = "gt 'begin', 'real_character'"
             let exp =
-                CallSt ("gt", [Val (String [[StringKind "begin"]]); Val (String [[StringKind "real_character"]])])
+                Proc ("gt", [Val (String [[StringKind "begin"]]); Val (String [[StringKind "real_character"]])])
             Assert.Equal("", Right exp, runStmtsEof input)
         // testCase "call " <| fun () ->
         //     let input = "The(Lady), or, the, Tiger"
