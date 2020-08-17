@@ -79,7 +79,12 @@ let showValue showExpr showStmtsInline = function
 let ops = Op.toString >> showString
 
 let unar = function No -> "no" | Obj -> "obj" | Neg -> "-" | Loc -> "loc"
-
+let showFuncName = function
+    | PredefUndef.Predef name ->
+        let name = (string name).ToLower()
+        showString name
+    | PredefUndef.Undef name ->
+        showString name
 let rec simpleShowExpr showStmtsInline expr : ShowS =
     let rec f = function
         | Val v -> showValue (simpleShowExpr showStmtsInline) showStmtsInline v
@@ -90,7 +95,7 @@ let rec simpleShowExpr showStmtsInline expr : ShowS =
                     empty
                 else
                     showParen true (List.map f args |> join ", ")
-            showString name << args
+            showFuncName name << args
         | UnarExpr(op, e) ->
             let space = function Obj | No | Loc -> showSpace | Neg -> id
             let x =
@@ -131,7 +136,7 @@ let rec showExpr showStmtsInline = function
             else
                 showParen true
                     (List.map (showExpr showStmtsInline) args |> join ", ")
-        showString name << args
+        showFuncName name << args
     | UnarExpr(op, e) ->
         let space = function Obj | No | Loc -> showSpace | Neg -> id
         showString (unar op) << space op << showExpr showStmtsInline e

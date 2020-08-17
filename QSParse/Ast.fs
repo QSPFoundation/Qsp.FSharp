@@ -1,6 +1,7 @@
 module Qsp.Ast
 open FsharpMyExtension
-
+open Qsp
+[<Struct>]
 type Op =
     /// `+`
     | Plus
@@ -70,6 +71,7 @@ module Op =
     let fromString =
         let m = Array.map (fun (a, b) -> b, a) ops |> Map.ofArray
         fun x -> match Map.tryFind x m with Some x -> x | None -> failwithf "not found %A" x
+[<Struct>]
 type UnarOp =
     /// `-`
     | Neg
@@ -113,7 +115,7 @@ module Precedences =
         | OpB Mod -> 7
         | OpB Times | OpB Divide -> 8
         | PrefB Neg -> 9
-
+[<Struct>]
 type VarType =
     /// `varName`, если к такой присвоить строковое значение, то интерпретатор попытается преобразовать ее в число. Если не получится, выбьет ошибку.
     | ImplicitNumericType
@@ -121,6 +123,9 @@ type VarType =
     | ExplicitNumericType
     /// `$varName`, к такой переменной можно смело присваивать и число, и строку
     | StringType
+type 'Predef PredefUndef =
+    | Predef of 'Predef
+    | Undef of string
 type Var = VarType * string
 type StmtsOrRaw =
     | Raw of string
@@ -141,7 +146,7 @@ and Value =
 and Expr =
     | Val of Value
     | Var of var:Var
-    | Func of string * Expr list
+    | Func of Defines.PredefFunc PredefUndef * Expr list
     | Arr of var:Var * Expr list
     | UnarExpr of UnarOp * Expr
     | Expr of Op * Expr * Expr

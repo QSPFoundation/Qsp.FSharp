@@ -47,7 +47,7 @@ let pAssign stmts =
                     <|> (puint32 >>% "")
                     <|> stringLiteral)
                 >>. sepBy1 pexpr (char_ws ',')
-                |>> fun args -> Assign(ass, Func(name, args)) // То есть `a = min x, y` можно, что ли? Хм...
+                |>> fun args -> Assign(ass, Func(Undef name, args)) // То есть `a = min x, y` можно, что ли? Хм...
         let assexpr = call <|> (pexpr |>> fun defExpr -> Assign(ass, defExpr))
 
         let str_ws s =

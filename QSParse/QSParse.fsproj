@@ -13,9 +13,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <Compile Include="Defines.fs" />
     <Compile Include="Ast.fs" />
     <Compile Include="Tokens.fs" />
-    <Compile Include="Defines.fs" />
     <Compile Include="Show.fs" />
     <Compile Include="ParserGeneric.fs" />
     <Compile Include="ParserExpr.fs" />

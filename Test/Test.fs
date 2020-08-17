@@ -118,7 +118,7 @@ let pexprTest =
         let input =
             "input 'How do you do?'"
         let exp =
-            Func ("input", [Val (String [[StringKind "How do you do?"]])])
+            Func (Predef Defines.Input, [Val (String [[StringKind "How do you do?"]])])
         testf input exp
     ]
 // #load "Parsec.fs"
@@ -785,7 +785,7 @@ let stmtTests =
             let exp =
               (StarPl
                  (Func
-                    ("iif",
+                    (Predef Defines.Iif,
                      [Expr (Ge, Var (ImplicitNumericType, "somevar"), Val (Int 2));
                       Val (String [[StringKind "thenBody"]]); Val (String [[StringKind "elseBody"]])])))
             Assert.Equal("", Right exp, runStmtsEof input)

@@ -2,7 +2,7 @@ module Qsp.Tokens
 
 type Range = FParsec.Position * FParsec.Position
 
-// [<Struct>]
+[<Struct>]
 type TokenType =
     | If
     | ElseIf
@@ -51,10 +51,8 @@ type TokenType =
     /// `&`
     | PunctuationTerminatorStatement
 
-    // | UnaryOperator of UnaryOperator : Ast.UnarOp
-    // | BinaryOperator of BinaryOperator : Ast.Op
-    | UnaryOperator of Ast.UnarOp
-    | BinaryOperator of Ast.Op
+    | UnaryOperator of UnaryOperator : Ast.UnarOp
+    | BinaryOperator of BinaryOperator : Ast.Op
 
     // | PunctuationDefinitionStringBegin
     // | PunctuationDefinitionStringEnd

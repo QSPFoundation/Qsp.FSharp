@@ -85,6 +85,27 @@ let ws =
              >>? ((ws1 >>? skipNewline) <|> skipNewline) >>. spaces)
 
 let term expr =
+    let getDesc (varType, (name:string)) =
+        match varType with
+        | StringType ->
+            Defines.vars
+            |> Map.tryFind (sprintf "$%s" (name.ToLower()))
+            |> function
+                | Some dscr -> dscr
+                | None -> "Пользовательская глобальная переменная строчного типа"
+        | ExplicitNumericType ->
+            Defines.vars
+            |> Map.tryFind (sprintf "#%s" (name.ToLower()))
+            |> function
+                | Some dscr -> dscr
+                | None -> "Пользовательская глобальная переменная числового типа"
+        | ImplicitNumericType ->
+            Defines.vars
+            |> Map.tryFind (name.ToLower())
+            |> function
+                | Some dscr -> dscr
+                | None ->
+                    "Пользовательская глобальная переменная числового типа"
     let pterm, ptermRef = createParserForwardedToRef()
     let pcallFuncOrArrOrVar =
         let pbraket = bet_ws '[' ']' (sepBy expr (skipChar ',' >>. ws))
@@ -106,73 +127,55 @@ let term expr =
 
             tuple2
                 (applyRange (pexplicitVar <|> pimplicitVar) .>> ws)
-                ((pBracesArgs |>> fun args -> TokenType.Function, fun (typ', name) -> Func(name, args))
+                ((pBracesArgs
+                  |>> fun args ->
+                    let tokenType = TokenType.Function
+                    fun (funType, name) range ->
+                        let p =
+                            [
+                                "Такой функции нет, а если есть, то напишите мне, автору расширения, пожалуйста, и я непременно добавлю."
+                                "Когда-нибудь добавлю: 'Возможно, вы имели ввиду: ...'"
+                            ]
+                            |> String.concat "\n"
+                            |> appendSemanticError range
+                        p
+                        >>. appendToken2 tokenType range
+                        >>% Func(Undef name, args)
+                    )
                 //   Невозможно, поскольку неоднозначно трактуется `f+1` => `f(+1)` или `f + 1`
                 //   <|> (pterm |>> fun arg -> TokenType.Function, fun (typ', name) -> Func(name, [arg]))
                   <|> (pbraket
-                       |>> fun arg ->
-                            let f (varType, nameVar) = Arr((varType, nameVar), arg)
-                            TokenType.Variable, f)
-                  <|>% (TokenType.Variable, fun (varType, nameVar) -> Var(varType, nameVar)))
-            >>= fun ((range, (varType, name)), (tokenType, f)) ->
-                    match tokenType with
-                    | TokenType.Function ->
-                        match f (varType, name) with
-                        | Func(name, args) as func ->
-                            let p =
-                                [
-                                    "Такой функции нет, а если есть, то напишите мне, автору расширения, пожалуйста, и я непременно добавлю."
-                                    "Когда-нибудь добавлю: 'Возможно, вы имели ввиду: ...'"
-                                ]
-                                |> String.concat "\n"
-                                |> appendSemanticError range
-                            p
-                            >>. appendToken2 tokenType range
-                            >>% func
-                        | func -> preturn func
-                    | TokenType.Variable ->
-                        let desc =
-                            match varType with
-                            | StringType ->
-                                Defines.vars
-                                |> Map.tryFind (sprintf "$%s" (name.ToLower()))
-                                |> function
-                                    | Some dscr -> dscr
-                                    | None -> "Пользовательская глобальная переменная строчного типа"
-                            | ExplicitNumericType ->
-                                Defines.vars
-                                |> Map.tryFind (sprintf "#%s" (name.ToLower()))
-                                |> function
-                                    | Some dscr -> dscr
-                                    | None -> "Пользовательская глобальная переменная числового типа"
-                            | ImplicitNumericType ->
-                                Defines.vars
-                                |> Map.tryFind (name.ToLower())
-                                |> function
-                                    | Some dscr -> dscr
-                                    | None ->
-                                        "Пользовательская глобальная переменная числового типа"
+                       |>> fun args ->
+                            fun (varType, nameVar) range ->
+                                let desc = getDesc(varType, nameVar)
+                                appendHover2 desc range
+                                >>. appendToken2 TokenType.Variable range
+                                >>. appendVarHighlight range (varType, nameVar) VarHighlightKind.ReadAccess
+                                >>% Arr((varType, nameVar), args))
+                  <|>% fun (varType, nameVar) range ->
+                        let desc = getDesc(varType, nameVar)
                         appendHover2 desc range
-                        >>. appendToken2 tokenType range
-                        >>. appendVarHighlight range (varType, name) VarHighlightKind.ReadAccess
-                        >>% f (varType, name)
-                    | tokenType ->
-                        appendToken2 tokenType range
-                        >>% f (varType, name)
+                        >>. appendToken2 TokenType.Variable range
+                        >>. appendVarHighlight range (varType, nameVar) VarHighlightKind.ReadAccess
+                        >>% Var(varType, nameVar))
+            >>= fun ((range, (varType, name)), f) ->
+                    f (varType, name) range
+
         let pPreDefFunc =
             Defines.functions
             |> Seq.sortByDescending (fun (KeyValue(name, _)) -> name) // для жадности
-            |> Seq.map (fun (KeyValue(name, (dscr, sign))) ->
+            |> Seq.map (fun (KeyValue(name, x)) ->
                 applyRange (pstringCI name .>>? notFollowedVarCont)
                 >>= fun (range, name) ->
                     appendToken2 TokenType.Function range
-                    >>. appendHover2 dscr range
-                    >>% (name, range, sign)
+                    >>. appendHover2 x.Description range
+                    >>% (name, range, x)
             )
             |> List.ofSeq
             |> choice
         pPreDefFunc .>> ws .>>. (pBracesArgs <|> (pterm |>> List.singleton) <|>% [])
-        >>= fun ((name, range, (sign, returnType)), args) ->
+        >>= fun ((stringName, range, x), args) ->
+                let sign, returnType = x.Signature
                 let p =
                     args
                     |> Array.ofList
@@ -180,13 +183,13 @@ let term expr =
                     |> function
                         | None ->
                             let msg =
-                                Defines.Show.printFuncSignature name returnType sign
+                                Defines.Show.printFuncSignature stringName returnType sign
                                 |> sprintf "Ожидается одна из перегрузок:\n%s"
                             appendSemanticError range msg
                         | Some () ->
                             preturn ()
                 p
-                >>% Func(name, args)
+                >>% Func(Predef x.SymbolicName, args)
         <|> pcallFunctionOrArrOrVar
     let pval =
         choice [

@@ -402,6 +402,47 @@ let vars =
         "nosave", dscr
     ]
     |> Map.ofList
+[<Struct>]
+type PredefFunc =
+    | Arrcomp
+    | Arrpos
+    | Arrsize
+    | Countobj
+    | Curacts
+    | Curloc
+    | Desc
+    | Dyneval
+    | Func
+    | Getobj
+    | Iif
+    | Input
+    | Instr
+    | Isnum
+    | Isplay
+    | Lcase
+    | Len
+    | Maintxt
+    | Max
+    | Mid
+    | Min
+    | Msecscount
+    | Qspver
+    | Rand
+    | Replace
+    | Rgb
+    | Rnd
+    | Selact
+    | Selobj
+    | Stattxt
+    | Str
+    | Strcomp
+    | Strfind
+    | Strpos
+    | Trim
+    | Ucase
+    | User_text
+    | Usrtxt
+    | Val
 let functions =
     let arg x (return':VarType) = arg x, return'
     let unit' (return':VarType) = unit', return'
@@ -418,32 +459,32 @@ let functions =
                 [| Numeric; Numeric |], ()
                 [| Numeric |], ()
             ] |> JustOverloads
-        "rand", dscr, (os, Numeric)
+        Rand, dscr, (os, Numeric)
         let dscr =
             [
                 "возвращает название текущей локации, также можно использовать переменную `$curloc`"
             ] |> String.concat "\n"
-        "curloc", dscr, unit' String
+        Curloc, dscr, unit' String
         let dscr =
             [
                 "возвращает случайное значение от 1 до 1000."
             ] |> String.concat "\n"
-        "rnd", dscr, unit' Numeric
+        Rnd, dscr, unit' Numeric
         let dscr =
             [
                 "`INPUT([$выражение])` - выводит окно ввода с приглашением [$выражение]. Возвращает введённый играющим текст, либо '' (пустая строка), если была нажата кнопка \"Отмена\"."
             ] |> String.concat "\n"
-        "input", dscr, arg String String
+        Input, dscr, arg String String
         let dscr =
             [
                 "возвращает текст, находящийся в строке ввода. Синоним `usrtxt`"
             ] |> String.concat "\n"
-        "user_text", dscr, unit' String
+        User_text, dscr, unit' String
         let dscr =
             [
                 "возвращает текст, находящийся в строке ввода. Синоним `user_text`"
             ] |> String.concat "\n"
-        "usrtxt", dscr, unit' String
+        Usrtxt, dscr, unit' String
         let dscr =
             [
                 "`MAX([выражение 1],[выражение 2], ...)` - возвращает максимальное из значений выражений-аргументов. Если передан один аргумент, то считается, что указано имя массива - в этом случае поиск максимального элемента происходит среди строковых (если название массива указано со знаком \"$\") или среди числовых значений элементов массива. Например:"
@@ -455,52 +496,52 @@ let functions =
                 "MAX('$b') & ! вернёт максимальное из строковых значений элементов массива \"B\""
                 "```"
             ] |> String.concat "\n"
-        "max", dscr, argList Any Any
+        Max, dscr, argList Any Any
         let dscr =
             [
                 "`MIN([выражение 1],[выражение 2], ...)` - возвращает минимальное из значений выражений-аргументов. Если передан один аргумент, то считается, что указано имя массива - в этом случае поиск минимального элемента происходит среди строковых (если название массива указано со знаком \"$\") или среди числовых значений элементов массива."
             ] |> String.concat "\n"
-        "min", dscr, argList Any Any
+        Min, dscr, argList Any Any
         let dscr =
             [
                 "`IIF([#выражение],[выражение_да],[выражение_нет])` - возвращает значение выражения [выражение_да], если [#выражение] верно, иначе значение выражения [выражение_нет]."
             ] |> String.concat "\n"
-        "iif", dscr, args [Numeric; Any; Any] Any
+        Iif, dscr, args [Numeric; Any; Any] Any
         let dscr =
             [
                 "`RGB([#выражение 1],[#выражение 2],[#выражение 3])` - возвращает код цвета на основе 3-х числовых аргументов. [#выражение 1], [#выражение 2] и [#выражение 3] определяют соответственно уровни красного, зелёного и синего цветов. Все значения аргументов должны быть в отрезке [0, 255]. Данная функция используется совместно с системными переменными `BCOLOR`, `FCOLOR` и `LCOLOR`."
             ] |> String.concat "\n"
-        "rgb", dscr, args [Numeric; Numeric; Numeric] Numeric
+        Rgb, dscr, args [Numeric; Numeric; Numeric] Numeric
         let dscr =
             [
                 "`ISPLAY([$выражение])` - проверяет, проигрывается ли файл с заданным названием в текущий момент времени и возвращает -1, если файл воспроизводится, иначе 0."
             ] |> String.concat "\n"
-        "isplay", dscr, arg String Numeric
+        Isplay, dscr, arg String Numeric
         let dscr =
             [
                 "возвращает количество миллисекунд, прошедших с момента начала игры."
             ] |> String.concat "\n"
-        "msecscount", dscr, unit' Numeric
+        Msecscount, dscr, unit' Numeric
         let dscr =
             [
                 "`DESC([$выражение])` - возвращает текст базового описания локации с заданным в [$выражение] названием."
             ] |> String.concat "\n"
-        "desc", dscr, arg String String
+        Desc, dscr, arg String String
         let dscr =
             [
                 "возвращает текст, находящийся в основном окне описаний. Также есть переменная `$maintxt`"
             ] |> String.concat "\n"
-        "maintxt", dscr, unit' String
+        Maintxt, dscr, unit' String
         let dscr =
             [
                 "возвращает текст, находящийся в окне пользователя. Также есть переменная `$stattxt`"
             ] |> String.concat "\n"
-        "stattxt", dscr, unit' String
+        Stattxt, dscr, unit' String
         let dscr =
             [
                 "возвращает версию интерпретатора в формате \"X.Y.Z\""
             ] |> String.concat "\n"
-        "qspver", dscr, unit' String
+        Qspver, dscr, unit' String
         let dscr =
             [
                 "`FUNC([$выражение],[параметр 1],[параметр 2], ...)` - обработка локации с названием `[$выражение]`. Указанные параметры передаются в массиве `ARGS`. Результат функции равен значению `$RESULT` при возврате строкового значения или `RESULT` при возврате числового значения. Если при обработке локации были установлены и `RESULT`, и `$RESULT`, то предпочтение отдаётся строковому значению. После обработки локации предыдущие значения `ARGS` и `RESULT` восстанавливаются. Примеры:"
@@ -509,11 +550,7 @@ let functions =
                 "PL FUNC($name, 1) * 78 & ! обработка локации с названием в $name как функции. `ARGS[0]` равен 1."
                 "MSG \"text\" + FUNC($name, \"строка\", 2) & ! обработка локации с названием в $name как функции. `$ARGS[0]` содержит строку \"строка\", `ARGS[1]` равен 2."
                 "```"
-            ] |> String.concat "\n"
-        "func", dscr, argList Any Any
-        let dscr =
-            [
-                "То же, что и `FUNC`, только возвращает строчный тип:"
+                "Также можно использовать `$func`:"
                 "```qsp"
                 "# start"
                 "$func('toString', 1) & ! -> '1'"
@@ -524,7 +561,7 @@ let functions =
                 "-"
                 "```"
             ] |> String.concat "\n"
-        "$func", dscr, argList Any String
+        Func, dscr, argList Any Any
         let dscr =
             [
                 "`DYNEVAL([$выражение],[параметр 1],[параметр 2], ...)` - возвращает значение указанного выражения. Функция позволяет вычислять значения динамически сгенерированных выражений. Указанные параметры передаются в массиве `ARGS`, а после вычисления выражения предыдущие значения `ARGS` восстанавливаются. Примеры:"
@@ -536,17 +573,17 @@ let functions =
                 "$x = DYNEVAL(\"$result = 'текст'\") & $x"
                 "```"
             ] |> String.concat "\n"
-        "dyneval", dscr, argAndArgList String Any Any
+        Dyneval, dscr, argAndArgList String Any Any
         let dscr =
             [
                 "возвращает количество предметов в рюкзаке."
             ] |> String.concat "\n"
-        "countobj", dscr, unit' Numeric
+        Countobj, dscr, unit' Numeric
         let dscr =
             [
                 "возвращает название выделенного предмета."
             ] |> String.concat "\n"
-        "selobj", dscr, unit' String
+        Selobj, dscr, unit' String
         let dscr =
             [
                 "`GETOBJ([#выражение])` - возвращает название предмета в рюкзаке, расположенного в заданной позиции. Индексация предметов рюкзака ведётся с 1."
@@ -569,7 +606,7 @@ let functions =
                 "END"
                 "```"
             ] |> String.concat "\n"
-        "getobj", dscr, arg Numeric String
+        Getobj, dscr, arg Numeric String
         let dscr =
             [
                 "`ARRCOMP([#выражение 1],[$выражение 2],[$выражение 3])` - возвращает индекс элемента массива с названием `[$выражение 2]`, соответствующего регулярному выражению `[$выражение 3]`. Поиск начинается с элемента номер `[#выражение 1]`; индексация элементов массива ведётся с нуля. Параметр `[#выражение 1]` может отсутствовать, при этом он принимается равным 0. Если элемент не найден, функция возвращает -1."
@@ -586,12 +623,12 @@ let functions =
                 [| Numeric; String; String |], ()
                 [| String; String |], ()
             ] |> JustOverloads
-        "arrcomp", dscr, (funcs, String)
+        Arrcomp, dscr, (funcs, String)
         let dscr =
             [
                 "`STRCOMP([$выражение],[$шаблон])` - проводит сравнение строки `[$выражение]` на соответствие регулярному выражению `[$шаблон]`. Возвращает -1, если строка соответствует шаблону, иначе 0. Сравни с функцией `STRFIND`."
             ] |> String.concat "\n"
-        "strcomp", dscr, args [String; String] Numeric
+        Strcomp, dscr, args [String; String] Numeric
         let dscr =
             [
                 "`STRFIND([$выражение],[$шаблон],[#номер])` - возвращает подстроку в строке `[$выражение]`, соответствующую группе с номером `[#номер]` регулярного выражения `[$шаблон]`. Если подстрока с указанным номером отсутствует, то возвращается пустая строка. Нумерация групп подстрок начинается с 1. Если параметр `[#номер]` отсутствует или равен 0, то возвращается подстрока, соответствующая всему регулярному выражению `[$шаблон]`. Примеры:"
@@ -611,8 +648,7 @@ let functions =
                 "STRFIND('идти к своему дому', 'к\\s(\\S+)', 1) & ! -> 'своему'"
                 "```"
             ] |> String.concat "\n"
-        "strfind", dscr, (argsAndOptional [ String; String ] Numeric, String)
-        "$strfind", dscr, (argsAndOptional [ String; String ] Numeric, String)
+        Strfind, dscr, (argsAndOptional [ String; String ] Numeric, String)
         let dscr =
             [
                 "`STRPOS([$выражение],[$шаблон],[#номер])` - возвращает позицию символа, с которого начинается вхождение подстроки в строке `[$выражение]`, соответствующей группе с номером `[#номер]` регулярного выражения `[$шаблон]`. Если подстрока с указанным номером отсутствует, то возвращается 0. Нумерация групп подстрок начинается с 1. Если параметр `[#номер]` отсутствует или равен 0, то возвращается позиция символа, с которого начинается вхождение подстроки, соответствующей всему регулярному выражению `[$шаблон]`."
@@ -633,12 +669,12 @@ let functions =
                 "STRPOS('идти к своему дому', 'к\\s(\\S+)', 1) & ! -> 8"
                 "```"
             ] |> String.concat "\n"
-        "strpos", dscr, (argsAndOptional [ String; String ] Numeric, Numeric)
+        Strpos, dscr, (argsAndOptional [ String; String ] Numeric, Numeric)
         let dscr =
             [
                 "возвращает текущие действия в виде текста. Сохранив значение в переменной, восстановить действия можно в любой момент игры с помощью оператора `DYNAMIC`."
             ] |> String.concat "\n"
-        "curacts", dscr, unit' String
+        Curacts, dscr, unit' String
         let dscr =
             [
                 "`ARRPOS([#выражение 1],[$выражение 2],[выражение 3])` - возвращает индекс элемента массива с названием `[$выражение 2]`, равного значению выражения `[выражение 3]`. Поиск начинается с элемента номер `[#выражение 1]`; индексация элементов массива ведётся с нуля. Параметр [#выражение 1] может отсутствовать, при этом он принимается равным 0. Если указанное значение не найдено, функция возвращает -1."
@@ -652,12 +688,12 @@ let functions =
                 [| Numeric; String; Any |], ()
                 [| String; Any |], ()
             ] |> JustOverloads
-        "arrpos", dscr, (funcs, Numeric)
+        Arrpos, dscr, (funcs, Numeric)
         let dscr =
             [
                 "`ARRSIZE([$выражение])` - возвращает число элементов в массиве с названием `[$выражение]`."
             ] |> String.concat "\n"
-        "arrsize", dscr, arg String Numeric
+        Arrsize, dscr, arg String Numeric
         let dscr =
             [
                 "`INSTR([#выражение 1],[$выражение 2],[$выражение 3])` - возвращает номер позиции символа, с которого начинается вхождение строки `[$выражение 3]` в строку `[$выражение 2]` (или 0, если такой строки нет). Поиск начинается с символа номер `[#выражение 1]`. Параметр `[#выражение 1]` может отсутствовать, при этом он принимается равным 1. Примеры:"
@@ -670,7 +706,7 @@ let functions =
                 [| Numeric; String; String |], ()
                 [| String; String |], ()
             ] |> JustOverloads
-        "instr", dscr, (funcs, Numeric)
+        Instr, dscr, (funcs, Numeric)
         let dscr =
             [
                 "`ISNUM([$выражение])` - функция проверяет, все ли символы в строке являются цифрами (учитывая знак \"-\" в начале, прилегающие пробелы и символы табуляции). Если в указанной строке есть хотя бы один символ - не-цифра (исключая возможный \"-\" в начале и прилегающие пробелы / символы табуляции), то функция возвращает 0 (ложь), иначе -1 (истина)."
@@ -679,7 +715,7 @@ let functions =
                 "`ISNUM(' -888')` равно `-1`"
                 "`ISNUM('777a6')` равно `0`"
             ] |> String.concat "\n"
-        "isnum", dscr, arg String Numeric
+        Isnum, dscr, arg String Numeric
         let dscr =
             [
                 "`LCASE([$выражение])` - возвращает строку маленьких букв, полученную изменением регистра букв исходной строки `[$выражение]`. Пример:"
@@ -687,12 +723,12 @@ let functions =
                 "LCASE('TExT#') & ! 'text#'"
                 "```"
             ] |> String.concat "\n"
-        "lcase", dscr, arg String String
+        Lcase, dscr, arg String String
         let dscr =
             [
                 "`LEN([$выражение])` - возвращает длину строки `[$выражение]`."
             ] |> String.concat "\n"
-        "len", dscr, arg String Numeric
+        Len, dscr, arg String Numeric
         let dscr =
             [
                 "`MID([$выражение],[#выражение 1],[#выражение 2])` - вырезает из строки `[$выражение]` строку, которая начинается с символа номер `[#выражение 1]` и имеет длину `[#выражение 2]`. Индексация символов в строке ведётся с 1."
@@ -703,8 +739,7 @@ let functions =
                 "MID('abcd', 2) равно 'bcd'"
                 "```"
             ] |> String.concat "\n"
-        "mid", dscr, (argsAndOptional [ String; Numeric ] Numeric, String)
-        "$mid", dscr, (argsAndOptional [ String; Numeric ] Numeric, String)
+        Mid, dscr, (argsAndOptional [ String; Numeric ] Numeric, String)
         let dscr =
             [
                 "`REPLACE([$выражение 1],[$выражение 2],[$выражение 3])` - заменяет в строке [$выражение 1] все вхождения строки [$выражение 2] строкой [$выражение 3]. Если [$выражение 3] отсутствует или указана пустая строка, то удаляет в исходной строке все вхождения искомой строки. Примеры:"
@@ -713,23 +748,19 @@ let functions =
                 "`REPLACE('test', 't', '34')` равно `'34es34'`"
                 "`REPLACE('test', 't')` равно `'es'`"
             ] |> String.concat "\n"
-        "replace", dscr, (argsAndOptional [ String; String ] String, String)
-        let dscr =
-            "Синоним `REPLACE`"
-        "$replace", dscr, (argsAndOptional [ String; String ] String, String)
+        Replace, dscr, (argsAndOptional [ String; String ] String, String)
         let dscr =
             [
                 "`STR([#выражение])` - переводит число (числовое выражение) `[#выражение]` в соответствующую строку. Например,"
                 "`PL STR(56)` выведет строку `56`."
             ] |> String.concat "\n"
-        "str", dscr, arg Numeric String
+        Str, dscr, arg Numeric String
         let dscr =
             [
                 "`TRIM([$выражение])` - удаляет прилегающие пробелы и символы табуляции из `[$выражение]`. Затем возвращает полученную строку. Пример:"
                 "`TRIM('     TRIM TEST        ')` равно `'TRIM TEST'`"
             ] |> String.concat "\n"
-        "trim", dscr, arg String String
-        "$trim", dscr, arg String String
+        Trim, dscr, arg String String
         let dscr =
             [
                 "`UCASE([$выражение])` - возвращает строку больших букв, полученную изменением регистра букв исходной строки `[$выражение]`. Пример:"
@@ -737,19 +768,21 @@ let functions =
                 "UCASE('TexT#') & ! -> 'TEXT#'"
                 "```"
             ] |> String.concat "\n"
-        "ucase", dscr, arg String String
+        Ucase, dscr, arg String String
         let dscr =
             [
                 "`VAL([$выражение])` - переводит строку цифр `[$выражение]` в соответствующее число. Если [$выражение] равно '' (пустая строка) или если оно содержит не-цифры, то возвращается 0."
             ] |> String.concat "\n"
-        "val", dscr, arg String Numeric
+        Val, dscr, arg String Numeric
         let dscr =
             [
                 "возвращает название выделенного действия."
             ] |> String.concat "\n"
-        "selact", dscr, unit' String
+        Selact, dscr, unit' String
     ]
-    |> List.map (fun (name, dscr, sign) -> name, (dscr, sign))
+    |> List.map (fun (name, dscr, sign) ->
+        let stringName = (string name).ToLower()
+        stringName, {| SymbolicName = name; Description = dscr; Signature = sign |})
     |> Map.ofList
 /// Да-да, всё это — процедуры: они что-то выполняют и никуда не перемещают.
 let procedures =
