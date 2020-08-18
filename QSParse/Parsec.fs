@@ -39,17 +39,6 @@ let pAssign stmts =
             between (pchar '{' >>. spaces) (spaces >>. char_ws '}') stmts
             |>> fun stmts -> AssignCode(ass, stmts)
 
-        let call =
-            ident >>=?
-            fun name ->
-                followedBy (
-                    ident
-                    <|> (puint32 >>% "")
-                    <|> stringLiteral)
-                >>. sepBy1 pexpr (char_ws ',')
-                |>> fun args -> Assign(ass, Func(Undef name, args)) // То есть `a = min x, y` можно, что ли? Хм...
-        let assexpr = call <|> (pexpr |>> fun defExpr -> Assign(ass, defExpr))
-
         let str_ws s =
             appendToken Tokens.TokenType.OperatorAssignment
                 (pstring s)
@@ -59,18 +48,21 @@ let pAssign stmts =
             str_ws "-=" >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Minus, Var name, defExpr))
             str_ws "=-" >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Minus, defExpr, Var name))
             (str_ws "+=" <|> str_ws "=+") >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Plus, Var name, defExpr))
-            str_ws "=" >>. (asscode <|> assexpr)
+            str_ws "=" >>. (asscode <|> (pexpr |>> fun defExpr -> Assign(ass, defExpr)))
         ]
 
     let assign name =
         let arr =
-            bet_ws '[' ']' (opt pexpr)
+            between
+                (appendToken Tokens.TokenType.BraceSquareOpened (pchar '[' .>> ws))
+                (appendToken Tokens.TokenType.BraceSquareClosed (pchar ']'))
+                (opt pexpr)
             |>> fun braketExpr ->
                 match braketExpr with
                 | Some braketExpr ->
                     AssignArr(name, braketExpr)
                 | None -> AssignArrAppend name
-        arr <|>% AssignVar name >>=? assdef name
+        (arr .>> ws) <|>% AssignVar name >>=? assdef name
     let pExplicitAssign =
         let p =
             appendToken

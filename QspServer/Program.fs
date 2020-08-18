@@ -117,6 +117,8 @@ module CommandResponse =
             | StringQuotedSingle
             | StringQuotedDouble
             | StringBraced -> "string"
+            | BraceSquareOpened
+            | BraceSquareClosed -> "metaBraceSquare"
         {
             Kind = "highlighting"
             Data =

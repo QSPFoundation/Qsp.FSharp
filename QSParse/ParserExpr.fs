@@ -108,7 +108,11 @@ let term expr =
                     "Пользовательская глобальная переменная числового типа"
     let pterm, ptermRef = createParserForwardedToRef()
     let pcallFuncOrArrOrVar =
-        let pbraket = bet_ws '[' ']' (sepBy expr (skipChar ',' >>. ws))
+        let pbraket =
+            between
+                (appendToken TokenType.BraceSquareOpened (pchar '[' .>> ws))
+                (appendToken TokenType.BraceSquareClosed (pchar ']'))
+                (sepBy expr (skipChar ',' >>. ws))
         let pBracesArgs =
             bet_ws '(' ')' (sepBy expr (pchar ',' >>. ws))
         let pcallFunctionOrArrOrVar =

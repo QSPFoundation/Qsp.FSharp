@@ -75,6 +75,14 @@ type TokenType =
     | InterpolationEnd
 
     | ConstantNumericInteger
+    /// meta.brace.square.js
+    ///
+    /// `[`
+    | BraceSquareOpened
+    /// meta.brace.square.js
+    ///
+    /// `]`
+    | BraceSquareClosed
 type InlineRange =
     {
         Line: int64
