@@ -116,7 +116,7 @@ and State =
         /// Локации, которые неопределенны именно в этом документе, но переходы к ним есть
         NotDefinedLocs: Map<Ast.LocationName, Tokens.InlineRange list>
         // Я тут, это самое, оставлю. Никто не возражает?
-        PStmts: Parser<Ast.Statement list>
+        PStmts: Parser<Ast.PosStatement list>
         /// `&lt;a gt ''x''>`
         SingleQuotNestedCount: int
         DoubleQuotNestedCount: int

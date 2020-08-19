@@ -1,6 +1,18 @@
 module Qsp.Ast
 open FsharpMyExtension
 open Qsp
+
+type NoEqualityPosition(pos:FParsec.Position) =
+    member __.Pos = pos
+    override __.ToString() = pos.ToString()
+    override __.Equals _ = true
+    override __.GetHashCode() = 0
+
+let test () =
+    let x = NoEqualityPosition(FParsec.Position("", 0L, 0L, 0L))
+    let y = NoEqualityPosition(FParsec.Position("", 0L, 0L, 1L))
+    x = y
+
 [<Struct>]
 type Op =
     /// `+`
@@ -129,7 +141,7 @@ type 'Predef PredefUndef =
 type Var = VarType * string
 type StmtsOrRaw =
     | Raw of string
-    | StaticStmts of Statement list
+    | StaticStmts of PosStatement list
 and LineKind =
     | StringKind of string
     /// Это то, что заключено между `&lt;&lt; >>`
@@ -156,13 +168,14 @@ and AssignWhat =
     /// Ключом массива может быть значение любого типа
     | AssignArr of var:Var * key:Expr
     | AssignArrAppend of var:Var
+and PosStatement = NoEqualityPosition * Statement
 and Statement =
     | Assign of AssignWhat * Expr
-    | AssignCode of AssignWhat * Statement list
+    | AssignCode of AssignWhat * PosStatement list
     | Proc of string * Expr list
-    | If of Expr * Statement list * Statement list
-    | Act of Expr list * Statement list
-    | For of var:Var * from:Expr * to':Expr * step:Expr option * body:Statement list
+    | If of Expr * PosStatement list * PosStatement list
+    | Act of Expr list * PosStatement list
+    | For of var:Var * from:Expr * to':Expr * step:Expr option * body:PosStatement list
     | Label of string
     | Comment of string
     | Exit
@@ -172,4 +185,80 @@ type LocationName = string
 /// 'asdf'
 /// - произвольный набор символов
 /// ```
-type Location = Location of LocationName * Statement list
+type Location = Location of LocationName * PosStatement list
+
+// module Option =
+//     let forall2 p x y =
+//         match x, y with
+//         | Some x, Some y ->
+//             p x y
+//         | _ -> false
+
+// let rec stmtsOrRawEqual x y =
+//     match x, y with
+//     | StaticStmts xs, StaticStmts ys ->
+//         List.forall2 posStmtEqual xs ys
+//     | _, Raw _ 
+//     | _, StaticStmts _ -> x = y
+// and lineKindEqual x y =
+//     match x, y with
+//     | HyperLinkKind(x, xs), HyperLinkKind(y, ys) ->
+//         stmtsOrRawEqual x y
+//         && List.forall2 lineEqual xs ys
+//     | _, HyperLinkKind _
+//     | _, ExprKind _
+//     | _, StringKind _ -> x = y
+// and lineEqual xs ys =
+//     List.forall2 lineKindEqual xs ys
+// and valueEqual x y =
+//     match x, y with
+//     | String lines, String lines2 ->
+//         List.forall2 lineEqual lines lines2
+//     | _, String _
+//     | _, Int _ -> x = y
+// and exprEqual x y = 
+//     match x, y with
+//     | Val x, Val y ->
+//         valueEqual x y
+//     | _, Val _
+//     | _, Arr _ 
+//     | _, Expr _
+//     | _, Func _
+//     | _, UnarExpr _
+//     | _, Var _
+//         -> x = y
+// /// Compares two PosStatements, but disregards Pos when comparing
+// and posStmtEqual (x:PosStatement) (y:PosStatement) =
+//     match x, y with
+//     | (_, Act(exprs, body)), (_, Act(exprs', body')) ->
+//         List.forall2 exprEqual exprs exprs'
+//         && List.forall2 posStmtEqual body body'
+//     | (_, AssignCode(x, body)), (_, AssignCode(x', body')) ->
+//         x = x'
+//         && List.forall2 posStmtEqual body body'
+//     | (_, If(expr, thenBody, elseBody)), (_, If(expr', thenBody', elseBody')) ->
+//         exprEqual expr expr'
+//         && List.forall2 posStmtEqual thenBody thenBody'
+//         && List.forall2 posStmtEqual elseBody elseBody'
+//     | (_, For(var, from, to', step, body)), (_, For(var', from', to'', step', body')) ->
+//         var = var'
+//         && exprEqual from from'
+//         && exprEqual to' to''
+//         && Option.forall2 exprEqual step step'
+//         && List.forall2 posStmtEqual body body'
+//     | (_, Assign(x, expr)), (_, Assign(y, expr')) ->
+//         x = y
+//         && exprEqual expr expr'
+//     | (_, Proc(x, expr)), (_, Proc(y, expr')) ->
+//         x = y
+//         && List.forall2 exprEqual expr expr'
+//     | (_, _), (_, Assign _)
+//     | (_, _), (_, AssignCode _)
+//     | (_, _), (_, Comment _)
+//     | (_, _), (_, Exit)
+//     | (_, _), (_, For _)
+//     | (_, _), (_, If _)
+//     | (_, _), (_, Label _)
+//     | (_, _), (_, Proc _)
+//     | (_, _), (_, Act _)
+//         -> x = y

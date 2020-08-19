@@ -54,7 +54,7 @@ type CliArguments =
             | Txt2qsp _ -> "specify a txt2gam (path : args)."
             | Source_Path _ -> "path to encoded game (.qps) or decoded source game (.qsps)."
 
-module Parser = 
+module Parser =
     open FParsec
     open Qsp.Parser.Generic
     open Qsp.Parser.Main
@@ -72,26 +72,82 @@ module Parser =
             str
 
 open Qsp.Ast
+
 let patternMatching pattern =
-    let rec f acc stmts =
+    let rec stmtsOrRawEqual (acc:_ list) x =
+        match x with
+        | StaticStmts xs ->
+            stmtsMatcher acc xs
+        | Raw _ -> acc
+    and lineKindEqual acc x =
+        match x with
+        | HyperLinkKind(stmtOrRaw, xs) ->
+            List.fold lineEqual (stmtsOrRawEqual acc stmtOrRaw) xs
+        | HyperLinkKind _
+        | ExprKind _
+        | StringKind _ -> acc
+    and lineEqual acc (xs:Qsp.Ast.Line) =
+        List.fold lineKindEqual acc xs
+    and valueEqual acc x =
+        match x with
+        | String lines ->
+            List.fold lineEqual acc lines
+        | Int _ -> acc
+    and exprEqual acc x =
+        match x with
+        | Val x ->
+            valueEqual acc x
+        | Arr _
+        | Expr _
+        | Func _
+        | UnarExpr _
+        | Var _
+            -> acc
+    and stmtsMatcher (acc:list<PosStatement>) stmts =
         stmts
-        |> List.collect (fun stmt ->
-            if stmt = pattern then
+        |> List.fold (fun acc stmt ->
+            if pattern = stmt then
                 stmt::acc
             else
+                let _, stmt = stmt
                 match stmt with
-                | Assign(_, _)
-                | Proc(_, _)
+                | Assign(_, expr) ->
+                    exprEqual acc expr
+                | Proc(_, exprs) ->
+                    List.fold exprEqual acc exprs
                 | Exit -> acc
-                | Act(_, body)
-                | AssignCode(_, body) -> f acc body
-                | If(_, _, _) -> acc
-                | For(var, from, to', step, body) -> f acc body
+                | Act(exprs, body) ->
+                    let acc = List.fold exprEqual acc exprs
+                    stmtsMatcher acc body
+                | AssignCode(_, body) -> stmtsMatcher acc body
+                | If(expr, thenBody, elseBody) ->
+                    let acc = exprEqual acc expr
+                    let acc = stmtsMatcher acc thenBody
+                    stmtsMatcher acc elseBody
+                | For(var, from, to', step, body) ->
+                    let acc = exprEqual acc from
+                    let acc = exprEqual acc to'
+                    let acc =
+                        match step with
+                        | Some step ->
+                            exprEqual acc step
+                        | _ -> acc
+                    stmtsMatcher acc body
                 | Label(_) -> acc
                 | Comment(_) -> acc
+        ) acc
+    stmtsMatcher []
+let parse patternRaw locs =
+    match Parser.parserStmt patternRaw with
+    | FParsec.CharParsers.Success(pattern, st, _) ->
+        // printfn "pattern:\n%A\n" pattern
+        locs
+        |> List.map (fun (Location (locName, loc)) ->
+            locName, patternMatching pattern loc
         )
-    f []
-
+        |> Right
+    | FParsec.CharParsers.Failure(err, st, _) ->
+        Left err
 [<EntryPoint>]
 let main argv =
     let parser = ArgumentParser.Create<CliArguments>(programName = "Utility.exe")
@@ -148,15 +204,7 @@ let main argv =
             else
                 f acc
         let str = f []
-        match Parser.parserStmt str with
-        | FParsec.CharParsers.Success(pattern, st, _) ->
-            locs
-            |> List.map (fun (Location (locName, loc)) ->
-                locName, patternMatching pattern loc
-            )
-            |> Right
-        | FParsec.CharParsers.Failure(err, st, _) ->
-            Left err
+        parse str locs
 
     tree
     |> Either.bind parse

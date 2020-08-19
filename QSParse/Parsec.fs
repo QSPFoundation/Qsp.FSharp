@@ -262,7 +262,7 @@ let pstmts1' pstmt =
         (pstmt .>> spaces
          .>> (skipMany (ppunctuationTerminator .>> spaces)))
 let pstmt =
-    let pstmt, pstmtRef = createParserForwardedToRef<Statement, _>()
+    let pstmt, pstmtRef = createParserForwardedToRef<PosStatement, _>()
     let pInlineStmts =
         many (pstmt .>> ws .>> skipMany (ppunctuationTerminator .>> ws))
     let pInlineStmts1 =
@@ -316,11 +316,8 @@ let pstmt =
         let setIsEndOptionalTo boolean =
             updateUserState (fun x -> { x with IsEndOptional = boolean })
 
-        let p =
-            ws .>>? skipNewline >>. spaces >>. pstmts .>> setIsEndOptionalTo false
-            <|> (spaces >>. pInlineStmts .>> setIsEndOptionalTo true)
         let pElse1 =
-            pelseKeyword >>. ws
+            pelseKeyword .>> ws
             >>. (pInlineStmts1 .>> opt pendKeyword
                  <|> (spaces >>. pstmts .>> pendKeyword))
         let pend =
@@ -332,12 +329,15 @@ let pstmt =
                     pendKeyword >>% ()
 
         let pelseIf =
-            many1 (pelseifHeader .>>. p)
+            let p =
+                ws .>>? skipNewline >>. spaces >>. pstmts .>> setIsEndOptionalTo false
+                <|> (spaces >>. pInlineStmts .>> setIsEndOptionalTo true)
+            many1 ((getPosition |>> NoEqualityPosition) .>>.? pelseifHeader .>>. p)
             .>>. (pElse1 <|> (pend >>% []))
             |>> fun (elifs, elseBody) ->
                 let rec f = function
-                    | (expr, thenBody)::xs ->
-                        [If(expr, thenBody, f xs)]
+                    | ((pos, expr), thenBody)::xs ->
+                        [pos, If(expr, thenBody, f xs)]
                     | [] -> elseBody
                 f elifs
 
@@ -358,7 +358,7 @@ let pstmt =
              <|> (spaces >>. pstmts .>>. (pelseIf <|> pElse1 <|> (pendKeyword >>% [])))))
             (fun expr (thenBody, elseBody) ->
                 If(expr, thenBody, elseBody))
-    pstmtRef :=
+    let p =
         choice [
             pcomment
             pexit
@@ -371,6 +371,7 @@ let pstmt =
             notFollowedBy (pchar '-' >>. ws >>. (skipNewline <|> skipChar '-' <|> eof)) // `-` завершает локацию
             >>. (pexpr |>> fun arg -> Proc("*pl", [arg]))
         ]
+    pstmtRef := (getPosition |>> NoEqualityPosition) .>>.? p
     pstmt
 
 let pstmts = pstmts' pstmt

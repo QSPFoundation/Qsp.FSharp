@@ -156,11 +156,11 @@ let showAssign showStmtsInline = function
     | AssignWhat.AssignArrAppend var -> showVar var << showString "[]"
 
 let (|OneStmt|_|) = function
-    | [x] ->
+    | [pos, x] ->
         match x with
         // | StarPl(Val (String _)) -> None
         | Proc(name, _) when name.ToLower() = "*pl" -> None // Как правило, строки очень длинные, потому пусть лучше будет так
-        | Assign _ | Proc _ | Comment _ -> Some x
+        | Assign _ | Proc _ | Comment _ -> Some (pos, x)
         | AssignCode _ -> None // спорно
         | Act _ | If _ -> None
         | Label _ -> None // эту нечисть нужно как можно более нагляднее подчеркнуть. Да странно будет, если она окажется одна в списке инструкций.
@@ -182,7 +182,7 @@ let showStmt indentsOption (formatConfig:FormatConfig) =
             showChar '\t'
         | UsingSpaces spacesCount ->
             replicate spacesCount ' '
-    let rec f' stmt =
+    let rec f' (pos, stmt) =
         let showStmtsInline xs : ShowS =
             List.collect f' xs // TODO
             |> join "&"
@@ -238,7 +238,7 @@ let showStmt indentsOption (formatConfig:FormatConfig) =
                           << showSpace << showStmtsInline [x]
                 | _ ->
                     let rec body : _ -> ShowS list = function
-                        | [If(e, thenBody, elseBody)] ->
+                        | [pos, If(e, thenBody, elseBody)] ->
                             [
                                 yield showString "elseif" << showSpace << showExpr e << showChar ':'
                                 yield! thenBody

@@ -255,7 +255,28 @@ let stringLiteralTest =
         testCase "braces escaped" <| fun () ->
             Assert.Equal("", Right "}", runEither stringLiteral "{}}}")
     ]
+let emptyPos = NoEqualityPosition(Position("", 0L, 0L, 0L))
+let emptyPoss x = x |> List.map (fun x -> emptyPos, x)
+let StaticStmts x =
+    emptyPoss x
+    |> StaticStmts
+let If(expr, thenBody, elseBody) =
+    If(expr, emptyPoss thenBody, emptyPoss elseBody)
+let Act(exprs, thenBody) = Act(exprs, emptyPoss thenBody)
+let For(x, y, z, w, thenBody) = For(x, y, z, w, emptyPoss thenBody)
 
+let equalTwoPosStmt (note, stmt1, stmt2) =
+    match stmt1, stmt2 with
+    | Right stmt1', Right stmt2' ->
+        if stmt1' <> stmt2' then
+            failtestf "Expected:\n%A\n\nActual:\n%A\nWarning: ignores Position when comparing!" stmt1 stmt2
+    | _ -> failtestf "Expected:\n%A\n\nActual:\n%A\nWarning: ignores Position when comparing!" stmt1 stmt2
+let exprEqual (note, expr1, expr2) =
+    match expr1, expr2 with
+    | Right expr1', Right expr2' ->
+        if expr1' <> expr2' then
+            failtestf "Expected:\n%A\n\nActual:\n%A\nWarning: ignores Position when comparing!" expr1 expr2
+    | _ -> failtestf "Expected:\n%A\n\nActual:\n%A\nWarning: ignores Position when comparing!" expr1 expr2
 [<Tests>]
 let stringLiteralWithTokenTest =
     let runEither str =
@@ -505,10 +526,10 @@ let ifTests =
                     "'statement that not belong to construction'"
                 ] |> String.concat "\n"
             let exp =
-                (If
+                (emptyPos, If
                    (Var (ImplicitNumericType, "expr"), [Proc ("gt", [Val (String [[StringKind "hall"]])])],
                     []))
-            Assert.Equal("", Right exp, runStmts input)
+            equalTwoPosStmt("", Right exp, runStmts input)
         testCase "inline if 2" <| fun () ->
             let input =
                 [
@@ -542,7 +563,7 @@ let ifTests =
                        [If
                           (Var (ImplicitNumericType, "expr6"),
                            [StarPl (Var (ImplicitNumericType, "stmt4"))], [])])])
-            Assert.Equal("", Right exp, runStmtsEof input)
+            equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "simple if" <| fun () ->
             let input =
                 [
@@ -555,7 +576,7 @@ let ifTests =
                    (Var (ImplicitNumericType, "expr"),
                     [StarPl (Var (ImplicitNumericType, "someStmt"))], []))
 
-            Assert.Equal("", Right exp, runStmtsEof input)
+            equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "elseif test" <| fun () ->
             let input =
                 [
@@ -580,7 +601,7 @@ let ifTests =
                            (Var (ImplicitNumericType, "expr3"),
                             [StarPl (Var (ImplicitNumericType, "stmt3"))],
                             [StarPl (Var (ImplicitNumericType, "stmt4"))])])]))
-            Assert.Equal("", Right exp, runStmtsEof input)
+            equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "elseif test2" <| fun () ->
             let input =
                 [
@@ -602,7 +623,7 @@ let ifTests =
                         [If
                            (Var (ImplicitNumericType, "expr3"),
                             [StarPl (Var (ImplicitNumericType, "stmt3"))], [])])]))
-            Assert.Equal("", Right exp, runStmtsEof input)
+            equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "another inline if" <| fun () ->
             let input =
                 [
@@ -615,7 +636,7 @@ let ifTests =
                   [If
                      (Var (ImplicitNumericType, "expr"),
                       [StarPl (Var (ImplicitNumericType, "stmt"))], [])]))
-            Assert.Equal("", Right exp, runStmtsEof input)
+            equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "elseif test2" <| fun () ->
             let input =
                 [
@@ -650,7 +671,7 @@ let ifTests =
                       [If
                          (Var (ImplicitNumericType, "expr3"),
                           [StarPl (Var (ImplicitNumericType, "stmt3"))], [])])]))
-            Assert.Equal("", Right exp, runStmtsEof input)
+            equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "if" <| fun () ->
             let input =
                 [
@@ -681,7 +702,7 @@ let ifTests =
                                  (Var (ImplicitNumericType, "expr5"),
                                   [StarPl (Var (ImplicitNumericType, "stmt5"))], [])])]);
                        StarPl (Var (ImplicitNumericType, "stmt6"))], [])]))
-            Assert.Equal("", Right exp, runStmtsEof input)
+            equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
     ]
 
 [<Tests>]
@@ -713,7 +734,7 @@ let forTests =
                      Var (ImplicitNumericType, "y")),
                   None,
                   [StarPl (Var (ImplicitNumericType, "stmt"))]))
-            Assert.Equal("", Right exp, runStmtsEof input)
+            equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "inline `for i = 4 + x to 45 / x + y: stmt`" <| fun () ->
             let input =
                 [
@@ -729,7 +750,7 @@ let forTests =
                      Var (ImplicitNumericType, "y")),
                   None,
                   [StarPl (Var (ImplicitNumericType, "stmt"))]))
-            Assert.Equal("", Right exp, runStmts input)
+            equalTwoPosStmt("", Right (emptyPos, exp), runStmts input)
         testCase "inline `for i = 4 + x to 45 / x + y step x + 1: stmt`" <| fun () ->
             let input =
                 [
@@ -745,7 +766,7 @@ let forTests =
                      Var (ImplicitNumericType, "y")),
                   Some (Expr (Plus, Var (ImplicitNumericType, "x"), Val (Int 1))),
                   [StarPl (Var (ImplicitNumericType, "stmt"))]))
-            Assert.Equal("", Right exp, runStmts input)
+            equalTwoPosStmt("", Right (emptyPos, exp), runStmts input)
     ]
 [<Tests>]
 let stmtTests =
@@ -769,7 +790,7 @@ let stmtTests =
             let exp =
                 Act ([Val (String [[StringKind "some act"]])], [Proc ("gt", [Val (String [[StringKind "hall"]])])])
 
-            Assert.Equal("", Right exp, runStmts input)
+            equalTwoPosStmt("", Right (emptyPos, exp), runStmts input)
 
         // порядок разбора
         testCase "stmt `years -= 10`" <| fun () ->
@@ -778,7 +799,7 @@ let stmtTests =
               (Assign
                  (AssignVar (ImplicitNumericType, "years"),
                   Expr (Minus, Var (ImplicitNumericType, "years"), Val (Int 10))))
-            Assert.Equal("", Right exp, runStmtsEof input)
+            equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "call function as expression" <| fun () ->
             // f(1) — должно обрабатываться раньше, чем `callProc arg1, arg2`
             let input = "iif(somevar >= 2, 'thenBody', 'elseBody')"
@@ -788,12 +809,12 @@ let stmtTests =
                     (Predef Defines.Iif,
                      [Expr (Ge, Var (ImplicitNumericType, "somevar"), Val (Int 2));
                       Val (String [[StringKind "thenBody"]]); Val (String [[StringKind "elseBody"]])])))
-            Assert.Equal("", Right exp, runStmtsEof input)
+            equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "call procedure" <| fun () ->
             let input = "gt 'begin', 'real_character'"
             let exp =
                 Proc ("gt", [Val (String [[StringKind "begin"]]); Val (String [[StringKind "real_character"]])])
-            Assert.Equal("", Right exp, runStmtsEof input)
+            equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         // testCase "call " <| fun () ->
         //     let input = "The(Lady), or, the, Tiger"
         //     let exp =
