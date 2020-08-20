@@ -164,9 +164,19 @@ let term expr =
                         >>% Var(varType, nameVar))
             >>= fun ((range, (varType, name)), f) ->
                     f (varType, name) range
-
-        let pPreDefFunc =
+        // #load @"Defines.fs"
+        // open Qsp
+        let nullary, multiary =
             Defines.functionsByName
+            |> Map.partition (fun _ x ->
+                let x, _ = x.Signature
+                match x with
+                | Defines.JustOverloads []
+                | Defines.JustOverloads [([||], ())] -> true
+                | _ -> false
+            )
+        let nullaryFunc =
+            nullary
             |> Seq.sortByDescending (fun (KeyValue(name, _)) -> name) // для жадности
             |> Seq.map (fun (KeyValue(name, x)) ->
                 applyRange (opt (pchar '$') >>? pstringCI name .>>? notFollowedVarCont)
@@ -177,7 +187,21 @@ let term expr =
             )
             |> List.ofSeq
             |> choice
-        pPreDefFunc .>> ws .>>. (pBracesArgs <|> (pterm |>> List.singleton) <|>% [])
+
+        let pPreDefFunc =
+            multiary
+            |> Seq.sortByDescending (fun (KeyValue(name, _)) -> name) // для жадности
+            |> Seq.map (fun (KeyValue(name, x)) ->
+                applyRange (opt (pchar '$') >>? pstringCI name .>>? notFollowedVarCont)
+                >>= fun (range, name) ->
+                    appendToken2 TokenType.Function range
+                    >>. appendHover2 x.Description range
+                    >>% (name, range, x)
+            )
+            |> List.ofSeq
+            |> choice
+        nullaryFunc .>>. (ws >>. (pBracesArgs <|>% []))
+        <|> (pPreDefFunc .>> ws .>>. (pBracesArgs <|> (pterm |>> List.singleton) <|>% []))
         >>= fun ((stringName, range, x), args) ->
                 let sign, returnType = x.Signature
                 let p =
