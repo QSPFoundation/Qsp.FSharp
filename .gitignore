@@ -398,3 +398,4 @@ paket-files/
 /Test/Mocks/
 
 /RunUtils.cmd
+/Sandbox.fsx

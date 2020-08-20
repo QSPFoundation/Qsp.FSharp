@@ -81,8 +81,17 @@ let ops = Op.toString >> showString
 let unar = function No -> "no" | Obj -> "obj" | Neg -> "-" | Loc -> "loc"
 let showFuncName = function
     | PredefUndef.Predef name ->
-        let name = (string name).ToLower()
-        showString name
+        match Map.tryFind name Qsp.Defines.functionBySymbolic with
+        | Some x ->
+            let _, returnedType = x.Signature
+            let returnedType =
+                match returnedType with
+                | Defines.Numeric -> id
+                | Defines.String -> showChar '$'
+                | Defines.Any -> id // TODO: defines by argument type
+            let nameStr = (string name).ToLower()
+            returnedType << showString nameStr
+        | None -> failwithf "%A not found in `functionBySymbolic`" name
     | PredefUndef.Undef name ->
         showString name
 let rec simpleShowExpr showStmtsInline expr : ShowS =

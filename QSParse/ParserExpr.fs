@@ -166,10 +166,10 @@ let term expr =
                     f (varType, name) range
 
         let pPreDefFunc =
-            Defines.functions
+            Defines.functionsByName
             |> Seq.sortByDescending (fun (KeyValue(name, _)) -> name) // для жадности
             |> Seq.map (fun (KeyValue(name, x)) ->
-                applyRange (pstringCI name .>>? notFollowedVarCont)
+                applyRange (opt (pchar '$') >>? pstringCI name .>>? notFollowedVarCont)
                 >>= fun (range, name) ->
                     appendToken2 TokenType.Function range
                     >>. appendHover2 x.Description range

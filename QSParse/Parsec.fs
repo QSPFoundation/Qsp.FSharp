@@ -24,7 +24,7 @@ let pImplicitVarWhenAssign p =
             | None ->
                 if Map.containsKey nameLower Defines.procs then
                     appendSemanticError range "Нельзя переопределять процедуру"
-                elif Map.containsKey nameLower Defines.functions then
+                elif Map.containsKey nameLower Defines.functionsByName then
                     appendSemanticError range "Нельзя переопределять функцию"
                 else
                     let dscr = "Пользовательская глобальная переменная числового типа"

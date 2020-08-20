@@ -780,10 +780,18 @@ let functions =
             ] |> String.concat "\n"
         Selact, dscr, unit' String
     ]
+let functionBySymbolic =
+    functions
+    |> List.map (fun (name, dscr, sign) ->
+        name, {| SymbolicName = name; Description = dscr; Signature = sign |})
+    |> Map.ofList
+let functionsByName =
+    functions
     |> List.map (fun (name, dscr, sign) ->
         let stringName = (string name).ToLower()
         stringName, {| SymbolicName = name; Description = dscr; Signature = sign |})
     |> Map.ofList
+
 /// Да-да, всё это — процедуры: они что-то выполняют и никуда не перемещают.
 let procedures =
     [
