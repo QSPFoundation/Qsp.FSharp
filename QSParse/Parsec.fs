@@ -317,7 +317,7 @@ let pstmt =
             updateUserState (fun x -> { x with IsEndOptional = boolean })
 
         let pElse1 =
-            pelseKeyword .>> ws
+            pelseKeyword .>> opt (skipChar ':') .>> ws
             >>. (pInlineStmts1 .>> opt pendKeyword
                  <|> (spaces >>. pstmts .>> pendKeyword))
         let pend =
