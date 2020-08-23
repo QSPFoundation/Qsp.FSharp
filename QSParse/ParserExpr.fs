@@ -55,28 +55,13 @@ type ProcOrFunc =
     | Function of string
 
 let notFollowedByBinOpIdent =
-    // конечно, тут нужно объяснить пользователю, почему именно нельзя использовать то или иное слово
-    // проще назвать, что допустимо
-    // let p =
-    //     choice [
-    //         spaces1
-    //         skipChar '"'
-    //         skipChar '''
-    //         eof
-    //     ]
-    // let followedVarCont =
-    //     followedBy (satisfy (fun c -> isDigit c || c = '_' || c = '.'))
     let p =
         pbinaryOperator
         .>> (skipSatisfy (not << isIdentifierChar)
              <|> eof)
     let p2 =
-        notFollowedByL p "идентификатор, а не строковый бинарный оператор"
+        notFollowedByL p "keyword"
         >>. ident
-    // runStateEither p2 emptyState "no"
-    // runStateEither p2 emptyState "no " // нельзя
-    // runStateEither p2 emptyState "node" // можно
-    // runStateEither p2 emptyState "foobar" // можно
     p2
 let ws =
     ws
