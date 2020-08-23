@@ -10,11 +10,23 @@ let qspSourceExt = ".qsps"
 let changeExtensionToQsp (path:FilePath) =
     System.IO.Path.ChangeExtension(path, qspSourceExt)
 
+module ThreadSafePrint =
+    let mail = MailboxProcessor.Start (fun agent ->
+        let rec loop () =
+            async {
+                let! msg = agent.Receive()
+                printfn "%s" msg
+                return! loop ()
+            }
+        loop ()
+    )
+    let printfn fmt = Printf.ksprintf mail.Post fmt
+
 let decodeGame config (src:FilePath) (dst:FilePath) =
     if System.IO.File.Exists config.Path then
         let args = sprintf "\"%s\" \"%s\" D %s" src dst config.Args
         let startProcString path args =
-            printfn "decoding: `%s %s`" path args
+            ThreadSafePrint.printfn "decoding: `%s %s`" path args
             let drivenOutput = new System.Text.StringBuilder()
             Proc.startProc (fun e ->
                 drivenOutput.AppendLine(e) |> ignore
@@ -39,7 +51,26 @@ let doFile txt2qspConfig updateSourceIfExists src =
     else
         decodeGame txt2qspConfig src dst
 
-let doDir txt2qspConfig updateSourceIfExists dir =
+let threadsExec threads fn xs =    
+    if threads > 1 then
+        xs
+        |> Seq.chunkBySize threads
+        |> Seq.collect (fun paths ->
+            paths
+            |> Array.map (fun x ->
+                async {
+                    return fn x
+                })
+            |> Async.Parallel
+            |> Async.RunSynchronously
+            // // or:
+            // paths
+            // |> Array.Parallel.map fn
+        )
+    else
+        xs |> Seq.map fn
+
+let doDir txt2qspConfig updateSourceIfExists threads dir =
     // TODO:
     // let xs =
     //     System.IO.Directory.EnumerateFiles(dir, "*.*", System.IO.SearchOption.AllDirectories)
@@ -53,17 +84,18 @@ let doDir txt2qspConfig updateSourceIfExists dir =
     //     )
 
     // if use the "*.qsp" mask, it will capture the ".qsps" files as well
-    System.IO.Directory.EnumerateFiles(dir, "*.*", System.IO.SearchOption.AllDirectories)
-    |> Seq.filter (System.IO.Path.GetExtension >> ((=) ".qsp"))
-    |> Seq.map (fun src ->
-        doFile txt2qspConfig updateSourceIfExists src
-    )
+    let xs =
+        System.IO.Directory.EnumerateFiles(dir, "*.*", System.IO.SearchOption.AllDirectories)
+        |> Seq.filter (System.IO.Path.GetExtension >> ((=) ".qsp"))
+    xs
+    |> threadsExec threads (doFile txt2qspConfig updateSourceIfExists)
 
 type CliArguments =
     | Working_Directory of path:FilePath
     | Txt2qsp of path:FilePath * args:string
     | Source_Path of path:FilePath
     | UpdateSourceIfExists
+    | Threads of int
     interface IArgParserTemplate with
         member s.Usage =
             match s with
@@ -71,7 +103,7 @@ type CliArguments =
             | Txt2qsp _ -> "specify a txt2gam (path : args)."
             | Source_Path _ -> "path to encoded game (.qps) or decoded source game (.qsps)."
             | UpdateSourceIfExists -> "decodes the source, even if it exists."
-
+            | Threads _ -> "number of threads per file, by default is 1."
 module Parser =
     open FParsec
     open Qsp.Parser.Generic
@@ -184,7 +216,12 @@ let main argv =
                 |> Some
             | _ -> None
         ) |> Either.ofOption "not defined --txt2qsp"
-
+    let threads =
+        results
+        |> List.tryPick (function
+            | Threads i -> Some i
+            | _ -> None
+        ) |> Option.defaultValue 1
     let folder =
         results
         |> List.tryPick (function
@@ -196,7 +233,7 @@ let main argv =
     let folderExec folder =
         txt2qspConfig
         |> Either.map (fun config ->
-            doDir config updateSourceIfExists folder
+            doDir config updateSourceIfExists threads folder
         )
         |> Either.seqEitherPseudo
 
@@ -254,9 +291,9 @@ let main argv =
         | Right folder ->
             let pattern = getPattern ()
             folderExec folder
-            |> Seq.map (
-                Either.bind (fun path ->
-                    printfn "parse: %s" path
+            |> threadsExec threads
+                (Either.bind (fun path ->
+                    ThreadSafePrint.printfn "parse: %s" path
                     match Qsp.Parser.Main.startOnFile enc path with
                     | FParsec.CharParsers.Success(locs, st, _) ->
                         locs
@@ -287,6 +324,6 @@ let main argv =
 
     all ()
     |> Seq.map (sprintf "%A")
-    |> uncurry System.IO.File.WriteAllLines "output.txt"
+    |> uncurry System.IO.File.WriteAllLines "output.log"
 
     0
