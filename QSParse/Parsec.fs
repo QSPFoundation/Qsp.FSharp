@@ -332,7 +332,7 @@ let pstmt =
             let p =
                 ws .>>? skipNewline >>. spaces >>. pstmts .>> setIsEndOptionalTo false
                 <|> (spaces >>. pInlineStmts .>> setIsEndOptionalTo true)
-            many1 ((getPosition |>> NoEqualityPosition) .>>.? pelseifHeader .>>. p)
+            many1 ((getPosition |>> (fparsecPosToPos >> NoEqualityPosition)) .>>.? pelseifHeader .>>. p)
             .>>. (pElse1 <|> (pend >>% []))
             |>> fun (elifs, elseBody) ->
                 let rec f = function
@@ -371,7 +371,7 @@ let pstmt =
             notFollowedBy (pchar '-' >>. ws >>. (skipNewline <|> skipChar '-' <|> eof)) // `-` завершает локацию
             >>. (pexpr |>> fun arg -> Proc("*pl", [arg]))
         ]
-    pstmtRef := (getPosition |>> NoEqualityPosition) .>>.? p
+    pstmtRef := (getPosition |>> (fparsecPosToPos >> NoEqualityPosition)) .>>.? p
     pstmt
 
 let pstmts = pstmts' pstmt

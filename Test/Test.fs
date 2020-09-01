@@ -255,7 +255,7 @@ let stringLiteralTest =
         testCase "braces escaped" <| fun () ->
             Assert.Equal("", Right "}", runEither stringLiteral "{}}}")
     ]
-let emptyPos = NoEqualityPosition(Position("", 0L, 0L, 0L))
+let emptyPos = NoEqualityPosition positionEmpty
 let emptyPoss x = x |> List.map (fun x -> emptyPos, x)
 let StaticStmts x =
     emptyPoss x

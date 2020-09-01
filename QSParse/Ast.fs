@@ -2,15 +2,22 @@ module Qsp.Ast
 open FsharpMyExtension
 open Qsp
 
-type NoEqualityPosition(pos:FParsec.Position) =
+[<Struct>]
+type Position = { StreamName:string; Index:int64; Line:int64; Column:int64 }
+let positionCreate streamName index line column =
+    { StreamName = streamName; Index = index; Line = line; Column = column }
+let positionEmpty =
+    positionCreate "" 0L 0L 0L
+
+type NoEqualityPosition(pos:Position) =
     member __.Pos = pos
     override __.ToString() = pos.ToString()
     override __.Equals _ = true
     override __.GetHashCode() = 0
 
 let test () =
-    let x = NoEqualityPosition(FParsec.Position("", 0L, 0L, 0L))
-    let y = NoEqualityPosition(FParsec.Position("", 0L, 0L, 1L))
+    let x = NoEqualityPosition(positionCreate "" 0L 0L 0L)
+    let y = NoEqualityPosition(positionCreate "" 0L 0L 1L)
     x = y
 
 [<Struct>]
@@ -75,7 +82,7 @@ module Op =
         Reflection.Reflection.unionEnum<Op>
         |> Array.map (fun x ->
             let IsBinOpSymbolic opName =
-                not <| String.exists FParsec.CharParsers.isLetter opName
+                not <| String.exists System.Char.IsLetter opName
                 : IsBinOpSymbolic
             let y = toString x
             x, (y, IsBinOpSymbolic y) )
@@ -198,7 +205,7 @@ type Location = Location of LocationName * PosStatement list
 //     match x, y with
 //     | StaticStmts xs, StaticStmts ys ->
 //         List.forall2 posStmtEqual xs ys
-//     | _, Raw _ 
+//     | _, Raw _
 //     | _, StaticStmts _ -> x = y
 // and lineKindEqual x y =
 //     match x, y with
@@ -216,12 +223,12 @@ type Location = Location of LocationName * PosStatement list
 //         List.forall2 lineEqual lines lines2
 //     | _, String _
 //     | _, Int _ -> x = y
-// and exprEqual x y = 
+// and exprEqual x y =
 //     match x, y with
 //     | Val x, Val y ->
 //         valueEqual x y
 //     | _, Val _
-//     | _, Arr _ 
+//     | _, Arr _
 //     | _, Expr _
 //     | _, Func _
 //     | _, UnarExpr _
