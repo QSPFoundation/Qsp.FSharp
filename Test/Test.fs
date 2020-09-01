@@ -211,7 +211,7 @@ let assignTest =
                     "  Error in Ln: 1 Col: 2"
                     "  f(expr) = 42"
                     "   ^"
-                    "  Expecting: '+=', '-=', '=', '=+', '=-', '[' or '_'"
+                    "  Expecting: '*=', '+=', '-=', '/=', '=', '=*', '=+', '=-', '=/', '[' or '_'"
                     ""
                 ] |> String.concat "\r\n"
             Assert.Equal("", Left exp, runExpr input)
