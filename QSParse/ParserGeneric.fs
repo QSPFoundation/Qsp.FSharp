@@ -15,7 +15,7 @@ let runStateEither p st str =
     match runParserOnString p st "" str with
     | Success(x, st, _) -> st, Right(x)
     | Failure(x, _, st) -> st, Left(x)
-let isIdentifierChar c = isLetter c || isDigit c || c = '_' || c = '.'
+let isIdentifierChar c = isLetter c || isDigit c || c = '_' || c = '.' || c = '$'
 
 let ident<'UserState> =
     skipChar '_' >>? many1Satisfy isIdentifierChar
