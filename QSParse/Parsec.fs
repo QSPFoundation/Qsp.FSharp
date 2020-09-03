@@ -46,11 +46,9 @@ let pAssign stmts =
 
         choice [
             str_ws "-=" >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Minus, Var name, defExpr))
-            str_ws "=-" >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Minus, defExpr, Var name))
             str_ws "/=" >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Divide, Var name, defExpr))
-            str_ws "=/" >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Divide, defExpr, Var name))
-            (str_ws "+=" <|> str_ws "=+") >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Plus, Var name, defExpr))
-            (str_ws "*=" <|> str_ws "=*") >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Times, Var name, defExpr))
+            str_ws "+=" >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Plus, Var name, defExpr))
+            str_ws "*=" >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Times, Var name, defExpr))
             str_ws "=" >>. (asscode <|> (pexpr |>> fun defExpr -> Assign(ass, defExpr)))
         ]
 
