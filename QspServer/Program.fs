@@ -695,6 +695,13 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
                 match res with
                 | None -> None
                 | Some(r, msg) ->
+                    let msg =
+                        match msg with
+                        | Parser.Generic.HoverDescription.FuncDescription predefFunc ->
+                            Map.tryFind predefFunc Defines.functionBySymbolic
+                            |> Option.map (fun x -> x.Description)
+                            |> Option.defaultValue ""
+                        | Parser.Generic.HoverDescription.RawDescription x -> x
                     {
                         Hover.Contents =
                             HoverContent.MarkupContent (markdown msg)

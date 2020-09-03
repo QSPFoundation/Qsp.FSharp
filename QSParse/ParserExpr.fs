@@ -47,7 +47,7 @@ let pexplicitVar varHighlightKind : _ Parser =
                     | None -> "Пользовательская глобальная переменная числового типа"
             | ImplicitNumericType -> failwith "Not Implemented"
         appendToken2 Tokens.Variable range
-        >>. appendHover2 msg range
+        >>. appendHover2 (RawDescription msg) range
         >>. appendVarHighlight range (typ, varName) varHighlightKind
         >>. preturn (typ, varName)
 type ProcOrFunc =
@@ -137,13 +137,13 @@ let term expr =
                        |>> fun args ->
                             fun (varType, nameVar) range ->
                                 let desc = getDesc(varType, nameVar)
-                                appendHover2 desc range
+                                appendHover2 (RawDescription desc) range
                                 >>. appendToken2 TokenType.Variable range
                                 >>. appendVarHighlight range (varType, nameVar) VarHighlightKind.ReadAccess
                                 >>% Arr((varType, nameVar), args))
                   <|>% fun (varType, nameVar) range ->
                         let desc = getDesc(varType, nameVar)
-                        appendHover2 desc range
+                        appendHover2 (RawDescription desc) range
                         >>. appendToken2 TokenType.Variable range
                         >>. appendVarHighlight range (varType, nameVar) VarHighlightKind.ReadAccess
                         >>% Var(varType, nameVar))
@@ -167,7 +167,7 @@ let term expr =
                 applyRange (opt (pchar '$') >>? pstringCI name .>>? notFollowedVarCont)
                 >>= fun (range, name) ->
                     appendToken2 TokenType.Function range
-                    >>. appendHover2 x.Description range
+                    >>. appendHover2 (FuncDescription x.SymbolicName) range
                     >>% (name, range, x)
             )
             |> List.ofSeq
@@ -180,7 +180,7 @@ let term expr =
                 applyRange (opt (pchar '$') >>? pstringCI name .>>? notFollowedVarCont)
                 >>= fun (range, name) ->
                     appendToken2 TokenType.Function range
-                    >>. appendHover2 x.Description range
+                    >>. appendHover2 (FuncDescription x.SymbolicName) range
                     >>% (name, range, x)
             )
             |> List.ofSeq

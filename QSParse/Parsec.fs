@@ -20,7 +20,7 @@ let pImplicitVarWhenAssign p =
         |> Map.tryFind nameLower
         |> function
             | Some dscr ->
-                appendHover2 dscr range
+                appendHover2 (RawDescription dscr) range
             | None ->
                 if Map.containsKey nameLower Defines.procs then
                     appendSemanticError range "Нельзя переопределять процедуру"
@@ -28,7 +28,7 @@ let pImplicitVarWhenAssign p =
                     appendSemanticError range "Нельзя переопределять функцию"
                 else
                     let dscr = "Пользовательская глобальная переменная числового типа"
-                    appendHover2 dscr range
+                    appendHover2 (RawDescription dscr) range
         >>. appendToken2 Tokens.TokenType.Variable range
         >>. appendVarHighlight range (ImplicitNumericType, name) VarHighlightKind.WriteAccess
         >>. preturn name
@@ -91,7 +91,7 @@ let pcallProc =
                 |> Map.tryFind (String.toLower name)
                 |> function
                     | Some (dscr, sign) ->
-                        appendHover2 dscr range
+                        appendHover2 (RawDescription dscr) range
                         >>% Some sign
                     | None ->
                         [
@@ -121,7 +121,7 @@ let pcallProc =
             applyRange (pstringCI name .>>? notFollowedVarCont)
             >>= fun (range, name) ->
                 appendToken2 Tokens.TokenType.Procedure range
-                >>. appendHover2 dscr range
+                >>. appendHover2 (RawDescription dscr) range
                 >>% (name, range, sign)
         )
         |> List.ofSeq
@@ -141,7 +141,7 @@ let pcallProc =
             match Map.tryFind (String.toLower name) Defines.procs with
             | Some (dscr, sign) ->
                 appendToken2 Tokens.TokenType.Procedure range
-                >>. appendHover2 dscr range
+                >>. appendHover2 (RawDescription dscr) range
                 >>% (name, range, sign)
             | None -> failwithf "'%s' not found in predef procs" name
     pProcWithAsterix
@@ -248,7 +248,7 @@ let genKeywordParser tokenType keyword =
             if name = keyword then Some dscr
             else None)
         |> Option.defaultWith (fun () -> failwithf "not found %s" keyword)
-    appendTokenHover tokenType dscr
+    appendTokenHover tokenType (RawDescription dscr)
         (pstringCI keyword .>>? notFollowedVarCont)
 let pexit : _ Parser =
     genKeywordParser Tokens.TokenType.Exit "exit"

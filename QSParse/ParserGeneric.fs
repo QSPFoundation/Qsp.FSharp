@@ -101,6 +101,11 @@ let highlightsEmpty =
         VarHighlights = varHighlightsEmpty
         LocHighlights = locHighlightsEmpty
     }
+type HoverDescription =
+    | FuncDescription of Defines.PredefFunc
+    // | VarDescription of Defines.
+    | RawDescription of string
+
 type 'a Parser = Parser<'a, State>
 
 and State =
@@ -111,7 +116,7 @@ and State =
         /// А если хочется понять, что инструкция `gt 'some loc'` верна, то придется пройтись дважды, чтобы определить, существует ли вообще `'some loc'`. Если бы локации определялись последовательно, то есть нельзя было бы обратиться к той, что — ниже, тогда потребовался только один проход. Но в таком случае придется вводить что-то вроде `rec`, чтобы перейти на локацию, определенную ниже. Но всё это возвращает к той же задаче, потому ну его.
         SemanticErrors: (Tokens.InlineRange * string) list
         /// Информация обо всём и вся
-        Hovers: (Tokens.InlineRange * string) list
+        Hovers: (Tokens.InlineRange * HoverDescription) list
         Highlights: Highlights
         /// Нужен для `elseif` конструкции. Эх, если бы ее можно было как-то именно там оставить, но увы.
         IsEndOptional : bool
