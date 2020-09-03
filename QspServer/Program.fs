@@ -787,59 +787,27 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
             | Some currentDocument ->
                 let documentUri = currentDocument.Uri
                 if documentUri = documentSymbolParams.TextDocument.Uri then
-                    client.WindowLogMessage {
-                        Type = MessageType.Info
-                        Message = sprintf "TextDocumentDocumentSymbol"
-                    }
-                    |> Async.RunSynchronously
-
-                    let symbolInfo =
-                        {
-                            ContainerName = None
-                            Name = "someVar"
-                            Kind = SymbolKind.Variable
-                            Location =
+                    highlights.LocHighlights.Ma
+                    |> Seq.choose (fun (KeyValue(locName, v)) ->
+                        v
+                        |> List.tryPick (fun (r, typ) ->
+                            if typ = Parser.Generic.VarHighlightKind.WriteAccess then
                                 {
-                                    Location.Uri = documentUri
-                                    Range =
+                                    ContainerName = None
+                                    Name = locName
+                                    Kind = SymbolKind.Function
+                                    Location =
                                         {
-                                            Range.Start =
-                                                {
-                                                    Position.Line = 0
-                                                    Character = 0
-                                                }
-                                            Range.End =
-                                                {
-                                                    Position.Line = 0
-                                                    Character = 1000
-                                                }
+                                            Location.Uri = documentUri
+                                            Range = Position.ofInlineRange r
                                         }
-                                }
-                        }
-                    let symbolInfo2 =
-                        {
-                            ContainerName = None
-                            Name = "someVar2"
-                            Kind = SymbolKind.Variable
-                            Location =
-                                {
-                                    Location.Uri = documentUri
-                                    Range =
-                                        {
-                                            Range.Start =
-                                                {
-                                                    Position.Line = 1
-                                                    Character = 0
-                                                }
-                                            Range.End =
-                                                {
-                                                    Position.Line = 1
-                                                    Character = 1000
-                                                }
-                                        }
-                                }
-                        }
-                    Some [|symbolInfo; symbolInfo2|]
+                                } |> Some
+                            else None
+                        )
+                    )
+                    |> Seq.sortBy (fun x -> x.Location.Range.Start.Line)
+                    |> Array.ofSeq
+                    |> Some
                 else None
             | None -> None
         return LspResult.success x
@@ -922,7 +890,7 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
                             ImplementationProvider = Some true
                             ReferencesProvider = Some true
                             DocumentHighlightProvider = Some true
-                            DocumentSymbolProvider = Some false
+                            DocumentSymbolProvider = Some true
                             WorkspaceSymbolProvider = Some false
                             DocumentFormattingProvider = Some true
                             DocumentRangeFormattingProvider = Some false
