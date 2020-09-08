@@ -51,24 +51,14 @@ let doFile txt2qspConfig updateSourceIfExists src =
     else
         decodeGame txt2qspConfig src dst
 
-let threadsExec threads fn xs =    
+let threadsExec threads fn xs =
     if threads > 1 then
         xs
-        |> Seq.chunkBySize threads
-        |> Seq.collect (fun paths ->
-            paths
-            |> Array.map (fun x ->
-                async {
-                    return fn x
-                })
-            |> Async.Parallel
-            |> Async.RunSynchronously
-            // // or:
-            // paths
-            // |> Array.Parallel.map fn
-        )
+        |> Seq.map (fun x -> async { return fn x })
+        |> fun xs -> Async.Parallel(xs, threads)
+        |> Async.RunSynchronously
     else
-        xs |> Seq.map fn
+        xs |> Seq.map fn |> Array.ofSeq
 
 let doDir txt2qspConfig updateSourceIfExists threads dir =
     // TODO:
@@ -86,7 +76,10 @@ let doDir txt2qspConfig updateSourceIfExists threads dir =
     // if use the "*.qsp" mask, it will capture the ".qsps" files as well
     let xs =
         System.IO.Directory.EnumerateFiles(dir, "*.*", System.IO.SearchOption.AllDirectories)
-        |> Seq.filter (System.IO.Path.GetExtension >> ((=) ".qsp"))
+        |> Seq.filter
+            (System.IO.Path.GetExtension
+             >> String.toLower
+             >> fun ext -> ext = ".qsp" || ext = ".gam")
     xs
     |> threadsExec threads (doFile txt2qspConfig updateSourceIfExists)
 
@@ -235,7 +228,7 @@ let main argv =
         |> Either.map (fun config ->
             doDir config updateSourceIfExists threads folder
         )
-        |> Either.seqEitherPseudo
+        |> Either.either (Left >> Array.singleton) id
 
     let path =
         results
@@ -249,7 +242,7 @@ let main argv =
         path
         |> Either.bind (fun src ->
             match String.toLower (System.IO.Path.GetExtension src) with
-            | ".qsp" ->
+            | ".qsp" | ".gam" ->
                 txt2qspConfig
                 |> Either.bind (fun config ->
                     doFile config updateSourceIfExists src
@@ -307,7 +300,7 @@ let main argv =
                         Left errMsg
                 )
             )
-        | Left err -> seq{ yield Left err }
+        | Left err -> [| Left err |]
     // let tree =
     //     pathExec ()
     //     |> Either.bind (fun path ->
