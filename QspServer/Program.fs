@@ -271,13 +271,13 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
     let publishDiagnostics uri (res:list<_>) =
         let diagnostics =
             res
-            |> List.map (fun (range, word) ->
+            |> List.map (fun (range, msg) ->
                 {
                     Range = range
                     Severity = Some (DiagnosticSeverity.Error)
                     Code = None
                     Source = "qsp"
-                    Message = sprintf "unknown '%s'" word
+                    Message = msg
                     RelatedInformation = None
                     Tags = None
                 })
