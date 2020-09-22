@@ -359,11 +359,11 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
             |> List.map (fun x -> struct (x.Range, x.TokenType) )
             |> Array.ofList
     member __.GetHighlighting(p : HighlightingRequest) =
-        let uri = sprintf "file:///%s" p.FileName
+        let uri = System.Uri p.FileName
         let res =
             currentDocument
             |> Option.map (fun x ->
-                let res = parse uri x.Text
+                let res = parse uri.AbsoluteUri x.Text
                 { Content =
                     CommandResponse.highlighting res
                     |> FSharpJsonType.SerializeOption.serNotIndent }
