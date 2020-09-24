@@ -254,8 +254,10 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
             else
                 false
         )
-        |> Option.map (fun (_, var) ->
-            Map.find var highlights.VarHighlights.Ma) // находить должно всегда
+        |> Option.map (fun (_, varId) ->
+            Map.find varId highlights.VarHighlights.VarScopeSystem.Result // находить должно всегда
+            |> snd
+        )
     let getLocHighlight (pos:Position) =
         highlights.LocHighlights.Ranges
         |> List.tryFind (fun (r, _) ->

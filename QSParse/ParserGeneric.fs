@@ -70,17 +70,18 @@ type DocumentHighlightKind =
 type VarHighlightKind =
     | ReadAccess
     | WriteAccess
-// type Var =
+
 type VarHighlights =
     {
-        Ma: Map<Ast.Var, (Tokens.InlineRange * VarHighlightKind) list>
-        Ranges: (Tokens.InlineRange * Ast.Var) list
+        VarScopeSystem: Scope.ScopeSystem<Ast.Var, Tokens.InlineRange * VarHighlightKind>
+        Ranges: (Tokens.InlineRange * Scope.VarId) list
     }
 let varHighlightsEmpty =
     {
-        Ma = Map.empty
+        VarScopeSystem = Scope.scopeSystemEmpty
         Ranges = []
     }
+
 type LocHighlights =
     {
         Ma: Map<Ast.LocationName, (Tokens.InlineRange * VarHighlightKind) list>
@@ -167,13 +168,23 @@ let appendVarHighlight (r:Tokens.InlineRange) (var:Ast.Var) highlightKind =
                 {
                     st.Highlights with
                         VarHighlights =
-                            {
-                                Ranges = (r, var)::st.Highlights.VarHighlights.Ranges
-                                Ma =
-                                    let v = r, highlightKind
-                                    st.Highlights.VarHighlights.Ma
-                                    |> Map.addOrMod var [v] (fun xs -> v::xs)
-                            }
+                            let varHighlights = st.Highlights.VarHighlights
+
+                            match highlightKind with
+                            | ReadAccess ->
+                                let v = r, highlightKind
+                                let varId, ss = Scope.addAsRead (var, (fun xs -> v::xs)) varHighlights.VarScopeSystem
+                                {
+                                    Ranges = (r, varId)::st.Highlights.VarHighlights.Ranges
+                                    VarScopeSystem = ss
+                                }
+                            | WriteAccess ->
+                                let v = r, highlightKind
+                                let varId, ss = Scope.addAsWrite (var, v) varHighlights.VarScopeSystem
+                                {
+                                    Ranges = (r, varId)::st.Highlights.VarHighlights.Ranges
+                                    VarScopeSystem = ss
+                                }
                 }
         }
     )
