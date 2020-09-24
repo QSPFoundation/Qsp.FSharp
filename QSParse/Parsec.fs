@@ -12,7 +12,7 @@ open Qsp.Parser.Expr
 let ppunctuationTerminator : _ Parser =
     appendToken Tokens.TokenType.PunctuationTerminatorStatement (pchar '&')
 
-let pImplicitVarWhenAssign p =
+let pImplicitVarWhenAssign p isLocal =
     applyRange p
     >>= fun (range, (name:string)) ->
         let nameLower = name.ToLower()
@@ -30,11 +30,11 @@ let pImplicitVarWhenAssign p =
                     let dscr = "Пользовательская глобальная переменная числового типа"
                     appendHover2 (RawDescription dscr) range
         >>. appendToken2 Tokens.TokenType.Variable range
-        >>. appendVarHighlight range (ImplicitNumericType, name) VarHighlightKind.WriteAccess false
+        >>. appendVarHighlight range (ImplicitNumericType, name) VarHighlightKind.WriteAccess isLocal
         >>. preturn name
 
 let pAssign stmts =
-    let assdef name ass =
+    let assdef isLocal name ass =
         let asscode =
             between (pchar '{' >>. spaces) (spaces >>. char_ws '}') stmts
             |>> fun stmts -> AssignCode(ass, stmts)
@@ -45,14 +45,14 @@ let pAssign stmts =
             .>> ws
 
         choice [
-            str_ws "-=" >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Minus, Var name, defExpr))
-            str_ws "/=" >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Divide, Var name, defExpr))
-            str_ws "+=" >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Plus, Var name, defExpr))
-            str_ws "*=" >>. pexpr |>> fun defExpr -> Assign(ass, Expr.Expr(Times, Var name, defExpr))
-            str_ws "=" >>. (asscode <|> (pexpr |>> fun defExpr -> Assign(ass, defExpr)))
+            str_ws "-=" >>. pexpr |>> fun defExpr -> Assign(isLocal, ass, Expr.Expr(Minus, Var name, defExpr))
+            str_ws "/=" >>. pexpr |>> fun defExpr -> Assign(isLocal, ass, Expr.Expr(Divide, Var name, defExpr))
+            str_ws "+=" >>. pexpr |>> fun defExpr -> Assign(isLocal, ass, Expr.Expr(Plus, Var name, defExpr))
+            str_ws "*=" >>. pexpr |>> fun defExpr -> Assign(isLocal, ass, Expr.Expr(Times, Var name, defExpr))
+            str_ws "=" >>. (asscode <|> (pexpr |>> fun defExpr -> Assign(isLocal, ass, defExpr)))
         ]
 
-    let assign name =
+    let assign isLocal name =
         let arr =
             between
                 (appendToken Tokens.TokenType.BraceSquareOpened (pchar '[' .>> ws))
@@ -63,23 +63,36 @@ let pAssign stmts =
                 | Some braketExpr ->
                     AssignArr(name, braketExpr)
                 | None -> AssignArrAppend name
-        (arr .>> ws) <|>% AssignVar name >>=? assdef name
+        (arr .>> ws) <|>% AssignVar name >>=? assdef isLocal name
+    let pSetOrLet =
+        appendToken Tokens.TokenType.Type
+            ((pstringCI "set" <|> pstringCI "let") .>>? notFollowedVarCont)
+        .>> ws
+        >>. (pexplicitVar VarHighlightKind.WriteAccess
+             <|> (pImplicitVarWhenAssign ident false |>> fun name -> ImplicitNumericType, name))
+        .>>? ws >>=? assign false
+    let pLocal =
+        appendToken Tokens.TokenType.Type
+            (pstringCI "local" .>>? notFollowedVarCont)
+        .>> ws
+        >>. (pexplicitVar VarHighlightKind.WriteAccess
+             <|> (pImplicitVarWhenAssign ident true |>> fun name -> ImplicitNumericType, name))
+        .>> ws >>=? assign true
     let pExplicitAssign =
-        let p =
-            appendToken
-                Tokens.TokenType.Type
-                ((pstringCI "set" <|> pstringCI "let") .>>? notFollowedVarCont)
-            .>> ws
-            >>. (pexplicitVar VarHighlightKind.WriteAccess <|> (pImplicitVarWhenAssign ident |>> fun name -> ImplicitNumericType, name))
-        p <|> pexplicitVar VarHighlightKind.WriteAccess .>>? ws
-        >>=? assign
+        pexplicitVar VarHighlightKind.WriteAccess
+        .>>? ws >>=? assign false
 
     let pImlicitAssign =
-        pImplicitVarWhenAssign notFollowedByBinOpIdent .>>? ws
+        pImplicitVarWhenAssign notFollowedByBinOpIdent false .>>? ws
         >>=? fun name ->
-            assign (ImplicitNumericType, name)
-    pExplicitAssign <|> pImlicitAssign
-
+            assign false (ImplicitNumericType, name)
+    choice
+        [
+            pLocal
+            pSetOrLet
+            pExplicitAssign
+            pImlicitAssign
+        ]
 let pcallProc =
     let f defines p =
         applyRange p
@@ -289,7 +302,7 @@ let pstmt =
         let pForHeader =
             genKeywordParser Tokens.TokenType.For "for" >>. ws
             >>. (pexplicitVar VarHighlightKind.WriteAccess
-                 <|> (pImplicitVarWhenAssign ident |>> fun name -> ImplicitNumericType, name))
+                 <|> (pImplicitVarWhenAssign ident false |>> fun name -> ImplicitNumericType, name))
             .>> ws .>> appendToken Tokens.TokenType.OperatorAssignment (pchar '=')
             .>> ws .>>. pexpr
             .>> genKeywordParser Tokens.TokenType.To "to"

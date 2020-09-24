@@ -154,7 +154,7 @@ let patternMatching pattern =
             else
                 let _, stmt = stmt
                 match stmt with
-                | Assign(_, expr) ->
+                | Assign(_, _, expr) ->
                     exprEqual acc expr
                 | Proc(_, exprs) ->
                     List.fold exprEqual acc exprs

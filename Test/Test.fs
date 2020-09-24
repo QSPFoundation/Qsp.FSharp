@@ -133,14 +133,14 @@ let assignTest =
             let input = "x = 21 + 21"
             let exp =
                 (Assign
-                   (AssignVar (ImplicitNumericType, "x"),
+                   (false, AssignVar (ImplicitNumericType, "x"),
                     Expr (Plus, Val (Int 21), Val (Int 21))))
             Assert.Equal("", Right exp, runExpr input)
         testCase "implicit assign implicit array var" <| fun () ->
             let input = "x[expr] = 42"
             let exp =
                 (Assign
-                   (AssignArr
+                   (false, AssignArr
                       ((ImplicitNumericType, "x"), Var (ImplicitNumericType, "expr")),
                     Val (Int 42)))
             Assert.Equal("", Right exp, runExpr input)
@@ -148,14 +148,14 @@ let assignTest =
             let input = "years -= 10"
             let exp =
               (Assign
-                 (AssignVar (ImplicitNumericType, "years"),
+                 (false, AssignVar (ImplicitNumericType, "years"),
                   Expr (Minus, Var (ImplicitNumericType, "years"), Val (Int 10))))
             Assert.Equal("", Right exp, runExpr input)
         testCase "implicit `-=` implicit var 2" <| fun () ->
             let input = "php -= 3*emdmg*2 - parm"
             let exp =
                 (Assign
-                   (AssignVar (ImplicitNumericType, "php"),
+                   (false, AssignVar (ImplicitNumericType, "php"),
                     Expr
                       (Minus, Var (ImplicitNumericType, "php"),
                        Expr
@@ -169,7 +169,7 @@ let assignTest =
             let input = "a = a = no -a > b"
             let exp =
                 (Assign
-                   (AssignVar (ImplicitNumericType, "a"),
+                   (false, AssignVar (ImplicitNumericType, "a"),
                     Expr
                       (Eq, Var (ImplicitNumericType, "a"),
                        UnarExpr
@@ -182,20 +182,20 @@ let assignTest =
             let input = "$x[expr] = 42"
             let exp =
                 (Assign
-                   (AssignArr ((StringType, "x"), Var (ImplicitNumericType, "expr")),
+                   (false, AssignArr ((StringType, "x"), Var (ImplicitNumericType, "expr")),
                     Val (Int 42)))
             Assert.Equal("", Right exp, runExpr input)
         testCase "implicit assign explicit var" <| fun () ->
             let input = "#x = 21 + 21"
             let exp =
                 (Assign
-                   (AssignVar (ExplicitNumericType, "x"),
+                   (false, AssignVar (ExplicitNumericType, "x"),
                     Expr (Plus, Val (Int 21), Val (Int 21))))
             Assert.Equal("", Right exp, runExpr input)
         testCase "`x[] = 1`" <| fun () ->
             let input = "x[] = 1"
             let exp =
-                Assign (AssignArrAppend (ImplicitNumericType, "x"), Val (Int 1))
+                Assign (false, AssignArrAppend (ImplicitNumericType, "x"), Val (Int 1))
             Assert.Equal("", Right exp, runExpr input)
         // ложные случаи:
         testCase "attempt assign function" <| fun () ->
@@ -205,7 +205,8 @@ let assignTest =
                     "Error in Ln: 1 Col: 1"
                     "f(expr) = 42"
                     "^"
-                    "Expecting: '#', '$', 'let' (case-insensitive) or 'set' (case-insensitive)"
+                    "Expecting: '#', '$', 'let' (case-insensitive), 'local' (case-insensitive) or"
+                    "'set' (case-insensitive)"
                     ""
                     "The parser backtracked after:"
                     "  Error in Ln: 1 Col: 2"
@@ -797,7 +798,7 @@ let stmtTests =
             let input = "years -= 10"
             let exp =
               (Assign
-                 (AssignVar (ImplicitNumericType, "years"),
+                 (false, AssignVar (ImplicitNumericType, "years"),
                   Expr (Minus, Var (ImplicitNumericType, "years"), Val (Int 10))))
             equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "call function as expression" <| fun () ->

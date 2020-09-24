@@ -198,13 +198,17 @@ let showStmt indentsOption (formatConfig:FormatConfig) =
         let showAssign = showAssign showStmtsInline
         let showExpr = showExpr showStmtsInline
         let showStringLines = showStringLines showExpr showStmtsInline
+        let showLocal isLocal =
+            if isLocal then
+                showString "local" << showSpace
+            else id
         match stmt with
-        | Assign(AssingName name' as ass, Expr((Plus|Minus) as op, Var name, e)) when name' = name ->
-            [showAssign ass << spaceBetween (ops op << showChar '=') << showExpr e]
-        | Assign(AssingName name' as ass, Expr((Plus|Minus) as op, e, Var name)) when name' = name ->
-            [showAssign ass << spaceBetween (showChar '=' << ops op) << showExpr e]
-        | Assign(ass, e) ->
-            [showAssign ass << spaceBetween (showChar '=') << showExpr e]
+        | Assign(isLocal, (AssingName name' as ass), Expr((Plus|Minus) as op, Var name, e)) when name' = name ->
+            [showLocal isLocal << showAssign ass << spaceBetween (ops op << showChar '=') << showExpr e]
+        | Assign(isLocal, (AssingName name' as ass), Expr((Plus|Minus) as op, e, Var name)) when name' = name ->
+            [showLocal isLocal << showAssign ass << spaceBetween (showChar '=' << ops op) << showExpr e]
+        | Assign(isLocal, ass, e) ->
+            [showLocal isLocal << showAssign ass << spaceBetween (showChar '=') << showExpr e]
         | Proc(name, [e]) when name.ToLower() = "*pl" ->
             if formatConfig.IsSplitStringPl then
                 match e with
