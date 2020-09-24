@@ -30,7 +30,7 @@ let pImplicitVarWhenAssign p =
                     let dscr = "Пользовательская глобальная переменная числового типа"
                     appendHover2 (RawDescription dscr) range
         >>. appendToken2 Tokens.TokenType.Variable range
-        >>. appendVarHighlight range (ImplicitNumericType, name) VarHighlightKind.WriteAccess
+        >>. appendVarHighlight range (ImplicitNumericType, name) VarHighlightKind.WriteAccess false
         >>. preturn name
 
 let pAssign stmts =
@@ -423,29 +423,53 @@ let ploc =
                     (skipManySatisfy ((<>) '\n'))))
         (fun name body -> Location(name, body))
 
-let pAfterAll =
-    preturn ()
+let ploc2 =
+    let updateScope fn =
+        updateUserState (fun x ->
+            let ss = x.Highlights.VarHighlights.VarScopeSystem
+
+            { x with
+                Highlights =
+                    { x.Highlights with
+                        VarHighlights =
+                            { x.Highlights.VarHighlights with
+                                VarScopeSystem = fn ss
+                            }
+                    }
+            })
+    let appendScope =
+        updateScope (fun ss ->
+            { ss with
+                Scopes = Scope.appendScope ss.Scopes
+            }
+            |> Scope.addAsWrite ((ImplicitNumericType, "args"), fun () -> [])
+            |> snd
+            |> Scope.addAsWrite ((StringType, "args"), fun () -> [])
+            |> snd
+        )
+
+    let ploc =
+        appendScope
+        >>? ploc
+        .>> updateScope (fun ss ->
+            { ss with
+                Scopes = Scope.removeScope ss.Scopes
+            }
+        )
+    spaces >>. many (ploc .>> spaces)
+    .>> (getPosition >>= fun p ->
+            updateUserState (fun st ->
+                { st with LastSymbolPos = p}))
+let emptyState =
+    { emptyState with PStmts = pstmts }
+
 let start str =
-    let emptyState =
-        { emptyState with PStmts = pstmts }
-    let p =
-        spaces >>. many (ploc .>> spaces)
-        .>> (getPosition >>= fun p ->
-                updateUserState (fun st ->
-                    { st with LastSymbolPos = p}))
-    runParserOnString (p .>> pAfterAll .>> eof)
+    runParserOnString (ploc2 .>> eof)
         emptyState
         ""
         str
 let startOnFile enc path =
-    let emptyState =
-        { emptyState with PStmts = pstmts }
-    let p =
-        spaces >>. many (ploc .>> spaces)
-        .>> (getPosition >>= fun p ->
-                updateUserState (fun st ->
-                    { st with LastSymbolPos = p}))
-    runParserOnFile (p .>> pAfterAll .>> eof)
+    runParserOnFile (ploc2 .>> eof)
         emptyState
         path
         enc

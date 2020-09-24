@@ -48,7 +48,7 @@ let pexplicitVar varHighlightKind : _ Parser =
             | ImplicitNumericType -> failwith "Not Implemented"
         appendToken2 Tokens.Variable range
         >>. appendHover2 (RawDescription msg) range
-        >>. appendVarHighlight range (typ, varName) varHighlightKind
+        >>. appendVarHighlight range (typ, varName) varHighlightKind false
         >>. preturn (typ, varName)
 type ProcOrFunc =
     | Procedure of string
@@ -139,13 +139,13 @@ let term expr =
                                 let desc = getDesc(varType, nameVar)
                                 appendHover2 (RawDescription desc) range
                                 >>. appendToken2 TokenType.Variable range
-                                >>. appendVarHighlight range (varType, nameVar) VarHighlightKind.ReadAccess
+                                >>. appendVarHighlight range (varType, nameVar) VarHighlightKind.ReadAccess false
                                 >>% Arr((varType, nameVar), args))
                   <|>% fun (varType, nameVar) range ->
                         let desc = getDesc(varType, nameVar)
                         appendHover2 (RawDescription desc) range
                         >>. appendToken2 TokenType.Variable range
-                        >>. appendVarHighlight range (varType, nameVar) VarHighlightKind.ReadAccess
+                        >>. appendVarHighlight range (varType, nameVar) VarHighlightKind.ReadAccess false
                         >>% Var(varType, nameVar))
             >>= fun ((range, (varType, name)), f) ->
                     f (varType, name) range

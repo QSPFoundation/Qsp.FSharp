@@ -68,13 +68,13 @@ let addAsRead (varName:'VarName, getValue) (scopeSystem: ScopeSystem<_,_>) =
         | [] -> failwith "the scope cannot be empty"
     f [] scopeSystem.Scopes
 
-let addAsWrite (varName, value) (scopeSystem: ScopeSystem<_,_>) =
+let addAsWrite (varName:'VarName, getValue) (scopeSystem: ScopeSystem<_,_>) =
     match scopeSystem.Scopes with
     | m::ms ->
         let newVarId = scopeSystem.NewVarId
         let m = Map.add varName newVarId m // that's ok: variables can be overwritten
         let result =
-            Map.add newVarId (varName, [value]) scopeSystem.Result
+            Map.add newVarId (varName, getValue ()) scopeSystem.Result
         let scopes = m::ms
         let x =
             {

@@ -109,7 +109,7 @@ module Parser =
             .>> (getPosition >>= fun p ->
                     updateUserState (fun st ->
                         { st with LastSymbolPos = p}))
-        runParserOnString (p .>> pAfterAll)
+        runParserOnString p
             emptyState
             ""
             str

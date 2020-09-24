@@ -160,7 +160,7 @@ let pGetDefLocPos locName =
                 | _ -> None
             )
 
-let appendVarHighlight (r:Tokens.InlineRange) (var:Ast.Var) highlightKind =
+let appendVarHighlight (r:Tokens.InlineRange) (var:Ast.Var) highlightKind isLocal =
     let var = mapSnd String.toLower var // for case-insensitively
     updateUserState (fun st ->
         { st with
@@ -170,17 +170,16 @@ let appendVarHighlight (r:Tokens.InlineRange) (var:Ast.Var) highlightKind =
                         VarHighlights =
                             let varHighlights = st.Highlights.VarHighlights
 
-                            match highlightKind with
-                            | ReadAccess ->
+                            if not <| isLocal then
                                 let v = r, highlightKind
                                 let varId, ss = Scope.addAsRead (var, (fun xs -> v::xs)) varHighlights.VarScopeSystem
                                 {
                                     Ranges = (r, varId)::st.Highlights.VarHighlights.Ranges
                                     VarScopeSystem = ss
                                 }
-                            | WriteAccess ->
+                            else
                                 let v = r, highlightKind
-                                let varId, ss = Scope.addAsWrite (var, v) varHighlights.VarScopeSystem
+                                let varId, ss = Scope.addAsWrite (var, fun () -> [v]) varHighlights.VarScopeSystem
                                 {
                                     Ranges = (r, varId)::st.Highlights.VarHighlights.Ranges
                                     VarScopeSystem = ss
