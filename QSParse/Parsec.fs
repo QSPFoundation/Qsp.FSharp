@@ -68,18 +68,18 @@ let pAssign stmts =
         appendToken Tokens.TokenType.Type
             ((pstringCI "set" <|> pstringCI "let") .>>? notFollowedVarCont)
         .>> ws
-        >>. (pexplicitVar VarHighlightKind.WriteAccess
+        >>. (pexplicitVar VarHighlightKind.WriteAccess false
              <|> (pImplicitVarWhenAssign ident false |>> fun name -> ImplicitNumericType, name))
         .>>? ws >>=? assign false
     let pLocal =
         appendToken Tokens.TokenType.Type
             (pstringCI "local" .>>? notFollowedVarCont)
         .>> ws
-        >>. (pexplicitVar VarHighlightKind.WriteAccess
+        >>. (pexplicitVar VarHighlightKind.WriteAccess true
              <|> (pImplicitVarWhenAssign ident true |>> fun name -> ImplicitNumericType, name))
         .>> ws >>=? assign true
     let pExplicitAssign =
-        pexplicitVar VarHighlightKind.WriteAccess
+        pexplicitVar VarHighlightKind.WriteAccess false
         .>>? ws >>=? assign false
 
     let pImlicitAssign =
@@ -332,7 +332,7 @@ let pstmt =
     let pFor =
         let pForHeader =
             genKeywordParser Tokens.TokenType.For "for" >>. ws
-            >>. (pexplicitVar VarHighlightKind.WriteAccess
+            >>. (pexplicitVar VarHighlightKind.WriteAccess false
                  <|> (pImplicitVarWhenAssign ident false |>> fun name -> ImplicitNumericType, name))
             .>> ws .>> appendToken Tokens.TokenType.OperatorAssignment (pchar '=')
             .>> ws .>>. pexpr

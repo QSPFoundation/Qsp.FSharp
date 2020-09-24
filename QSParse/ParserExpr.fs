@@ -18,7 +18,7 @@ let pbinaryOperator : _ Parser =
     |> choice
 
 /// берёт только то, что начинается с `#` или `$`
-let pexplicitVar varHighlightKind : _ Parser =
+let pexplicitVar varHighlightKind isLocal : _ Parser =
     let isIdentifierFirstChar c = isLetter c || c = '_'
     let p = many1Satisfy2L isIdentifierFirstChar isIdentifierChar "identifier"
     // TODO: или просто `many1Satisfy isIdentifierChar` ?
@@ -48,7 +48,7 @@ let pexplicitVar varHighlightKind : _ Parser =
             | ImplicitNumericType -> failwith "Not Implemented"
         appendToken2 Tokens.Variable range
         >>. appendHover2 (RawDescription msg) range
-        >>. appendVarHighlight range (typ, varName) varHighlightKind false
+        >>. appendVarHighlight range (typ, varName) varHighlightKind isLocal
         >>. preturn (typ, varName)
 type ProcOrFunc =
     | Procedure of string
