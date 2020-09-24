@@ -73,7 +73,7 @@ type VarHighlightKind =
 
 type VarHighlights =
     {
-        VarScopeSystem: Scope.ScopeSystem<Ast.Var, Tokens.InlineRange * VarHighlightKind>
+        VarScopeSystem: Scope.ScopeSystem<Ast.VarName, Tokens.InlineRange * VarHighlightKind>
         Ranges: (Tokens.InlineRange * Scope.VarId) list
     }
 let varHighlightsEmpty =
@@ -172,14 +172,14 @@ let appendVarHighlight (r:Tokens.InlineRange) (var:Ast.Var) highlightKind isLoca
 
                             if not <| isLocal then
                                 let v = r, highlightKind
-                                let varId, ss = Scope.addAsRead (var, (fun xs -> v::xs)) varHighlights.VarScopeSystem
+                                let varId, ss = Scope.addAsRead (snd var, (fun xs -> v::xs)) varHighlights.VarScopeSystem
                                 {
                                     Ranges = (r, varId)::st.Highlights.VarHighlights.Ranges
                                     VarScopeSystem = ss
                                 }
                             else
                                 let v = r, highlightKind
-                                let varId, ss = Scope.addAsWrite (var, fun () -> [v]) varHighlights.VarScopeSystem
+                                let varId, ss = Scope.addAsWrite (snd var, fun () -> [v]) varHighlights.VarScopeSystem
                                 {
                                     Ranges = (r, varId)::st.Highlights.VarHighlights.Ranges
                                     VarScopeSystem = ss

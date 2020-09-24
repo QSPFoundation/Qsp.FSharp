@@ -442,9 +442,9 @@ let ploc2 =
             { ss with
                 Scopes = Scope.appendScope ss.Scopes
             }
-            |> Scope.addAsWrite ((ImplicitNumericType, "args"), fun () -> [])
+            |> Scope.addAsWrite ("args", fun () -> [])
             |> snd
-            |> Scope.addAsWrite ((StringType, "args"), fun () -> [])
+            |> Scope.addAsWrite ("result", fun () -> [])
             |> snd
         )
 

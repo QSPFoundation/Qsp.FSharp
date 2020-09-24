@@ -145,7 +145,8 @@ type VarType =
 type 'Predef PredefUndef =
     | Predef of 'Predef
     | Undef of string
-type Var = VarType * string
+type VarName = string
+type Var = VarType * VarName
 type StmtsOrRaw =
     | Raw of string
     | StaticStmts of PosStatement list
