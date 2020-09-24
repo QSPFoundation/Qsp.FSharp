@@ -278,10 +278,41 @@ let pstmts1' pstmt =
 let pstmt =
     let pstmt, pstmtRef = createParserForwardedToRef<PosStatement, _>()
     let pInlineStmts =
-        many (pstmt .>> ws .>> skipMany (ppunctuationTerminator .>> ws))
+        updateScope (fun ss ->
+            { ss with
+                Scopes = Scope.appendScope ss.Scopes
+            }
+        )
+        >>. many (pstmt .>> ws .>> skipMany (ppunctuationTerminator .>> ws))
+        .>> updateScope (fun ss ->
+            { ss with
+                Scopes = Scope.removeScope ss.Scopes
+            }
+        )
     let pInlineStmts1 =
-        many1 (pstmt .>> ws .>> skipMany (ppunctuationTerminator .>> ws))
-    let pstmts = pstmts' pstmt
+        updateScope (fun ss ->
+            { ss with
+                Scopes = Scope.appendScope ss.Scopes
+            }
+        )
+        >>? many1 (pstmt .>> ws .>> skipMany (ppunctuationTerminator .>> ws))
+        .>> updateScope (fun ss ->
+            { ss with
+                Scopes = Scope.removeScope ss.Scopes
+            }
+        )
+    let pstmts =
+        updateScope (fun ss ->
+            { ss with
+                Scopes = Scope.appendScope ss.Scopes
+            }
+        )
+        >>. pstmts' pstmt
+        .>> updateScope (fun ss ->
+            { ss with
+                Scopes = Scope.removeScope ss.Scopes
+            }
+        )
 
     let pcolonKeyword : _ Parser =
         appendToken Tokens.TokenType.Colon (pchar ':')
@@ -437,20 +468,7 @@ let ploc =
         (fun name body -> Location(name, body))
 
 let ploc2 =
-    let updateScope fn =
-        updateUserState (fun x ->
-            let ss = x.Highlights.VarHighlights.VarScopeSystem
-
-            { x with
-                Highlights =
-                    { x.Highlights with
-                        VarHighlights =
-                            { x.Highlights.VarHighlights with
-                                VarScopeSystem = fn ss
-                            }
-                    }
-            })
-    let appendScope =
+    let ploc =
         updateScope (fun ss ->
             { ss with
                 Scopes = Scope.appendScope ss.Scopes
@@ -460,9 +478,6 @@ let ploc2 =
             |> Scope.addAsWrite ("result", fun () -> [])
             |> snd
         )
-
-    let ploc =
-        appendScope
         >>? ploc
         .>> updateScope (fun ss ->
             { ss with

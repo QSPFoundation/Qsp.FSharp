@@ -145,7 +145,19 @@ let emptyState =
         DoubleQuotNestedCount = 0
         HtmlAttDoubleNested = 0
     }
+let updateScope fn =
+    updateUserState (fun x ->
+        let ss = x.Highlights.VarHighlights.VarScopeSystem
 
+        { x with
+            Highlights =
+                { x.Highlights with
+                    VarHighlights =
+                        { x.Highlights.VarHighlights with
+                            VarScopeSystem = fn ss
+                        }
+                }
+        })
 let pGetDefLocPos locName =
     getUserState
     |>> fun st ->
