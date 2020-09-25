@@ -182,6 +182,7 @@ and Statement =
     | If of Expr * PosStatement list * PosStatement list
     | Act of Expr list * PosStatement list
     | For of var:Var * from:Expr * to':Expr * step:Expr option * body:PosStatement list
+    | Loop of preStmts:PosStatement list * Expr * step:PosStatement list * body:PosStatement list
     | Label of string
     | Comment of string
     | Exit

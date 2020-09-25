@@ -174,7 +174,7 @@ let (|OneStmt|_|) = function
         | Act _ | If _ -> None
         | Label _ -> None // эту нечисть нужно как можно более нагляднее подчеркнуть. Да странно будет, если она окажется одна в списке инструкций.
         | Exit -> None // ¯\_(ツ)_/¯
-        | For _ -> None
+        | For _ | Loop _ -> None
     | _ -> None
 
 let (|AssingName|) = function AssignArr(x, _) -> x | AssignVar x -> x | AssignArrAppend x -> x
@@ -331,6 +331,29 @@ let showStmt indentsOption (formatConfig:FormatConfig) =
             ]
 
         | Exit -> [showString "exit"]
+        | Loop(preStmts, condExpr, step, body) ->
+            let header =
+                showString "loop"
+                << if List.isEmpty preStmts then id else showSpace << showStmtsInline preStmts
+                << showSpace << showString "while"
+                << showSpace << showExpr condExpr
+                << if List.isEmpty step then id
+                   else
+                    showSpace << showString "step"
+                    << showSpace << showStmtsInline step
+                << showChar ':'
+            [
+                match body with
+                | OneStmt x ->
+                    yield header << showSpace << showStmtsInline [x]
+                | _ ->
+                    yield header
+                    yield!
+                        body
+                        |> List.collect
+                            (f' >> List.map ((<<) tabs))
+                    yield showString "end"
+            ]
     f'
 
 let showLoc indentsOption isSplitStringPl (Location(name, statements)) : ShowS list =

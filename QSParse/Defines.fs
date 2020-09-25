@@ -1287,5 +1287,22 @@ let keywords =
             ] |> String.concat "\n"
         "for", dscr
         "to", "**TO** — ключевое слово для конструкции FOR"
-        "step", "**STEP** — ключевое слово для конструкции FOR"
+        "step", "**STEP** — ключевое слово для конструкции FOR или LOOP"
+        let dscr =
+            [
+                "inline:"
+                ""
+                "```ebnf"
+                "'loop' [inlineStatements] 'while' expr ['step' inlineStatements]: statements"
+                "```"
+                "multiline:"
+                ""
+                "```ebnf"
+                "'loop' [inlineStatements] 'while' expr ['step' inlineStatements]:"
+                "    statements"
+                "'end'"
+                "```"
+            ] |> String.concat "\n"
+        "loop", dscr
+        "while", "**WHILE** — ключевое слово для конструкции LOOP"
     ]

@@ -176,6 +176,11 @@ let patternMatching pattern =
                             exprEqual acc step
                         | _ -> acc
                     stmtsMatcher acc body
+                | Loop(preStmts, condExpr, step, body) ->
+                    let acc = stmtsMatcher acc preStmts
+                    let acc = exprEqual acc condExpr
+                    let acc = stmtsMatcher acc step
+                    stmtsMatcher acc body
                 | Label(_) -> acc
                 | Comment(_) -> acc
         ) acc

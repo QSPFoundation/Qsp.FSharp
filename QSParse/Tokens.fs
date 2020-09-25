@@ -17,6 +17,9 @@ type TokenType =
     | To
     | Step
 
+    | Loop
+    | While
+
     /// в TS `var` называется `storage.type.js`
     | Type
     | Keyword

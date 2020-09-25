@@ -82,6 +82,8 @@ module CommandResponse =
             | For
             | To
             | Step
+            | Loop
+            | While
             | SharpBeginLoc
             | MinusEndLoc -> "keywordControl"
             | BinaryOperator op ->
