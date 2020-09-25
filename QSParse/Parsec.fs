@@ -43,9 +43,9 @@ let pAssign stmts =
                 { ss with
                     Scopes = Scope.appendScope ss.Scopes
                 }
-                |> Scope.addAsWrite ("args", fun () -> [])
+                |> Scope.addAsWrite ("args", id)
                 |> snd
-                |> Scope.addAsWrite ("result", fun () -> [])
+                |> Scope.addAsWrite ("result", id)
                 |> snd
             )
             >>? p
@@ -488,9 +488,9 @@ let ploc2 =
             { ss with
                 Scopes = Scope.appendScope ss.Scopes
             }
-            |> Scope.addAsWrite ("args", fun () -> [])
+            |> Scope.addAsWrite ("args", id)
             |> snd
-            |> Scope.addAsWrite ("result", fun () -> [])
+            |> Scope.addAsWrite ("result", id)
             |> snd
         )
         >>? ploc
