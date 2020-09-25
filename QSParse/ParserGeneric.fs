@@ -20,7 +20,7 @@ let isIdentifierChar c = isLetter c || isDigit c || c = '_' || c = '.' || c = '$
 let ident<'UserState> =
     skipChar '_' >>? many1Satisfy isIdentifierChar
     |>> fun ident -> "_" + ident
-    <|> many1Satisfy2L isLetter isIdentifierChar "identifier"
+    <|> many1Satisfy2L (fun c -> isLetter c || c = '#') isIdentifierChar "identifier"
     : Parser<_, 'UserState>
 
 let ws<'UserState> =

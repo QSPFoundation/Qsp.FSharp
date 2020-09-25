@@ -16,8 +16,8 @@ type FormatConfig =
 
 let showVarType = function
     | StringType -> showChar '$'
-    | ImplicitNumericType -> empty
-    | ExplicitNumericType -> showChar '#'
+    | NumericType -> empty
+
 let showVar (typ:VarType, varName:string) =
     showVarType typ << showString varName
 

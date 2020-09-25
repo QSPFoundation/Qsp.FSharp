@@ -30,7 +30,7 @@ let pImplicitVarWhenAssign p isLocal =
                     let dscr = "Пользовательская глобальная переменная числового типа"
                     appendHover2 (RawDescription dscr) range
         >>. appendToken2 Tokens.TokenType.Variable range
-        >>. appendVarHighlight range (ImplicitNumericType, name) VarHighlightKind.WriteAccess isLocal
+        >>. appendVarHighlight range (NumericType, name) VarHighlightKind.WriteAccess isLocal
         >>. preturn name
 
 let pAssign stmts =
@@ -83,24 +83,24 @@ let pAssign stmts =
         appendToken Tokens.TokenType.Type
             ((pstringCI "set" <|> pstringCI "let") .>>? notFollowedVarCont)
         .>> ws
-        >>. (pexplicitVar VarHighlightKind.WriteAccess false
-             <|> (pImplicitVarWhenAssign ident false |>> fun name -> ImplicitNumericType, name))
+        >>. (pstringVar VarHighlightKind.WriteAccess false
+             <|> (pImplicitVarWhenAssign ident false |>> fun name -> NumericType, name))
         .>>? ws >>=? assign false
     let pLocal =
         appendToken Tokens.TokenType.Type
             (pstringCI "local" .>>? notFollowedVarCont)
         .>> ws
-        >>. (pexplicitVar VarHighlightKind.WriteAccess true
-             <|> (pImplicitVarWhenAssign ident true |>> fun name -> ImplicitNumericType, name))
+        >>. (pstringVar VarHighlightKind.WriteAccess true
+             <|> (pImplicitVarWhenAssign ident true |>> fun name -> NumericType, name))
         .>> ws >>=? assign true
     let pExplicitAssign =
-        pexplicitVar VarHighlightKind.WriteAccess false
+        pstringVar VarHighlightKind.WriteAccess false
         .>>? ws >>=? assign false
 
     let pImlicitAssign =
         pImplicitVarWhenAssign notFollowedByBinOpIdent false .>>? ws
         >>=? fun name ->
-            assign false (ImplicitNumericType, name)
+            assign false (NumericType, name)
     choice
         [
             pLocal
@@ -347,8 +347,8 @@ let pstmt =
     let pFor =
         let pForHeader =
             genKeywordParser Tokens.TokenType.For "for" >>. ws
-            >>. (pexplicitVar VarHighlightKind.WriteAccess false
-                 <|> (pImplicitVarWhenAssign ident false |>> fun name -> ImplicitNumericType, name))
+            >>. (pstringVar VarHighlightKind.WriteAccess false
+                 <|> (pImplicitVarWhenAssign ident false |>> fun name -> NumericType, name))
             .>> ws .>> appendToken Tokens.TokenType.OperatorAssignment (pchar '=')
             .>> ws .>>. pexpr
             .>> genKeywordParser Tokens.TokenType.To "to"

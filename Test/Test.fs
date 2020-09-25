@@ -43,17 +43,17 @@ let pexprTest =
         testCase "строчные бинарные операторы и названия переменных, которые начинаются с них" <| fun () ->
             let input = "notFollowedBy" // Уж точно не должно быть "no tFollowedBy"
             let exp =
-                Var (ImplicitNumericType, "notFollowedBy")
+                Var (NumericType, "notFollowedBy")
             Assert.Equal("", Right exp, runExpr input)
         testCase "строчные бинарные операторы и названия переменных, которые начинаются с них" <| fun () ->
             let input = "object"
             let exp =
-                Var (ImplicitNumericType, "object")
+                Var (NumericType, "object")
             Assert.Equal("", Right exp, runExpr input)
         testCase "строчные бинарные операторы и названия переменных, которые начинаются с них" <| fun () ->
             let input = "obj something"
             let exp =
-                UnarExpr (Obj, Var (ImplicitNumericType, "something"))
+                UnarExpr (Obj, Var (NumericType, "something"))
             Assert.Equal("", Right exp, runExpr input)
 
         let input = "var1 and var2 and no var3 and obj var4"
@@ -63,10 +63,10 @@ let pexprTest =
                Expr
                  (And,
                   Expr
-                    (And, Var (ImplicitNumericType, "var1"),
-                     Var (ImplicitNumericType, "var2")),
-                  UnarExpr (No, Var (ImplicitNumericType, "var3"))),
-               UnarExpr (Obj, Var (ImplicitNumericType, "var4")))
+                    (And, Var (NumericType, "var1"),
+                     Var (NumericType, "var2")),
+                  UnarExpr (No, Var (NumericType, "var3"))),
+               UnarExpr (Obj, Var (NumericType, "var4")))
         testf input exp
 
         testCase "2" <| fun () ->
@@ -89,14 +89,14 @@ let pexprTest =
 
         let input = "- x"
         let exp =
-            UnarExpr (Neg, Var (ImplicitNumericType, "x"))
+            UnarExpr (Neg, Var (NumericType, "x"))
         testf input exp
 
         let input = "-x + -y"
         let exp =
             Expr
-              (Plus, UnarExpr (Neg, Var (ImplicitNumericType, "x")),
-               UnarExpr (Neg, Var (ImplicitNumericType, "y")))
+              (Plus, UnarExpr (Neg, Var (NumericType, "x")),
+               UnarExpr (Neg, Var (NumericType, "y")))
         testf input exp
 
         let input =
@@ -111,8 +111,8 @@ let pexprTest =
         let exp =
             Expr
               (Plus,
-               Expr (Plus, Var (ImplicitNumericType, "x"), Var (ImplicitNumericType, "z")),
-               Var (ImplicitNumericType, "y"))
+               Expr (Plus, Var (NumericType, "x"), Var (NumericType, "z")),
+               Var (NumericType, "y"))
         testf input exp
 
         let input =
@@ -133,7 +133,7 @@ let assignTest =
             let input = "x = 21 + 21"
             let exp =
                 (Assign
-                   (false, AssignVar (ImplicitNumericType, "x"),
+                   (false, AssignVar (NumericType, "x"),
                     Expr (Plus, Val (Int 21), Val (Int 21))))
             Assert.Equal("", Right exp, runExpr input)
         testCase "implicit assign implicit array var" <| fun () ->
@@ -141,61 +141,61 @@ let assignTest =
             let exp =
                 (Assign
                    (false, AssignArr
-                      ((ImplicitNumericType, "x"), Var (ImplicitNumericType, "expr")),
+                      ((NumericType, "x"), Var (NumericType, "expr")),
                     Val (Int 42)))
             Assert.Equal("", Right exp, runExpr input)
         testCase "implicit `-=` implicit var" <| fun () ->
             let input = "years -= 10"
             let exp =
               (Assign
-                 (false, AssignVar (ImplicitNumericType, "years"),
-                  Expr (Minus, Var (ImplicitNumericType, "years"), Val (Int 10))))
+                 (false, AssignVar (NumericType, "years"),
+                  Expr (Minus, Var (NumericType, "years"), Val (Int 10))))
             Assert.Equal("", Right exp, runExpr input)
         testCase "implicit `-=` implicit var 2" <| fun () ->
             let input = "php -= 3*emdmg*2 - parm"
             let exp =
                 (Assign
-                   (false, AssignVar (ImplicitNumericType, "php"),
+                   (false, AssignVar (NumericType, "php"),
                     Expr
-                      (Minus, Var (ImplicitNumericType, "php"),
+                      (Minus, Var (NumericType, "php"),
                        Expr
                          (Minus,
                           Expr
                             (Times,
-                             Expr (Times, Val (Int 3), Var (ImplicitNumericType, "emdmg")),
-                             Val (Int 2)), Var (ImplicitNumericType, "parm")))))
+                             Expr (Times, Val (Int 3), Var (NumericType, "emdmg")),
+                             Val (Int 2)), Var (NumericType, "parm")))))
             Assert.Equal("", Right exp, runExpr input)
         testCase "5" <| fun () ->
             let input = "a = a = no -a > b"
             let exp =
                 (Assign
-                   (false, AssignVar (ImplicitNumericType, "a"),
+                   (false, AssignVar (NumericType, "a"),
                     Expr
-                      (Eq, Var (ImplicitNumericType, "a"),
+                      (Eq, Var (NumericType, "a"),
                        UnarExpr
                          (No,
                           Expr
-                            (Gt, UnarExpr (Neg, Var (ImplicitNumericType, "a")),
-                             Var (ImplicitNumericType, "b"))))))
+                            (Gt, UnarExpr (Neg, Var (NumericType, "a")),
+                             Var (NumericType, "b"))))))
             Assert.Equal("", Right exp, runExpr input)
         testCase "implicit assign explicit array var" <| fun () ->
             let input = "$x[expr] = 42"
             let exp =
                 (Assign
-                   (false, AssignArr ((StringType, "x"), Var (ImplicitNumericType, "expr")),
+                   (false, AssignArr ((StringType, "x"), Var (NumericType, "expr")),
                     Val (Int 42)))
             Assert.Equal("", Right exp, runExpr input)
-        testCase "implicit assign explicit var" <| fun () ->
+        testCase "#x = 21 + 21" <| fun () ->
             let input = "#x = 21 + 21"
             let exp =
                 (Assign
-                   (false, AssignVar (ExplicitNumericType, "x"),
+                   (false, AssignVar (NumericType, "#x"),
                     Expr (Plus, Val (Int 21), Val (Int 21))))
             Assert.Equal("", Right exp, runExpr input)
         testCase "`x[] = 1`" <| fun () ->
             let input = "x[] = 1"
             let exp =
-                Assign (false, AssignArrAppend (ImplicitNumericType, "x"), Val (Int 1))
+                Assign (false, AssignArrAppend (NumericType, "x"), Val (Int 1))
             Assert.Equal("", Right exp, runExpr input)
         // ложные случаи:
         testCase "attempt assign function" <| fun () ->
@@ -205,8 +205,8 @@ let assignTest =
                     "Error in Ln: 1 Col: 1"
                     "f(expr) = 42"
                     "^"
-                    "Expecting: '#', '$', 'let' (case-insensitive), 'local' (case-insensitive) or"
-                    "'set' (case-insensitive)"
+                    "Expecting: '$', 'let' (case-insensitive), 'local' (case-insensitive) or 'set'"
+                    "(case-insensitive)"
                     ""
                     "The parser backtracked after:"
                     "  Error in Ln: 1 Col: 2"
@@ -415,7 +415,7 @@ let pcallProcTests =
         testCase "pcallProcTests base" <| fun () ->
             let input = "someProc arg1"
             let exp =
-                Proc ("someProc", [Var (ImplicitNumericType, "arg1")])
+                Proc ("someProc", [Var (NumericType, "arg1")])
 
             Assert.Equal("", Right exp, runStmts input)
         testCase "pcallProcTests base many args" <| fun () ->
@@ -423,9 +423,9 @@ let pcallProcTests =
             let exp =
                 (Proc
                    ("someProc",
-                    [Expr (Divide, Var (ImplicitNumericType, "z"), Val (Int 2));
+                    [Expr (Divide, Var (NumericType, "z"), Val (Int 2));
                      Expr
-                       (Plus, Var (ImplicitNumericType, "x"), Var (ImplicitNumericType, "y"))]))
+                       (Plus, Var (NumericType, "x"), Var (NumericType, "y"))]))
             Assert.Equal("", Right exp, runStmts input)
         testCase "pcallProcTests false with space" <| fun () ->
             let input = "someProc "
@@ -479,12 +479,12 @@ let pcallProcTests =
             let exp =
                 (Proc
                    ("*pl",
-                    [Var (ImplicitNumericType, "arg1"); Var (ImplicitNumericType, "arg2")]))
+                    [Var (NumericType, "arg1"); Var (NumericType, "arg2")]))
             Assert.Equal("", Right exp, runStmts input)
         testCase "call `p2 x`, который начинается на заданный оператор `p`, но образует новый" <| fun () ->
             let input = "p2 x"
             let exp =
-                Proc ("p2", [Var (ImplicitNumericType, "x")])
+                Proc ("p2", [Var (NumericType, "x")])
             Assert.Equal("", Right exp, runStmts input)
         testCase "call ad-hoc `add obj`" <| fun () ->
             let input = "add obj"
@@ -528,7 +528,7 @@ let ifTests =
                 ] |> String.concat "\n"
             let exp =
                 (emptyPos, If
-                   (Var (ImplicitNumericType, "expr"), [Proc ("gt", [Val (String [[StringKind "hall"]])])],
+                   (Var (NumericType, "expr"), [Proc ("gt", [Val (String [[StringKind "hall"]])])],
                     []))
             equalTwoPosStmt("", Right exp, runStmts input)
         testCase "inline if 2" <| fun () ->
@@ -547,23 +547,23 @@ let ifTests =
             // tested
             let exp =
                 If
-                  (Var (ImplicitNumericType, "expr"),
+                  (Var (NumericType, "expr"),
                    [If
-                      (Var (ImplicitNumericType, "expr2"),
-                       [StarPl (Var (ImplicitNumericType, "stmt1"))], []);
+                      (Var (NumericType, "expr2"),
+                       [StarPl (Var (NumericType, "stmt1"))], []);
                     If
-                      (Var (ImplicitNumericType, "expr3"),
-                       [StarPl (Var (ImplicitNumericType, "stmt1"))],
-                       [StarPl (Var (ImplicitNumericType, "stmt2"))]);
+                      (Var (NumericType, "expr3"),
+                       [StarPl (Var (NumericType, "stmt1"))],
+                       [StarPl (Var (NumericType, "stmt2"))]);
                     If
-                      (Var (ImplicitNumericType, "expr4"),
-                       [StarPl (Var (ImplicitNumericType, "stmt3"))], [])],
+                      (Var (NumericType, "expr4"),
+                       [StarPl (Var (NumericType, "stmt3"))], [])],
                    [If
-                      (Var (ImplicitNumericType, "expr5"),
-                       [StarPl (Var (ImplicitNumericType, "stmt6"))],
+                      (Var (NumericType, "expr5"),
+                       [StarPl (Var (NumericType, "stmt6"))],
                        [If
-                          (Var (ImplicitNumericType, "expr6"),
-                           [StarPl (Var (ImplicitNumericType, "stmt4"))], [])])])
+                          (Var (NumericType, "expr6"),
+                           [StarPl (Var (NumericType, "stmt4"))], [])])])
             equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "simple if" <| fun () ->
             let input =
@@ -574,8 +574,8 @@ let ifTests =
                 ] |> String.concat "\n"
             let exp =
                 (If
-                   (Var (ImplicitNumericType, "expr"),
-                    [StarPl (Var (ImplicitNumericType, "someStmt"))], []))
+                   (Var (NumericType, "expr"),
+                    [StarPl (Var (NumericType, "someStmt"))], []))
 
             equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "elseif test" <| fun () ->
@@ -593,15 +593,15 @@ let ifTests =
                 ] |> String.concat "\n"
             let exp =
                 (If
-                   (Var (ImplicitNumericType, "expr1"),
-                    [StarPl (Var (ImplicitNumericType, "stmt1"))],
+                   (Var (NumericType, "expr1"),
+                    [StarPl (Var (NumericType, "stmt1"))],
                     [If
-                       (Var (ImplicitNumericType, "expr2"),
-                        [StarPl (Var (ImplicitNumericType, "stmt2"))],
+                       (Var (NumericType, "expr2"),
+                        [StarPl (Var (NumericType, "stmt2"))],
                         [If
-                           (Var (ImplicitNumericType, "expr3"),
-                            [StarPl (Var (ImplicitNumericType, "stmt3"))],
-                            [StarPl (Var (ImplicitNumericType, "stmt4"))])])]))
+                           (Var (NumericType, "expr3"),
+                            [StarPl (Var (NumericType, "stmt3"))],
+                            [StarPl (Var (NumericType, "stmt4"))])])]))
             equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "elseif test2" <| fun () ->
             let input =
@@ -616,14 +616,14 @@ let ifTests =
                 ] |> String.concat "\n"
             let exp =
                 (If
-                   (Var (ImplicitNumericType, "expr1"),
-                    [StarPl (Var (ImplicitNumericType, "stmt1"))],
+                   (Var (NumericType, "expr1"),
+                    [StarPl (Var (NumericType, "stmt1"))],
                     [If
-                       (Var (ImplicitNumericType, "expr2"),
-                        [StarPl (Var (ImplicitNumericType, "stmt2"))],
+                       (Var (NumericType, "expr2"),
+                        [StarPl (Var (NumericType, "stmt2"))],
                         [If
-                           (Var (ImplicitNumericType, "expr3"),
-                            [StarPl (Var (ImplicitNumericType, "stmt3"))], [])])]))
+                           (Var (NumericType, "expr3"),
+                            [StarPl (Var (NumericType, "stmt3"))], [])])]))
             equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "another inline if" <| fun () ->
             let input =
@@ -633,10 +633,10 @@ let ifTests =
                 ] |> String.concat "\n"
             let exp =
               (If
-                 (Var (ImplicitNumericType, "expr"), [],
+                 (Var (NumericType, "expr"), [],
                   [If
-                     (Var (ImplicitNumericType, "expr"),
-                      [StarPl (Var (ImplicitNumericType, "stmt"))], [])]))
+                     (Var (NumericType, "expr"),
+                      [StarPl (Var (NumericType, "stmt"))], [])]))
             equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "elseif test2" <| fun () ->
             let input =
@@ -657,21 +657,21 @@ let ifTests =
                 ] |> String.concat "\n"
             let exp =
               (If
-                 (Var (ImplicitNumericType, "expr1"),
-                  [StarPl (Var (ImplicitNumericType, "stmt1"))],
+                 (Var (NumericType, "expr1"),
+                  [StarPl (Var (NumericType, "stmt1"))],
                   [If
-                     (Var (ImplicitNumericType, "expr2"),
-                      [StarPl (Var (ImplicitNumericType, "stmt2"));
+                     (Var (NumericType, "expr2"),
+                      [StarPl (Var (NumericType, "stmt2"));
                        If
-                         (Var (ImplicitNumericType, "expr4"),
-                          [StarPl (Var (ImplicitNumericType, "stmt4"))],
+                         (Var (NumericType, "expr4"),
+                          [StarPl (Var (NumericType, "stmt4"))],
                           [If
-                             (Var (ImplicitNumericType, "expr5"),
-                              [StarPl (Var (ImplicitNumericType, "stmt5"))], [])]);
-                       StarPl (Var (ImplicitNumericType, "stmt6"))],
+                             (Var (NumericType, "expr5"),
+                              [StarPl (Var (NumericType, "stmt5"))], [])]);
+                       StarPl (Var (NumericType, "stmt6"))],
                       [If
-                         (Var (ImplicitNumericType, "expr3"),
-                          [StarPl (Var (ImplicitNumericType, "stmt3"))], [])])]))
+                         (Var (NumericType, "expr3"),
+                          [StarPl (Var (NumericType, "stmt3"))], [])])]))
             equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "if" <| fun () ->
             let input =
@@ -687,22 +687,22 @@ let ifTests =
 
             let exp =
               (If
-                 (Var (ImplicitNumericType, "expr1"),
-                  [StarPl (Var (ImplicitNumericType, "stmt1"));
+                 (Var (NumericType, "expr1"),
+                  [StarPl (Var (NumericType, "stmt1"));
                    Act ([Val (String [[StringKind "arg"]])], [Proc ("pl", [])])],
                   [If
-                     (Var (ImplicitNumericType, "expr2"),
+                     (Var (NumericType, "expr2"),
                       [If
-                         (Var (ImplicitNumericType, "expr3"),
-                          [StarPl (Var (ImplicitNumericType, "stmt2"))],
-                          [StarPl (Var (ImplicitNumericType, "stmt3"));
+                         (Var (NumericType, "expr3"),
+                          [StarPl (Var (NumericType, "stmt2"))],
+                          [StarPl (Var (NumericType, "stmt3"));
                            If
-                             (Var (ImplicitNumericType, "expr4"),
-                              [StarPl (Var (ImplicitNumericType, "stmt4"))],
+                             (Var (NumericType, "expr4"),
+                              [StarPl (Var (NumericType, "stmt4"))],
                               [If
-                                 (Var (ImplicitNumericType, "expr5"),
-                                  [StarPl (Var (ImplicitNumericType, "stmt5"))], [])])]);
-                       StarPl (Var (ImplicitNumericType, "stmt6"))], [])]))
+                                 (Var (NumericType, "expr5"),
+                                  [StarPl (Var (NumericType, "stmt5"))], [])])]);
+                       StarPl (Var (NumericType, "stmt6"))], [])]))
             equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
     ]
 
@@ -728,13 +728,13 @@ let forTests =
                 ] |> String.concat "\n"
             let exp =
               (For
-                 ((ImplicitNumericType, "i"),
-                  Expr (Plus, Val (Int 4), Var (ImplicitNumericType, "x")),
+                 ((NumericType, "i"),
+                  Expr (Plus, Val (Int 4), Var (NumericType, "x")),
                   Expr
-                    (Plus, Expr (Divide, Val (Int 45), Var (ImplicitNumericType, "x")),
-                     Var (ImplicitNumericType, "y")),
+                    (Plus, Expr (Divide, Val (Int 45), Var (NumericType, "x")),
+                     Var (NumericType, "y")),
                   None,
-                  [StarPl (Var (ImplicitNumericType, "stmt"))]))
+                  [StarPl (Var (NumericType, "stmt"))]))
             equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "inline `for i = 4 + x to 45 / x + y: stmt`" <| fun () ->
             let input =
@@ -744,13 +744,13 @@ let forTests =
                 ] |> String.concat "\n"
             let exp =
               (For
-                 ((ImplicitNumericType, "i"),
-                  Expr (Plus, Val (Int 4), Var (ImplicitNumericType, "x")),
+                 ((NumericType, "i"),
+                  Expr (Plus, Val (Int 4), Var (NumericType, "x")),
                   Expr
-                    (Plus, Expr (Divide, Val (Int 45), Var (ImplicitNumericType, "x")),
-                     Var (ImplicitNumericType, "y")),
+                    (Plus, Expr (Divide, Val (Int 45), Var (NumericType, "x")),
+                     Var (NumericType, "y")),
                   None,
-                  [StarPl (Var (ImplicitNumericType, "stmt"))]))
+                  [StarPl (Var (NumericType, "stmt"))]))
             equalTwoPosStmt("", Right (emptyPos, exp), runStmts input)
         testCase "inline `for i = 4 + x to 45 / x + y step x + 1: stmt`" <| fun () ->
             let input =
@@ -760,13 +760,13 @@ let forTests =
                 ] |> String.concat "\n"
             let exp =
               (For
-                 ((ImplicitNumericType, "i"),
-                  Expr (Plus, Val (Int 4), Var (ImplicitNumericType, "x")),
+                 ((NumericType, "i"),
+                  Expr (Plus, Val (Int 4), Var (NumericType, "x")),
                   Expr
-                    (Plus, Expr (Divide, Val (Int 45), Var (ImplicitNumericType, "x")),
-                     Var (ImplicitNumericType, "y")),
-                  Some (Expr (Plus, Var (ImplicitNumericType, "x"), Val (Int 1))),
-                  [StarPl (Var (ImplicitNumericType, "stmt"))]))
+                    (Plus, Expr (Divide, Val (Int 45), Var (NumericType, "x")),
+                     Var (NumericType, "y")),
+                  Some (Expr (Plus, Var (NumericType, "x"), Val (Int 1))),
+                  [StarPl (Var (NumericType, "stmt"))]))
             equalTwoPosStmt("", Right (emptyPos, exp), runStmts input)
     ]
 [<Tests>]
@@ -798,8 +798,8 @@ let stmtTests =
             let input = "years -= 10"
             let exp =
               (Assign
-                 (false, AssignVar (ImplicitNumericType, "years"),
-                  Expr (Minus, Var (ImplicitNumericType, "years"), Val (Int 10))))
+                 (false, AssignVar (NumericType, "years"),
+                  Expr (Minus, Var (NumericType, "years"), Val (Int 10))))
             equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "call function as expression" <| fun () ->
             // f(1) — должно обрабатываться раньше, чем `callProc arg1, arg2`
@@ -808,7 +808,7 @@ let stmtTests =
               (StarPl
                  (Func
                     (Predef Defines.Iif,
-                     [Expr (Ge, Var (ImplicitNumericType, "somevar"), Val (Int 2));
+                     [Expr (Ge, Var (NumericType, "somevar"), Val (Int 2));
                       Val (String [[StringKind "thenBody"]]); Val (String [[StringKind "elseBody"]])])))
             equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "call procedure" <| fun () ->

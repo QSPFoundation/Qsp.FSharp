@@ -17,20 +17,16 @@ let pbinaryOperator : _ Parser =
     |> List.map pstringCI
     |> choice
 
-/// берёт только то, что начинается с `#` или `$`
-let pexplicitVar varHighlightKind isLocal : _ Parser =
-    let isIdentifierFirstChar c = isLetter c || c = '_'
-    let p = many1Satisfy2L isIdentifierFirstChar isIdentifierChar "identifier"
-    // TODO: или просто `many1Satisfy isIdentifierChar` ?
-    let varType =
-        choice [
-            pchar '#' >>% ExplicitNumericType
-            pchar '$' >>% StringType
-        ]
+let pstringIdent =
+    let isIdentifierFirstChar c = isLetter c || c = '_' || c = '#'
+    let ident = many1Satisfy2L isIdentifierFirstChar isIdentifierChar "identifier"
+    let varType = pchar '$' >>% StringType
+    varType .>>. ident
 
-    (getPosition .>>.? varType) .>>. (p .>>. getPosition)
-    >>= fun ((p1, typ), (varName, p2)) ->
-        let range = toRange p1 p2
+/// берёт только то, что начинается с `$`
+let pstringVar varHighlightKind isLocal : _ Parser =
+    applyRange pstringIdent
+    >>= fun (range, (typ, varName)) ->
         let msg =
             match typ with
             | StringType ->
@@ -38,14 +34,10 @@ let pexplicitVar varHighlightKind isLocal : _ Parser =
                 |> Map.tryFind (sprintf "$%s" (varName.ToLower()))
                 |> function
                     | Some dscr -> dscr
-                    | None -> "Пользовательская глобальная переменная строчного типа"
-            | ExplicitNumericType ->
-                Defines.vars
-                |> Map.tryFind (sprintf "#%s" (varName.ToLower()))
-                |> function
-                    | Some dscr -> dscr
-                    | None -> "Пользовательская глобальная переменная числового типа"
-            | ImplicitNumericType -> failwith "Not Implemented"
+                    | None ->
+                        let scope = if isLocal then "локальная" else "глобальная"
+                        sprintf "Пользовательская %s переменная строчного типа" scope
+            | NumericType -> failwith "NumericType Not Implemented"
         appendToken2 Tokens.Variable range
         >>. appendHover2 (RawDescription msg) range
         >>. appendVarHighlight range (typ, varName) varHighlightKind isLocal
@@ -78,13 +70,7 @@ let term expr =
             |> function
                 | Some dscr -> dscr
                 | None -> "Пользовательская глобальная переменная строчного типа"
-        | ExplicitNumericType ->
-            Defines.vars
-            |> Map.tryFind (sprintf "#%s" (name.ToLower()))
-            |> function
-                | Some dscr -> dscr
-                | None -> "Пользовательская глобальная переменная числового типа"
-        | ImplicitNumericType ->
+        | NumericType ->
             Defines.vars
             |> Map.tryFind (name.ToLower())
             |> function
@@ -101,21 +87,11 @@ let term expr =
         let pBracesArgs =
             bet_ws '(' ')' (sepBy expr (pchar ',' >>. ws))
         let pcallFunctionOrArrOrVar =
-            let pimplicitVar =
-                notFollowedByBinOpIdent |>> fun x -> ImplicitNumericType, x
-            let pexplicitVar =
-                let isIdentifierFirstChar c = isLetter c || c = '_'
-                let p = many1Satisfy2L isIdentifierFirstChar isIdentifierChar "identifier"
-                // TODO: или просто `many1Satisfy isIdentifierChar` ?
-                let varType =
-                    choice [
-                        pchar '#' >>% ExplicitNumericType
-                        pchar '$' >>% StringType
-                    ]
-                varType .>>. p
+            let pnumericVar =
+                notFollowedByBinOpIdent |>> fun x -> NumericType, x
 
             tuple2
-                (applyRange (pexplicitVar <|> pimplicitVar) .>> ws)
+                (applyRange (pstringIdent <|> pnumericVar) .>> ws)
                 ((pBracesArgs
                   |>> fun args ->
                     let tokenType = TokenType.Function
