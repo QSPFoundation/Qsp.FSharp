@@ -36,9 +36,24 @@ let pImplicitVarWhenAssign p isLocal =
 let pAssign stmts =
     let assdef isLocal name ass =
         let asscode =
-            between (pchar '{' >>. spaces) (spaces >>. char_ws '}') stmts
-            |>> fun stmts -> AssignCode(ass, stmts)
-
+            let p =
+                between (pchar '{' >>. spaces) (spaces >>. char_ws '}') stmts
+                |>> fun stmts -> AssignCode(ass, stmts)
+            updateScope (fun ss ->
+                { ss with
+                    Scopes = Scope.appendScope ss.Scopes
+                }
+                |> Scope.addAsWrite ("args", fun () -> [])
+                |> snd
+                |> Scope.addAsWrite ("result", fun () -> [])
+                |> snd
+            )
+            >>? p
+            .>> updateScope (fun ss ->
+                { ss with
+                    Scopes = Scope.removeScope ss.Scopes
+                }
+            )
         let str_ws s =
             appendToken Tokens.TokenType.OperatorAssignment
                 (pstring s)
