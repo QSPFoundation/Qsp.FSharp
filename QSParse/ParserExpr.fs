@@ -21,7 +21,7 @@ let pstringIdent =
     let isIdentifierFirstChar c = isLetter c || c = '_' || c = '#'
     let ident = many1Satisfy2L isIdentifierFirstChar isIdentifierChar "identifier"
     let varType =
-        appendToken TokenType.Variable (pchar '$') >>% StringType
+        appendToken TokenType.KeywordSymbol (pchar '$') >>% StringType
     varType .>>. applyRange ident
 
 /// берёт только то, что начинается с `$`
@@ -79,14 +79,15 @@ let term expr =
                 | None ->
                     "Пользовательская глобальная переменная числового типа"
     let pterm, ptermRef = createParserForwardedToRef()
+    let pBracesArgs =
+        bet_ws '(' ')' (sepBy expr (pchar ',' >>. ws))
     let pcallFuncOrArrOrVar =
         let pbraket =
             between
                 (appendToken TokenType.BraceSquareOpened (pchar '[' .>> ws))
                 (appendToken TokenType.BraceSquareClosed (pchar ']'))
                 (sepBy expr (skipChar ',' >>. ws))
-        let pBracesArgs =
-            bet_ws '(' ')' (sepBy expr (pchar ',' >>. ws))
+
         let pcallFunctionOrArrOrVar =
             let pnumericVar =
                 applyRange notFollowedByBinOpIdent |>> fun x -> NumericType, x
@@ -189,8 +190,32 @@ let term expr =
                 (pint32 |>> Int)
         ]
         |>> Val
-    ptermRef := pval <|> pcallFuncOrArrOrVar
-    pval <|> pcallFuncOrArrOrVar <|> bet_ws '(' ')' expr
+    let pDirectCallFunc =
+        appendToken TokenType.KeywordSymbol (pchar '@')
+        >>. ws >>. applyRange notFollowedByBinOpIdent
+        .>> ws .>>. (pBracesArgs <|> (pterm |>> List.singleton) <|>% [])
+        >>= fun ((r, locName), args) ->
+            let locNameLower = String.toLower locName
+            appendLocHighlight r locNameLower VarHighlightKind.ReadAccess
+            >>. pGetDefLocPos locNameLower
+                >>= function
+                    | None ->
+                        updateUserState (fun st ->
+                            { st with
+                                NotDefinedLocs =
+                                    st.NotDefinedLocs
+                                    |> Map.addOrMod locNameLower [r] (fun xs -> r::xs)
+                            }
+                        )
+                    | Some _ -> preturn ()
+            >>% Func(Predef Defines.Func, Val (String [[StringKind locName]])::args)
+    ptermRef :=
+        choice [
+            pval
+            pDirectCallFunc
+            pcallFuncOrArrOrVar
+        ]
+    pterm <|> bet_ws '(' ')' expr
 
 let pExprOld : _ Parser =
     let opp = new OperatorPrecedenceParser<Expr, unit, _>()

@@ -69,6 +69,7 @@ module CommandResponse =
             | Type -> "storage"
             | Variable -> "variable"
             | Keyword -> "keyword"
+            | KeywordSymbol -> "keywordSymbol"
             | Comment -> "comment"
             | Function -> "function"
             | If

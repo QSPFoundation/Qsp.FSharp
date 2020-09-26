@@ -23,6 +23,8 @@ type TokenType =
     /// в TS `var` называется `storage.type.js`
     | Type
     | Keyword
+    /// `keyword.symbol.fsharp`
+    | KeywordSymbol
 
     | SharpBeginLoc
     | MinusEndLoc
