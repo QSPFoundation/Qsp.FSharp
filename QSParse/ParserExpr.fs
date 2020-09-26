@@ -20,13 +20,14 @@ let pbinaryOperator : _ Parser =
 let pstringIdent =
     let isIdentifierFirstChar c = isLetter c || c = '_' || c = '#'
     let ident = many1Satisfy2L isIdentifierFirstChar isIdentifierChar "identifier"
-    let varType = pchar '$' >>% StringType
-    varType .>>. ident
+    let varType =
+        appendToken TokenType.Variable (pchar '$') >>% StringType
+    varType .>>. applyRange ident
 
 /// берёт только то, что начинается с `$`
 let pstringVar varHighlightKind isLocal : _ Parser =
-    applyRange pstringIdent
-    >>= fun (range, (typ, varName)) ->
+    pstringIdent
+    >>= fun (typ, (range, varName)) ->
         let msg =
             match typ with
             | StringType ->
@@ -88,10 +89,10 @@ let term expr =
             bet_ws '(' ')' (sepBy expr (pchar ',' >>. ws))
         let pcallFunctionOrArrOrVar =
             let pnumericVar =
-                notFollowedByBinOpIdent |>> fun x -> NumericType, x
+                applyRange notFollowedByBinOpIdent |>> fun x -> NumericType, x
 
             tuple2
-                (applyRange (pstringIdent <|> pnumericVar) .>> ws)
+                (pstringIdent <|> pnumericVar .>> ws)
                 ((pBracesArgs
                   |>> fun args ->
                     let tokenType = TokenType.Function
@@ -123,7 +124,7 @@ let term expr =
                         >>. appendToken2 TokenType.Variable range
                         >>. appendVarHighlight range (varType, nameVar) VarHighlightKind.ReadAccess false
                         >>% Var(varType, nameVar))
-            >>= fun ((range, (varType, name)), f) ->
+            >>= fun ((varType, (range, name)), f) ->
                     f (varType, name) range
         // #load @"Defines.fs"
         // open Qsp
