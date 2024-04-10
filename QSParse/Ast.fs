@@ -172,7 +172,7 @@ and Expr =
 and AssignWhat =
     | AssignVar of var:Var
     /// Ключом массива может быть значение любого типа
-    | AssignArr of var:Var * key:Expr
+    | AssignArr of var:Var * key:Expr * secondKey: Expr option
     | AssignArrAppend of var:Var
 and PosStatement = NoEqualityPosition * Statement
 and Statement =

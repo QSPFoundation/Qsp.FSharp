@@ -141,7 +141,7 @@ let assignTest =
             let exp =
                 (Assign
                    (false, AssignArr
-                      ((NumericType, "x"), Var (NumericType, "expr")),
+                      ((NumericType, "x"), Var (NumericType, "expr"), None),
                     Val (Int 42)))
             Assert.Equal("", Right exp, runExpr input)
         testCase "implicit `-=` implicit var" <| fun () ->
@@ -182,7 +182,14 @@ let assignTest =
             let input = "$x[expr] = 42"
             let exp =
                 (Assign
-                   (false, AssignArr ((StringType, "x"), Var (NumericType, "expr")),
+                   (false, AssignArr ((StringType, "x"), Var (NumericType, "expr"), None),
+                    Val (Int 42)))
+            Assert.Equal("", Right exp, runExpr input)
+        testCase "implicit assign explicit two demention array" <| fun () ->
+            let input = "$x[firstKeyExpr, secondKeyExpr] = 42"
+            let exp =
+                (Assign
+                   (false, AssignArr ((StringType, "x"), Var (NumericType, "firstKeyExpr"), Some(Var (NumericType, "secondKeyExpr"))),
                     Val (Int 42)))
             Assert.Equal("", Right exp, runExpr input)
         testCase "#x = 21 + 21" <| fun () ->
@@ -234,6 +241,26 @@ let assignTest =
                 runExpr input
                 |> Option.ofEither
             Assert.None("", act)
+    ]
+
+[<Tests>]
+let showAssignTest =
+    let showAssign str =
+        let emptyPos = NoEqualityPosition positionEmpty
+        Show.showStmt (Show.UsingSpaces 4) Show.FormatConfig.Default (emptyPos, str)
+        |> ShowList.joinEmpty "\n"
+        |> ShowList.show
+
+    testList "showAssignTest" [
+        testCase "implicit assign explicit two demention array" <| fun () ->
+            let act =
+                Assign
+                   (false, AssignArr ((NumericType, "x"), Var (NumericType, "firstKeyExpr"), Some(Var (NumericType, "secondKeyExpr"))),
+                    Val (Int 42))
+                |> showAssign
+            let exp =
+                "x[firstKeyExpr, secondKeyExpr] = 42"
+            Assert.Equal("", exp, act)
     ]
 
 [<Tests>]

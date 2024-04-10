@@ -160,7 +160,15 @@ let rec showExpr showStmtsInline = function
 
 
 let showAssign showStmtsInline = function
-    | AssignWhat.AssignArr(var, key) -> showVar var << bet "[" "]" (showExpr showStmtsInline key)
+    | AssignWhat.AssignArr(var, firstKeyExpr, secondKeyExpr) ->
+        showVar var
+        << bet "[" "]" (
+            showExpr showStmtsInline firstKeyExpr <<
+            match secondKeyExpr with
+            | Some secondKeyExpr ->
+                showString ", " << showExpr showStmtsInline secondKeyExpr
+            | None -> empty
+        )
     | AssignWhat.AssignVar var -> showVar var
     | AssignWhat.AssignArrAppend var -> showVar var << showString "[]"
 
@@ -177,7 +185,7 @@ let (|OneStmt|_|) = function
         | For _ | Loop _ -> None
     | _ -> None
 
-let (|AssingName|) = function AssignArr(x, _) -> x | AssignVar x -> x | AssignArrAppend x -> x
+let (|AssingName|) = function AssignArr(x, _, _) -> x | AssignVar x -> x | AssignArrAppend x -> x
 type IndentsOption =
     | UsingSpaces of int
     | UsingTabs

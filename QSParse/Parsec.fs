@@ -72,13 +72,18 @@ let pAssign stmts =
             between
                 (appendToken Tokens.TokenType.BraceSquareOpened (pchar '[' .>> ws))
                 (appendToken Tokens.TokenType.BraceSquareClosed (pchar ']'))
-                (opt pexpr)
+                (opt (
+                    tuple2
+                        (pexpr .>> ws)
+                        (opt (skipChar ',' .>> ws >>. pexpr))
+                ))
             |>> fun braketExpr ->
                 match braketExpr with
-                | Some braketExpr ->
-                    AssignArr(name, braketExpr)
+                | Some (firstKeyExpr, secondKeyExpr) ->
+                    AssignArr(name, firstKeyExpr, secondKeyExpr)
                 | None -> AssignArrAppend name
         (arr .>> ws) <|>% AssignVar name >>=? assdef isLocal name
+
     let pSetOrLet =
         appendToken Tokens.TokenType.Type
             ((pstringCI "set" <|> pstringCI "let") .>>? notFollowedVarCont)
