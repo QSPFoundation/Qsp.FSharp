@@ -1,18 +1,38 @@
+strategy: min
 storage: none
 source https://api.nuget.org/v3/index.json
 
 framework: net461, netstandard2.0, netcoreapp3.1
-nuget FAKE
-nuget FParsec
-nuget FSharp.Core
-nuget Fuchu
-nuget Newtonsoft.Json
-nuget Argu
 
-nuget HtmlAgilityPack
-nuget Newtonsoft.Json.Bson
-nuget YamlDotNet
-nuget TextCopy
+nuget FSharp.Core >= 4.7.2 lowest_matching: true
+// core
+nuget FParsec >= 1.1.1 lowest_matching: true
+// server
+nuget Newtonsoft.Json >= 12.0.3 lowest_matching: true
+// test
+nuget Fuchu >= 1.1 lowest_matching: true
+// utility
+nuget Argu >= 6.1.1 lowest_matching: true
 
+// FsharpMyExtension
+nuget HtmlAgilityPack >= 1.11.24 lowest_matching: true
+nuget Newtonsoft.Json.Bson >= 1.0.2 lowest_matching: true
+nuget TextCopy >= 4.2 lowest_matching: true
+nuget YamlDotNet >= 8.1.2 lowest_matching: true
+nuget System.Drawing.Common >= 4.7 lowest_matching: true
+
+// server
 github gretmn102/LSP-API src/LanguageServerProtocol.fs
-git https://github.com/gretmn102/FsharpMyExtension.git
+git https://github.com/gretmn102/FsharpMyExtension.git afae9328f846d67545a142708c4e11055ce6ac8b
+
+group Build
+    strategy: min
+    source https://api.nuget.org/v3/index.json
+    framework: netstandard2.0
+    storage: none
+
+    nuget FSharp.Core >= 4.7.2 lowest_matching: true
+    nuget Fake.Core.ReleaseNotes >= 5.20.4 lowest_matching: true
+    nuget Fake.Core.Target >= 5.20.4 lowest_matching: true
+    nuget Fake.DotNet.Cli >= 5.20.4 lowest_matching: true
+    nuget Fake.IO.FileSystem >= 5.20.4 lowest_matching: true

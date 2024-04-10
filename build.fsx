@@ -1,67 +1,54 @@
 // --------------------------------------------------------------------------------------
 // FAKE build script
 // --------------------------------------------------------------------------------------
-#r "paket:
-  nuget Fake.Core.Target
-  nuget Fake.Core.Process
-  nuget Fake.DotNet.Cli
-  nuget Fake.Core.ReleaseNotes
-  nuget Fake.DotNet.AssemblyInfoFile
-  nuget Fake.DotNet.Paket
-  nuget Fake.Tools.Git
-  nuget Fake.Core.Environment
-  nuget Fake.Core.UserInput
-  nuget Fake.IO.FileSystem
-  nuget Fake.IO.Zip
-  nuget Fake.DotNet.MsBuild
-  nuget Fake.Api.GitHub
-  nuget Microsoft.Build"
-#load ".fake/build.fsx/intellisense.fsx"
-open Fake.IO.Globbing.Operators
+#r "paket: groupref build //"
+#load "./.fake/build.fsx/intellisense.fsx"
+#r "netstandard"
+
 open Fake.Core
+open Fake.IO
+open Fake.IO.Globbing.Operators
+open Fake.IO.FileSystemOperators
+
 // --------------------------------------------------------------------------------------
 // Build variables
 // --------------------------------------------------------------------------------------
-let f projName =
-    let pattern = sprintf @"**/%s.fsproj" projName
-    let xs = !! pattern
-    xs
-    |> Seq.tryExactlyOne
-    |> Option.defaultWith (fun () ->
-        xs
-        |> List.ofSeq
-        |> failwithf "'%s' expected exactly one but:\n%A" pattern
-    )
 let testProjName = "Test"
-let testProjPath = @"Test/Test.fsproj"
+let testProjPath = "Test" </> sprintf "%s.fsproj" testProjName
 let serverProjName = "QspServer"
+let serverProjPath = "QspServer" </> sprintf "%s.fsproj" serverProjName
 let parserProjName = "QSParse"
-let serverProjPath = f serverProjName
+let parserProjPath = "QSParse" </> sprintf "%s.fsproj" parserProjName
 let utilityProjName = "Utility"
-let utilityProjpath = "Utility/Utility.fsproj"
+let utilityProjpath = "Utility" </> sprintf "%s.fsproj" utilityProjName
 // --------------------------------------------------------------------------------------
 // Helpers
 // --------------------------------------------------------------------------------------
 open Fake.DotNet
-let buildConf = DotNet.BuildConfiguration.Release
-let dotnetSdk = lazy DotNet.install DotNet.Versions.FromGlobalJson
-let inline dtntSmpl arg = DotNet.Options.lift dotnetSdk.Value arg
+
+let dotnet cmd workingDir =
+    let result = DotNet.exec (DotNet.Options.withWorkingDirectory workingDir) cmd ""
+    if result.ExitCode <> 0 then failwithf "'dotnet %s' failed in %s" cmd workingDir
+
 let targetFrameworks = ["net461"; "netcoreapp3.1"]
 // --------------------------------------------------------------------------------------
 // Targets
 // --------------------------------------------------------------------------------------
+
+let commonBuildArgs =
+    [
+        yield "-c Release"
+        if not Environment.isWindows then
+            yield "--framework netcoreapp3.1"
+    ]
+    |> String.concat " "
+
 let dotnetBuild =
-    DotNet.build (fun x ->
-        // Чтобы в Linux'е не компилировался net461, дан этот костыль:
-        { x with
-                Configuration = buildConf
-                Framework =
-                    if not Environment.isWindows then
-                        Some "netcoreapp3.1"
-                    else
-                        None
-                }
-        |> dtntSmpl)
+    dotnet (sprintf "build %s" commonBuildArgs)
+
+let dotnetRun framework =
+    dotnet (sprintf "run --framework %s" framework)
+
 Target.create "BuildServer" (fun _ ->
     serverProjPath
     |> Fake.IO.Path.getDirectory
@@ -73,6 +60,7 @@ Target.create "BuildTest" (fun _ ->
     |> Fake.IO.Path.getDirectory
     |> dotnetBuild
 )
+
 Target.create "BuildUtility" (fun _ ->
     utilityProjpath
     |> Fake.IO.Path.getDirectory
@@ -85,27 +73,13 @@ Target.create "Copy3rd" <| fun _ ->
         failwithf "'%s' not found" srcDir
     targetFrameworks
     |> List.iter (fun targetFramework ->
-        let localPath = sprintf "bin/%A/%s" buildConf targetFramework
+        let localPath = sprintf "bin/%s/%s" "Release" targetFramework
         let dstDir = sprintf "%s/%s/%s" serverProjName localPath srcDir
         Fake.IO.Shell.copyDir dstDir srcDir (fun _ -> true)
     )
-let run projName targetFramework projPath =
-    let dir = Fake.IO.Path.getDirectory projPath
-    let localpath = sprintf "bin/%A/%s/%s.exe" buildConf targetFramework projName
-    let path = Fake.IO.Path.combine dir localpath
-    if not <| Fake.IO.File.exists path then
-        failwithf "not found %s" path
-
-    Command.RawCommand(path, Arguments.Empty)
-    |> CreateProcess.fromCommand
-    |> CreateProcess.withWorkingDirectory (Fake.IO.Path.getDirectory path)
-    |> Proc.run
 
 Target.create "RunTest" (fun _ ->
-    let targetFramework = targetFrameworks.[0]
-    let x = run testProjName targetFramework testProjPath
-    if x.ExitCode <> 0 then
-        failwith "test error"
+    dotnetRun "netcoreapp3.1" (Path.getDirectory testProjPath)
 )
 
 Target.create "TrimTrailingWhitespace" (fun _ ->
@@ -128,9 +102,9 @@ Target.create "TrimTrailingWhitespace" (fun _ ->
 )
 
 Target.create "CopyToMainProj" (fun _ ->
-    let srcDir = sprintf @"QspServer/bin/%A" buildConf
+    let srcDir = sprintf @"QspServer/bin/%s" "Release"
     let dstDir = @"e:/Project/Qsp/QspVscodeExtension/release/bin"
-    Fake.IO.Shell.copyDir dstDir srcDir (fun _ -> true)
+    Shell.copyDir dstDir srcDir (fun _ -> true)
 )
 
 // --------------------------------------------------------------------------------------
