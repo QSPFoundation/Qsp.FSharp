@@ -100,9 +100,6 @@ Target.create "Default" ignore
 "BuildServer"
   ==> "Default"
 
-"BuildTest"
-  ==> "RunTest"
-
 // "BuildServer" <=> "BuildTest"
 
 // Copy3rd запускает и BuildServer, и BuildTest. Шо делать, чтобы он отдельно запускал?
