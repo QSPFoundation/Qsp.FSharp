@@ -13,8 +13,8 @@ open Fake.IO.FileSystemOperators
 // --------------------------------------------------------------------------------------
 // Build variables
 // --------------------------------------------------------------------------------------
-let testProjName = "Test"
-let testProjPath = "Test" </> sprintf "%s.fsproj" testProjName
+let testProjName = "Qsp.FSharp.Core.Tests"
+let testProjPath = "tests" </> "Qsp.FSharp.Core.Tests" </> sprintf "%s.fsproj" testProjName
 let serverProjName = "Qsp.FSharp.LanguageServer"
 let serverProjPath = "src" </> "Qsp.FSharp.LanguageServer" </> sprintf "%s.fsproj" serverProjName
 let parserProjName = "Qsp.FSharp.Core"

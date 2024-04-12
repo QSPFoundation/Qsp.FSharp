@@ -8,7 +8,7 @@
     <Tailcalls>true</Tailcalls>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\src\Qsp.FSharp.Core\Qsp.FSharp.Core.fsproj">
+    <ProjectReference Include="..\..\src\Qsp.FSharp.Core\Qsp.FSharp.Core.fsproj">
       <Name>Qsp.FSharp.Core.fsproj</Name>
     </ProjectReference>
   </ItemGroup>
@@ -17,5 +17,5 @@
     <Compile Include="OldAndNewExprTests.fs" />
     <Compile Include="Test.fs" />
   </ItemGroup>
-  <Import Project="..\.paket\Paket.Restore.targets" />
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

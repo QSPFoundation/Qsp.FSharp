@@ -395,7 +395,7 @@ paket-files/
 /.ionide/
 /Utils/
 
-/Test/Mocks/
+/tests/Qsp.FSharp.Core.Tests/Mocks
 
 /RunUtils.cmd
 /Sandbox.fsx
