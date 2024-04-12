@@ -9,7 +9,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Qsp.FSharp.LanguageServer",
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Test", "Test\Test.fsproj", "{14D57AF2-CE1E-46D4-B6B6-0EED2A6F203E}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Utility", "Utility\Utility.fsproj", "{B35121AB-A0AD-4E81-A5A2-039E7C57FD8B}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Qsp.FSharp.Cli", "src\Qsp.FSharp.Cli\Qsp.FSharp.Cli.fsproj", "{B35121AB-A0AD-4E81-A5A2-039E7C57FD8B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

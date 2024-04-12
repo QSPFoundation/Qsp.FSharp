@@ -8,7 +8,7 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\src\Qsp.FSharp.Core\Qsp.FSharp.Core.fsproj">
+    <ProjectReference Include="..\Qsp.FSharp.Core\Qsp.FSharp.Core.fsproj">
       <Name>Qsp.FSharp.Core.fsproj</Name>
     </ProjectReference>
   </ItemGroup>
@@ -16,5 +16,5 @@
     <None Include="App.config" />
     <Compile Include="Program.fs" />
   </ItemGroup>
-  <Import Project="..\.paket\Paket.Restore.targets" />
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
