@@ -8,9 +8,6 @@
     <Tailcalls>true</Tailcalls>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\paket-files\github.com\gretmn102\FsharpMyExtension\FsharpMyExtension\FsharpMyExtension\FsharpMyExtension.fsproj">
-      <Name>FsharpMyExtension.fsproj</Name>
-    </ProjectReference>
     <ProjectReference Include="..\QSParse\QSParse.fsproj">
       <Name>QSParse.fsproj</Name>
     </ProjectReference>

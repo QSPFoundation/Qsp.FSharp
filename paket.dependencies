@@ -14,16 +14,12 @@ nuget Fuchu >= 1.1 lowest_matching: true
 // utility
 nuget Argu >= 6.1.1 lowest_matching: true
 
-// FsharpMyExtension
-nuget HtmlAgilityPack >= 1.11.24 lowest_matching: true
-nuget Newtonsoft.Json.Bson >= 1.0.2 lowest_matching: true
-nuget TextCopy >= 4.2 lowest_matching: true
-nuget YamlDotNet >= 8.1.2 lowest_matching: true
-nuget System.Drawing.Common >= 4.7 lowest_matching: true
-
 // server
 github gretmn102/LSP-API src/LanguageServerProtocol.fs
-git https://github.com/gretmn102/FsharpMyExtension.git afae9328f846d67545a142708c4e11055ce6ac8b
+
+// all
+source https://gitlab.com/api/v4/projects/28574921/packages/nuget/index.json
+nuget FSharpMyExt >= 2.0.0-prerelease.8 lowest_matching: true
 
 group Build
     strategy: min

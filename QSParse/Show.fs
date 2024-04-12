@@ -71,7 +71,7 @@ let rec showStringLines showExpr showStmtsInline (lines:list<Line>) =
         ) >> joinsEmpty empty
     )
 let showValue showExpr showStmtsInline = function
-    | Int x -> shows x
+    | Int x -> showByToString x
     | String lines ->
         showStringLines showExpr showStmtsInline lines
         |> joinsEmpty (showString "\n")
