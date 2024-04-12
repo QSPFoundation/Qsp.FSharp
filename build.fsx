@@ -90,12 +90,6 @@ Target.create "TrimTrailingWhitespace" (fun _ ->
     )
 )
 
-Target.create "CopyToMainProj" (fun _ ->
-    let srcDir = sprintf @"QspServer/bin/%s" "Release"
-    let dstDir = @"e:/Project/Qsp/QspVscodeExtension/release/bin"
-    Shell.copyDir dstDir srcDir (fun _ -> true)
-)
-
 // --------------------------------------------------------------------------------------
 // Build order
 // --------------------------------------------------------------------------------------
@@ -107,7 +101,6 @@ Target.create "Default" ignore
   ==> "Default"
 
 "BuildTest"
-  ==> "CopyToMainProj"
   ==> "RunTest"
 
 // "BuildServer" <=> "BuildTest"
