@@ -11,12 +11,6 @@
     <ProjectReference Include="..\QSParse\QSParse.fsproj">
       <Name>QSParse.fsproj</Name>
     </ProjectReference>
-    <ProjectReference Include="..\QspServer\QspServer.fsproj">
-      <Name>QspServer.fsproj</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Utility\Utility.fsproj">
-      <Name>Utility.fsproj</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
