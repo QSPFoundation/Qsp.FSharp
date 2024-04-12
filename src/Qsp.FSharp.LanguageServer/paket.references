@@ -1,6 +1,6 @@
-FSharp.Core
-FuChu
-Newtonsoft.Json
-FParsec
-File:LanguageServerProtocol.fs
-FSharpMyExt
+group LanguageServer
+    FSharp.Core
+    Newtonsoft.Json
+    FParsec
+    File:LanguageServerProtocol.fs
+    FSharpMyExt

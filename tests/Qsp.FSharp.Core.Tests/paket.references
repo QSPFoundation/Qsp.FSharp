@@ -1,3 +1,4 @@
-FSharp.Core
-FuChu
-FSharpMyExt
+group Tests
+    FSharp.Core
+    FuChu
+    FSharpMyExt
