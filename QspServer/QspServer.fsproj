@@ -16,6 +16,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ContentWithTargetPath Include="..\3rd\txt2gam.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>3rd\txt2gam.exe</TargetPath>
+    </ContentWithTargetPath>
     <Compile Include="..\paket-files\gretmn102\LSP-API\src\LanguageServerProtocol.fs">
       <Paket>True</Paket>
       <Link>paket-files/LanguageServerProtocol.fs</Link>
