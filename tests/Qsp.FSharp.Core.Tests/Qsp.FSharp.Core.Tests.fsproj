@@ -4,8 +4,6 @@
     <OutputType>Exe</OutputType>
     <TargetFrameworks>netcoreapp3.1;net461</TargetFrameworks>
     <AssemblyName>test</AssemblyName>
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Qsp.FSharp.Core\Qsp.FSharp.Core.fsproj">
