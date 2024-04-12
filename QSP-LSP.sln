@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "QSParse", "QSParse\QSParse.fsproj", "{E543CCB0-25C2-41BB-892D-9FFC0DBCAEA3}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Qsp.FSharp.Core", "src\Qsp.FSharp.Core\Qsp.FSharp.Core.fsproj", "{E543CCB0-25C2-41BB-892D-9FFC0DBCAEA3}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "QspServer", "QspServer\QspServer.fsproj", "{E5765DB9-DBFF-4068-84C1-46D6500DA728}"
 EndProject

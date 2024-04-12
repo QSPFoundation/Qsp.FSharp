@@ -17,8 +17,8 @@ let testProjName = "Test"
 let testProjPath = "Test" </> sprintf "%s.fsproj" testProjName
 let serverProjName = "QspServer"
 let serverProjPath = "QspServer" </> sprintf "%s.fsproj" serverProjName
-let parserProjName = "QSParse"
-let parserProjPath = "QSParse" </> sprintf "%s.fsproj" parserProjName
+let parserProjName = "Qsp.FSharp.Core"
+let parserProjPath = "src" </> "Qsp.FSharp.Core" </> sprintf "%s.fsproj" parserProjName
 let utilityProjName = "Utility"
 let utilityProjpath = "Utility" </> sprintf "%s.fsproj" utilityProjName
 // --------------------------------------------------------------------------------------

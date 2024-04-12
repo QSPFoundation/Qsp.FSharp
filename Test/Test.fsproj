@@ -8,8 +8,8 @@
     <Tailcalls>true</Tailcalls>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\QSParse\QSParse.fsproj">
-      <Name>QSParse.fsproj</Name>
+    <ProjectReference Include="..\src\Qsp.FSharp.Core\Qsp.FSharp.Core.fsproj">
+      <Name>Qsp.FSharp.Core.fsproj</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
