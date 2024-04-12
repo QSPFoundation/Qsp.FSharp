@@ -15,8 +15,8 @@ open Fake.IO.FileSystemOperators
 // --------------------------------------------------------------------------------------
 let testProjName = "Test"
 let testProjPath = "Test" </> sprintf "%s.fsproj" testProjName
-let serverProjName = "QspServer"
-let serverProjPath = "QspServer" </> sprintf "%s.fsproj" serverProjName
+let serverProjName = "Qsp.FSharp.LanguageServer"
+let serverProjPath = "src" </> "Qsp.FSharp.LanguageServer" </> sprintf "%s.fsproj" serverProjName
 let parserProjName = "Qsp.FSharp.Core"
 let parserProjPath = "src" </> "Qsp.FSharp.Core" </> sprintf "%s.fsproj" parserProjName
 let utilityProjName = "Utility"
