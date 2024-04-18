@@ -140,8 +140,7 @@ let assignTest =
             let input = "x[expr] = 42"
             let exp =
                 (Assign
-                   (false, AssignArr
-                      ((NumericType, "x"), Var (NumericType, "expr"), None),
+                   (false, AssignArr ((NumericType, "x"), [ Var (NumericType, "expr") ]),
                     Val (Int 42)))
             Assert.Equal("", Right exp, runExpr input)
         testCase "implicit `-=` implicit var" <| fun () ->
@@ -182,14 +181,21 @@ let assignTest =
             let input = "$x[expr] = 42"
             let exp =
                 (Assign
-                   (false, AssignArr ((StringType, "x"), Var (NumericType, "expr"), None),
+                   (false, AssignArr ((StringType, "x"), [Var (NumericType, "expr")]),
                     Val (Int 42)))
             Assert.Equal("", Right exp, runExpr input)
         testCase "implicit assign explicit two demention array" <| fun () ->
             let input = "$x[firstKeyExpr, secondKeyExpr] = 42"
             let exp =
                 (Assign
-                   (false, AssignArr ((StringType, "x"), Var (NumericType, "firstKeyExpr"), Some(Var (NumericType, "secondKeyExpr"))),
+                   (false, AssignArr ((StringType, "x"), [ Var (NumericType, "firstKeyExpr"); Var (NumericType, "secondKeyExpr") ]),
+                    Val (Int 42)))
+            Assert.Equal("", Right exp, runExpr input)
+        testCase "implicit assign explicit tree demention array" <| fun () ->
+            let input = "$x[firstKeyExpr, secondKeyExpr, $thirdKeyExpr] = 42"
+            let exp =
+                (Assign
+                   (false, AssignArr ((StringType, "x"), [ Var (NumericType, "firstKeyExpr"); Var (NumericType, "secondKeyExpr"); Var (StringType, "thirdKeyExpr") ]),
                     Val (Int 42)))
             Assert.Equal("", Right exp, runExpr input)
         testCase "#x = 21 + 21" <| fun () ->
@@ -202,7 +208,7 @@ let assignTest =
         testCase "`x[] = 1`" <| fun () ->
             let input = "x[] = 1"
             let exp =
-                Assign (false, AssignArrAppend (NumericType, "x"), Val (Int 1))
+                Assign (false, AssignArr((NumericType, "x"), []), Val (Int 1))
             Assert.Equal("", Right exp, runExpr input)
         // ложные случаи:
         testCase "attempt assign function" <| fun () ->
@@ -255,11 +261,21 @@ let showAssignTest =
         testCase "implicit assign explicit two demention array" <| fun () ->
             let act =
                 Assign
-                   (false, AssignArr ((NumericType, "x"), Var (NumericType, "firstKeyExpr"), Some(Var (NumericType, "secondKeyExpr"))),
+                   (false, AssignArr ((NumericType, "x"), [ Var (NumericType, "firstKeyExpr"); Var (NumericType, "secondKeyExpr") ]),
                     Val (Int 42))
                 |> showAssign
             let exp =
                 "x[firstKeyExpr, secondKeyExpr] = 42"
+            Assert.Equal("", exp, act)
+
+        testCase "implicit assign explicit three dimensions array" <| fun () ->
+            let act =
+                Assign
+                   (false, AssignArr ((NumericType, "x"), [ Var (NumericType, "firstKeyExpr"); Var (NumericType, "secondKeyExpr"); Var (StringType, "threeKeyExpr") ]),
+                    Val (Int 42))
+                |> showAssign
+            let exp =
+                "x[firstKeyExpr, secondKeyExpr, $threeKeyExpr] = 42"
             Assert.Equal("", exp, act)
     ]
 

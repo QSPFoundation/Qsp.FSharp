@@ -171,9 +171,9 @@ and Expr =
 
 and AssignWhat =
     | AssignVar of var:Var
-    /// Ключом массива может быть значение любого типа
-    | AssignArr of var:Var * key:Expr * secondKey: Expr option
-    | AssignArrAppend of var:Var
+    /// Arguments of the array may be missing.
+    /// In this case, the value is added to the end of the array.
+    | AssignArr of var: Var * args: Expr list
 and PosStatement = NoEqualityPosition * Statement
 and Statement =
     | Assign of isLocal:bool * AssignWhat * Expr

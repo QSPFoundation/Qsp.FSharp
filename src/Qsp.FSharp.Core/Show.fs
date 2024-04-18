@@ -94,6 +94,10 @@ let showFuncName = function
         | None -> failwithf "%A not found in `functionBySymbolic`" name
     | PredefUndef.Undef name ->
         showString name
+
+let showArrayArgs xs =
+    bet "[" "]" (join ", " xs)
+
 let rec simpleShowExpr showStmtsInline expr : ShowS =
     let rec f = function
         | Val v -> showValue (simpleShowExpr showStmtsInline) showStmtsInline v
@@ -132,9 +136,10 @@ let rec simpleShowExpr showStmtsInline expr : ShowS =
             f e1 << showSpace
             << ops op << showSpace
             << f e2
-        | Arr(var, es) ->
-            showVar var << bet "[" "]" (List.map f es |> join ", ")
+        | Arr(var, args) ->
+            showVar var << showArrayArgs (List.map f args)
     f expr
+
 let rec showExpr showStmtsInline = function
     | Val v -> showValue (showExpr showStmtsInline) showStmtsInline v
     | Var v -> showVar v
@@ -156,21 +161,14 @@ let rec showExpr showStmtsInline = function
             | UnarExpr _ -> showParen true | _ -> id
         let f x = f x (showExpr showStmtsInline x)
         f e1 << showSpace << ops op << showSpace << f e2
-    | Arr(var, es) -> showVar var << bet "[" "]" (List.map (showExpr showStmtsInline) es |> join ", ")
-
+    | Arr(var, args) ->
+        showVar var << showArrayArgs (List.map (showExpr showStmtsInline) args)
 
 let showAssign showStmtsInline = function
-    | AssignWhat.AssignArr(var, firstKeyExpr, secondKeyExpr) ->
+    | AssignWhat.AssignArr(var, args) ->
         showVar var
-        << bet "[" "]" (
-            showExpr showStmtsInline firstKeyExpr <<
-            match secondKeyExpr with
-            | Some secondKeyExpr ->
-                showString ", " << showExpr showStmtsInline secondKeyExpr
-            | None -> empty
-        )
+        << showArrayArgs (List.map (showExpr showStmtsInline) args)
     | AssignWhat.AssignVar var -> showVar var
-    | AssignWhat.AssignArrAppend var -> showVar var << showString "[]"
 
 let (|OneStmt|_|) = function
     | [pos, x] ->
@@ -185,7 +183,8 @@ let (|OneStmt|_|) = function
         | For _ | Loop _ -> None
     | _ -> None
 
-let (|AssingName|) = function AssignArr(x, _, _) -> x | AssignVar x -> x | AssignArrAppend x -> x
+let (|AssingName|) = function AssignArr(x, _) -> x | AssignVar x -> x
+
 type IndentsOption =
     | UsingSpaces of int
     | UsingTabs
