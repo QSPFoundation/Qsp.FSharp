@@ -120,6 +120,93 @@ let pexprTest =
         let exp =
             Func (Predef Defines.Input, [Val (String [[StringKind "How do you do?"]])])
         testf input exp
+
+        testCase "()" <| fun () ->
+            Assert.Equal(
+                "",
+                Right (Tuple []),
+                runExpr "()"
+            )
+
+        testCase "(1 + 2)" <| fun () ->
+            Assert.Equal(
+                "",
+                Right (
+                    Expr (
+                        Plus,
+                        Val (Int 1),
+                        Val (Int 2)
+                    )
+                ),
+                runExpr "(1 + 2)"
+            )
+
+        testCase "(1, 2)" <| fun () ->
+            Assert.Equal(
+                "",
+                Right (
+                    Tuple [
+                        Val (Int 1)
+                        Val (Int 2)
+                    ]
+                ),
+                runExpr "(1, 2)"
+            )
+
+        testCase "(1, 2, 3)" <| fun () ->
+            Assert.Equal(
+                "",
+                Right (
+                    Tuple [
+                        Val (Int 1)
+                        Val (Int 2)
+                        Val (Int 3)
+                    ]
+                ),
+                runExpr "(1, 2, 3)"
+            )
+
+        testCase "(1, (2, 3))" <| fun () ->
+            Assert.Equal(
+                "",
+                Right (
+                    Tuple [
+                        Val (Int 1)
+                        Tuple [
+                            Val (Int 2)
+                            Val (Int 3)
+                        ]
+                    ]
+                ),
+                runExpr "(1, (2, 3))"
+            )
+
+        testCase "(1, (2 + 3), x[4]) + x[5]" <| fun () ->
+            Assert.Equal(
+                "",
+                Right (
+                    Expr (
+                        Plus,
+                        Tuple [
+                            Val (Int 1)
+                            Expr (
+                                Plus,
+                                Val (Int 2),
+                                Val (Int 3)
+                            )
+                            Arr(
+                                (NumericType, "x"),
+                                [ Val (Int 4) ]
+                            )
+                        ],
+                        Arr(
+                            (NumericType, "x"),
+                            [ Val (Int 5) ]
+                        )
+                    )
+                ),
+                runExpr "(1, (2 + 3), x[4]) + x[5]"
+            )
     ]
 // #load "Parsec.fs"
 
@@ -277,6 +364,44 @@ let showAssignTest =
             let exp =
                 "x[firstKeyExpr, secondKeyExpr, $threeKeyExpr] = 42"
             Assert.Equal("", exp, act)
+    ]
+
+[<Tests>]
+let exprShowTests =
+    let show expr =
+        Show.showExpr (fun _ -> ShowList.empty) expr
+        |> ShowList.show
+
+    testList "exprShowTests" [
+        testCase "tuple (a, b + c)" <| fun () ->
+            Assert.Equal(
+                "",
+                "(a, b + c)",
+                Tuple [
+                    Var (NumericType, "a")
+                    Expr (
+                        Plus,
+                        Var (NumericType, "b"),
+                        Var (NumericType, "c")
+                    )
+                ]
+                |> show
+            )
+        testCase "tuple (a + b, c, 'e')" <| fun () ->
+            Assert.Equal(
+                "",
+                "(a + b, c, 'e')",
+                Tuple [
+                    Expr (
+                        Plus,
+                        Var (NumericType, "a"),
+                        Var (NumericType, "b")
+                    )
+                    Var (NumericType, "c")
+                    Val (Value.String [[ LineKind.StringKind "e" ]])
+                ]
+                |> show
+            )
     ]
 
 [<Tests>]

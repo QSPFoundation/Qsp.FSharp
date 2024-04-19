@@ -98,6 +98,9 @@ let showFuncName = function
 let showArrayArgs xs =
     bet "[" "]" (join ", " xs)
 
+let showTupleArgs xs =
+    bet "(" ")" (join ", " xs)
+
 let rec simpleShowExpr showStmtsInline expr : ShowS =
     let rec f = function
         | Val v -> showValue (simpleShowExpr showStmtsInline) showStmtsInline v
@@ -107,7 +110,7 @@ let rec simpleShowExpr showStmtsInline expr : ShowS =
                 if List.isEmpty args then
                     empty
                 else
-                    showParen true (List.map f args |> join ", ")
+                    showTupleArgs (List.map f args)
             showFuncName name << args
         | UnarExpr(op, e) ->
             let space = function Obj | No | Loc -> showSpace | Neg -> id
@@ -119,6 +122,7 @@ let rec simpleShowExpr showStmtsInline expr : ShowS =
                 | Func(_, _) // `-(func(idx))` лучше выглядит, чем `-(arr(idx))`?
                 | UnarExpr _
                 | Val _
+                | Tuple _
                 | Var _ ->
                     space op << f e
             showString (unar op) << x
@@ -128,6 +132,7 @@ let rec simpleShowExpr showStmtsInline expr : ShowS =
                 | Val(_)
                 | Var _ ->  f body
                 | UnarExpr(_, _)
+                | Tuple(_)
                 | Expr(_, _, _) ->
                     showParen true (f body)
                 | Func(_, _)
@@ -136,6 +141,8 @@ let rec simpleShowExpr showStmtsInline expr : ShowS =
             f e1 << showSpace
             << ops op << showSpace
             << f e2
+        | Tuple args ->
+            showTupleArgs (List.map f args)
         | Arr(var, args) ->
             showVar var << showArrayArgs (List.map f args)
     f expr
@@ -148,8 +155,7 @@ let rec showExpr showStmtsInline = function
             if List.isEmpty args then
                 empty
             else
-                showParen true
-                    (List.map (showExpr showStmtsInline) args |> join ", ")
+                showTupleArgs (List.map (showExpr showStmtsInline) args)
         showFuncName name << args
     | UnarExpr(op, e) ->
         let space = function Obj | No | Loc -> showSpace | Neg -> id
@@ -161,6 +167,8 @@ let rec showExpr showStmtsInline = function
             | UnarExpr _ -> showParen true | _ -> id
         let f x = f x (showExpr showStmtsInline x)
         f e1 << showSpace << ops op << showSpace << f e2
+    | Tuple args ->
+        showTupleArgs (List.map (showExpr showStmtsInline) args)
     | Arr(var, args) ->
         showVar var << showArrayArgs (List.map (showExpr showStmtsInline) args)
 

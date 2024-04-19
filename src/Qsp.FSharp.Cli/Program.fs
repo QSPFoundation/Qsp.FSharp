@@ -144,6 +144,7 @@ let patternMatching pattern =
         | Expr _
         | Func _
         | UnarExpr _
+        | Tuple _
         | Var _
             -> acc
     and stmtsMatcher (acc:list<PosStatement>) stmts =

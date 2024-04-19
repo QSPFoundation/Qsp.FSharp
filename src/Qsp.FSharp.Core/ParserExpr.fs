@@ -209,13 +209,20 @@ let term expr =
                         )
                     | Some _ -> preturn ()
             >>% Func(Predef Defines.Func, Val (String [[StringKind locName]])::args)
+
+    let ptuple =
+        pBracesArgs
+        |>> function
+            | [x] -> x
+            | xs -> Expr.Tuple xs
+
     ptermRef :=
         choice [
             pval
             pDirectCallFunc
             pcallFuncOrArrOrVar
         ]
-    pterm <|> bet_ws '(' ')' expr
+    pterm <|> ptuple
 
 let pExprOld : _ Parser =
     let opp = new OperatorPrecedenceParser<Expr, unit, _>()

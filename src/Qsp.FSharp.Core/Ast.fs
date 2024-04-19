@@ -168,6 +168,7 @@ and Expr =
     | Arr of var:Var * Expr list
     | UnarExpr of UnarOp * Expr
     | Expr of Op * Expr * Expr
+    | Tuple of Expr list
 
 and AssignWhat =
     | AssignVar of var:Var
