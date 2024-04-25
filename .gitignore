@@ -399,3 +399,5 @@ paket-files/
 
 /RunUtils.cmd
 /Sandbox.fsx
+
+/src/Qsp.FSharp.Core/Directory.Build.props
