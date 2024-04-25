@@ -930,17 +930,22 @@ type LocalSetting = {
 open FsharpMyExtension
 [<EntryPoint>]
 let main argv =
-    use input = System.Console.OpenStandardInput()
-    use output = System.Console.OpenStandardOutput()
+    match argv with
+    | [| "--ping" |] ->
+        printfn "PONG!"
+        0
+    | _ ->
+        use input = System.Console.OpenStandardInput()
+        use output = System.Console.OpenStandardOutput()
 
-    let requestsHandlings =
-        defaultRequestHandlings<BackgroundServiceServer>()
-        |> Map.add "fsharp/highlighting" (requestHandling (fun s p -> s.GetHighlighting(p) ))
-        |> Map.add "fsharp/workspaceLoad" (requestHandling (fun s p -> s.FSharpWorkspaceLoad(p) ))
-        |> Map.add "qsp/build" (requestHandling (fun s p -> s.BuildSource p false ))
-        |> Map.add "qsp/buildAndRun" (requestHandling (fun s p -> s.BuildSource p true ))
+        let requestsHandlings =
+            defaultRequestHandlings<BackgroundServiceServer>()
+            |> Map.add "fsharp/highlighting" (requestHandling (fun s p -> s.GetHighlighting(p) ))
+            |> Map.add "fsharp/workspaceLoad" (requestHandling (fun s p -> s.FSharpWorkspaceLoad(p) ))
+            |> Map.add "qsp/build" (requestHandling (fun s p -> s.BuildSource p false ))
+            |> Map.add "qsp/buildAndRun" (requestHandling (fun s p -> s.BuildSource p true ))
 
-    Server.start requestsHandlings input output FsacClient (fun lspClient -> BackgroundServiceServer((), lspClient))
-    |> printfn "%A"
+        Server.start requestsHandlings input output FsacClient (fun lspClient -> BackgroundServiceServer((), lspClient))
+        |> printfn "%A"
 
-    0
+        0
