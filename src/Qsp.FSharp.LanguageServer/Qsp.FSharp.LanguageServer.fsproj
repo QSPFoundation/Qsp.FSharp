@@ -3,8 +3,18 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>netcoreapp3.1;net461</TargetFrameworks>
+    <!-- <TargetName> broke netcoreapp3.1 dependency runtime -->
     <AssemblyName>qspserver</AssemblyName>
   </PropertyGroup>
+  <Target Name="AddOutputToLib" AfterTargets="Build">
+    <ItemGroup>
+      <None Include="$(OutputPath)\**" Pack="true" PackagePath="lib$(TargetFramework)">
+        <PackageCopyToOutput>true</PackageCopyToOutput>
+        <Visible>false</Visible>
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+  </Target>
   <ItemGroup>
     <ProjectReference Include="..\Qsp.FSharp.Core\Qsp.FSharp.Core.fsproj">
       <Name>Qsp.FSharp.Core.fsproj</Name>

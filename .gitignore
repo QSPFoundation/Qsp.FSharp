@@ -401,3 +401,4 @@ paket-files/
 /Sandbox.fsx
 
 /src/Qsp.FSharp.Core/Directory.Build.props
+/src/Qsp.FSharp.LanguageServer/Directory.Build.props

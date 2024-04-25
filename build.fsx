@@ -16,7 +16,8 @@ open Fake.IO.FileSystemOperators
 let testProjName = "Qsp.FSharp.Core.Tests"
 let testProjPath = "tests" </> "Qsp.FSharp.Core.Tests" </> sprintf "%s.fsproj" testProjName
 let serverProjName = "Qsp.FSharp.LanguageServer"
-let serverProjPath = "src" </> "Qsp.FSharp.LanguageServer" </> sprintf "%s.fsproj" serverProjName
+let serverProjDir = "src" </> "Qsp.FSharp.LanguageServer"
+let serverProjPath = serverProjDir </> sprintf "%s.fsproj" serverProjName
 let parserProjName = "Qsp.FSharp.Core"
 let parserProjDir = "src" </> "Qsp.FSharp.Core"
 let parserProjPath = parserProjDir </> sprintf "%s.fsproj" parserProjName
@@ -106,6 +107,53 @@ Target.create "CorePushToGitlab" (fun _ ->
     |> dotnet (sprintf "nuget push -s %s %s" "gitlab" packPath)
 )
 
+Target.create "LanguageServerMeta" (fun _ ->
+    let release = ReleaseNotes.load (serverProjDir </> "RELEASE_NOTES.md")
+
+    [
+        "<Project xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">"
+        "<ItemGroup>"
+        "    <PackageReference Include=\"Microsoft.SourceLink.GitHub\" Version=\"1.0.0\" PrivateAssets=\"All\"/>"
+        "</ItemGroup>"
+        "<PropertyGroup>"
+        "    <PackageId>Qsp.FSharp.LanguageServer</PackageId>"
+        "    <EmbedUntrackedSources>true</EmbedUntrackedSources>"
+        "    <PackageProjectUrl>https://github.com/gretmn102/FParserQSP/tree/master/src/Qsp.FSharp.LanguageServer</PackageProjectUrl>"
+        "    <PackageLicenseExpression>MIT</PackageLicenseExpression>"
+        "    <RepositoryUrl>https://github.com/gretmn102/FParserQSP.git</RepositoryUrl>"
+        sprintf "    <PackageReleaseNotes>%s</PackageReleaseNotes>"
+            (String.concat "\n" release.Notes |> XmlText.escape)
+        "    <PackageTags>fsharp;qsp;lsp</PackageTags>"
+        "    <Authors>gretmn102</Authors>"
+        sprintf "    <Version>%s</Version>" release.SemVer.AsString
+        "</PropertyGroup>"
+        "</Project>"
+    ]
+    |> File.write false (serverProjDir </> "Directory.Build.props")
+)
+
+Target.create "LanguageServerPack" (fun _ ->
+    let commonBuildArgs =
+        [
+            yield commonBuildArgs
+            // If you use netcoreapp3.1, then Core will also try
+            // to compile to that framework, which will cause errors
+            if not Environment.isWindows then
+                yield "-p:TargetFrameworks=netstandard2.0"
+        ]
+        |> String.concat " "
+    dotnet (sprintf "pack %s" commonBuildArgs) serverProjDir
+)
+
+Target.create "LanguageServerPushToGitlab" (fun _ ->
+    let release = ReleaseNotes.load (serverProjDir </> "RELEASE_NOTES.md")
+    let deployDir = serverProjDir </> "bin" </> "Release"
+    let packPath =
+        sprintf "Qsp.FSharp.LanguageServer.%s.nupkg" release.SemVer.AsString
+    deployDir
+    |> dotnet (sprintf "nuget push -s %s %s" "gitlab" packPath)
+)
+
 Target.create "BuildServer" (fun _ ->
     serverProjPath
     |> Fake.IO.Path.getDirectory
@@ -157,6 +205,10 @@ Target.create "Default" ignore
 "CoreMeta"
   ==> "CorePack"
   ==> "CorePushToGitlab"
+
+"LanguageServerMeta"
+  ==> "LanguageServerPack"
+  ==> "LanguageServerPushToGitlab"
 
 "BuildServer"
   ==> "Default"
