@@ -99,6 +99,66 @@ let pexprTest =
                UnarExpr (Neg, Var (NumericType, "y")))
         testf input exp
 
+        testf
+            "1 + 2 * 3"
+            (Expr (
+                Plus,
+                Val (Int 1),
+                Expr (Times, Val (Int 2), Val (Int 3))
+            ))
+
+        testf
+            "1 + 2 mod 3 * 4"
+            (Expr (
+                Plus,
+                Val (Int 1),
+                Expr (
+                    Mod,
+                    Val (Int 2),
+                    Expr (Times, Val (Int 3), Val (Int 4))
+                )
+            ))
+
+        testf
+            "-1 - -1"
+            (Expr (
+                Minus,
+                UnarExpr (Neg, Val (Int 1)),
+                UnarExpr (Neg, Val (Int 1))
+            ))
+
+        testf
+            "-(a + b)"
+            (UnarExpr (
+                Neg,
+                Expr (
+                    Plus, Var (NumericType, "a"), Var (NumericType, "b")
+                )
+            ))
+
+        testf
+            "a and b = c and d"
+            (Expr (
+                And,
+                Expr (
+                    And,
+                    Var (NumericType, "a"),
+                    Expr (Eq, Var (NumericType, "b"), Var (NumericType, "c"))
+                ),
+                Var (NumericType, "d")
+            ))
+
+        testf
+            "obj 'яблоко' = 0"
+            (UnarExpr (
+                Obj,
+                Expr (
+                    Eq,
+                    Val (String [[StringKind "яблоко"]]),
+                    Val (Int 0)
+                )
+            ))
+
         let input =
             [
                 "x + _"
