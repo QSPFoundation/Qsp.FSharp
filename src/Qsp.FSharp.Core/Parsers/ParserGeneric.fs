@@ -67,11 +67,14 @@ type LocHighlights =
         Ma: Map<Ast.LocationName, (Tokens.InlineRange * VarHighlightKind) list>
         Ranges: (Tokens.InlineRange * Ast.LocationName) list
     }
-let locHighlightsEmpty =
-    {
-        Ma = Map.empty
-        Ranges = []
-    }
+
+module LocHighlights =
+    let empty =
+        {
+            Ma = Map.empty
+            Ranges = []
+        }
+
 type Highlights =
     {
         VarHighlights: VarHighlights
@@ -80,7 +83,7 @@ type Highlights =
 let highlightsEmpty =
     {
         VarHighlights = VarHighlights.empty
-        LocHighlights = locHighlightsEmpty
+        LocHighlights = LocHighlights.empty
     }
 type HoverDescription =
     | FuncDescription of Defines.PredefFunc
