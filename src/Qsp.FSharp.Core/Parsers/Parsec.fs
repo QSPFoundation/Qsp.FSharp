@@ -337,6 +337,19 @@ module Statement =
                         Scopes = Scope.removeScope ss.Scopes
                     })
 
+        let pAct pInlineStmts pstmts =
+            let pactKeyword : _ Parser =
+                genKeywordParser Tokens.TokenType.Act "act"
+
+            let pactHeader = pactKeyword .>> ws >>. sepBy1 pexpr (char_ws ',') .>> pcolonKeyword
+
+            pipe2
+                pactHeader
+                ((ws >>? skipNewline >>. spaces >>. pstmts .>> pendKeyword)
+                <|> (spaces >>. pInlineStmts .>> optional pendKeyword))
+                (fun expr body ->
+                    Act(expr, body))
+
         let pstmt =
             let pstmt, pstmtRef = createParserForwardedToRef<PosStatement, _>()
 
@@ -377,18 +390,7 @@ module Statement =
                     }
                 )
 
-            let pAct =
-                let pactKeyword : _ Parser =
-                    genKeywordParser Tokens.TokenType.Act "act"
 
-                let pactHeader = pactKeyword .>> ws >>. sepBy1 pexpr (char_ws ',') .>> pcolonKeyword
-
-                pipe2
-                    pactHeader
-                    ((ws >>? skipNewline >>. spaces >>. pstmts .>> pendKeyword)
-                    <|> (spaces >>. pInlineStmts .>> optional pendKeyword))
-                    (fun expr body ->
-                        Act(expr, body))
             let pFor =
                 let pForHeader =
                     genKeywordParser Tokens.TokenType.For "for" >>. ws
@@ -469,7 +471,7 @@ module Statement =
                     pexit
                     psign
                     pIf
-                    pAct
+                    (pAct pInlineStmts pstmts)
                     pFor
                     (ploop pstmt)
                     pAssign pstmts
