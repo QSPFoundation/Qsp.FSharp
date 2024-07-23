@@ -218,23 +218,17 @@ let appendToken2 tokenType r =
         { st with Tokens = token :: st.Tokens }
     )
 
-let toRange (p1:FParsec.Position) (p2:FParsec.Position) =
-    {
-        Tokens.InlineRange.Line = p1.Line // Должно выполняться условие `p1.Line = p2.Line`
-        Tokens.InlineRange.Column1 = p1.Column
-        Tokens.InlineRange.Column2 = p2.Column // Должно выполняться условие `p2.Column > p1.Column`
-    }
 let appendToken tokenType p =
     getPosition .>>.? p .>>. getPosition
     >>= fun ((p1, p), p2) ->
-        let r = toRange p1 p2
+        let r = Tokens.InlineRange.ofFParsecPositions p1 p2
         appendToken2 tokenType r
         >>. preturn p
 
 let applyRange p =
     getPosition .>>.? p .>>. getPosition
     >>= fun ((p1, p), p2) ->
-        let range = toRange p1 p2
+        let range = Tokens.InlineRange.ofFParsecPositions p1 p2
         preturn (range, p)
 
 let appendHover2 msg range =
@@ -250,13 +244,13 @@ let appendSemanticError range msg =
 let appendHover msg p =
     (getPosition .>>.? p .>>. getPosition)
     >>= fun ((p1, p), p2) ->
-        let r = toRange p1 p2
+        let r = Tokens.InlineRange.ofFParsecPositions p1 p2
         appendHover2 msg r
         >>. preturn p
 let appendTokenHover tokenType msg p =
     (getPosition .>>.? p .>>. getPosition)
     >>= fun ((p1, p), p2) ->
-        let r = toRange p1 p2
+        let r = Tokens.InlineRange.ofFParsecPositions p1 p2
         appendToken2 tokenType r
         >>. appendHover2 msg r
         >>. preturn p

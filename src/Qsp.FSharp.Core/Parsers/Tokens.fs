@@ -94,6 +94,15 @@ type InlineRange =
         Column1: int64
         Column2: int64
     }
+
+module InlineRange =
+    let ofFParsecPositions (p1: FParsec.Position) (p2: FParsec.Position) =
+        {
+            Line = p1.Line // Должно выполняться условие `p1.Line = p2.Line`
+            Column1 = p1.Column
+            Column2 = p2.Column // Должно выполняться условие `p2.Column > p1.Column`
+        }
+
 type Token =
     { TokenType: TokenType
       Range: InlineRange }
