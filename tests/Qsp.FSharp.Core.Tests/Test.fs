@@ -18,6 +18,18 @@ open Qsp.Parser.Expr
 
 
 open Fuchu
+
+[<Tests>]
+let noEqualityPositionTests =
+    testList "noEqualityPositionTests" [
+        testCase "base" <| fun () ->
+            Assert.Equal(
+                "",
+                NoEqualityPosition(Position.create "" 0L 0L 0L),
+                NoEqualityPosition(Position.create "" 1L 1L 1L)
+            )
+    ]
+
 [<Tests>]
 let pexprTest =
     let runExpr str =

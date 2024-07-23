@@ -35,11 +35,6 @@ type NoEqualityPosition(pos:Position) =
     override __.Equals _ = true
     override __.GetHashCode() = 0
 
-let test () =
-    let x = NoEqualityPosition(Position.create "" 0L 0L 0L)
-    let y = NoEqualityPosition(Position.create "" 0L 0L 1L)
-    x = y
-
 [<Struct>]
 type Op =
     /// `+`
