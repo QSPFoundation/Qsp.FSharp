@@ -3,11 +3,31 @@ open FsharpMyExtension
 open Qsp
 
 [<Struct>]
-type Position = { StreamName:string; Index:int64; Line:int64; Column:int64 }
-let positionCreate streamName index line column =
-    { StreamName = streamName; Index = index; Line = line; Column = column }
-let positionEmpty =
-    positionCreate "" 0L 0L 0L
+type Position = {
+    StreamName: string
+    Index: int64
+    Line: int64
+    Column: int64
+}
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+[<RequireQualifiedAccess>]
+module Position =
+    let empty =
+        {
+            StreamName = ""
+            Index = 0L
+            Line = 0L
+            Column = 0L
+        }
+
+    let create streamName index line column =
+        {
+            StreamName = streamName
+            Index = index
+            Line = line
+            Column = column
+        }
 
 type NoEqualityPosition(pos:Position) =
     member __.Pos = pos
@@ -16,8 +36,8 @@ type NoEqualityPosition(pos:Position) =
     override __.GetHashCode() = 0
 
 let test () =
-    let x = NoEqualityPosition(positionCreate "" 0L 0L 0L)
-    let y = NoEqualityPosition(positionCreate "" 0L 0L 1L)
+    let x = NoEqualityPosition(Position.create "" 0L 0L 0L)
+    let y = NoEqualityPosition(Position.create "" 0L 0L 1L)
     x = y
 
 [<Struct>]

@@ -399,7 +399,7 @@ let assignTest =
 [<Tests>]
 let showAssignTest =
     let showAssign str =
-        let emptyPos = NoEqualityPosition positionEmpty
+        let emptyPos = NoEqualityPosition Position.empty
         Show.showStmt (Show.UsingSpaces 4) Show.FormatConfig.Default (emptyPos, str)
         |> ShowList.joinEmpty "\n"
         |> ShowList.show
@@ -484,7 +484,7 @@ let stringLiteralTest =
         testCase "braces escaped" <| fun () ->
             Assert.Equal("", Right "}", runEither stringLiteral "{}}}")
     ]
-let emptyPos = NoEqualityPosition positionEmpty
+let emptyPos = NoEqualityPosition Position.empty
 let emptyPoss x = x |> List.map (fun x -> emptyPos, x)
 let StaticStmts x =
     emptyPoss x

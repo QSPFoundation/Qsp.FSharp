@@ -5,7 +5,7 @@ open FsharpMyExtension.Either
 open Qsp
 
 let fparsecPosToPos (pos:FParsec.Position) =
-    Ast.positionCreate pos.StreamName pos.Index pos.Line pos.Column
+    Ast.Position.create pos.StreamName pos.Index pos.Line pos.Column
 
 let runEither p str =
     match run p str with
