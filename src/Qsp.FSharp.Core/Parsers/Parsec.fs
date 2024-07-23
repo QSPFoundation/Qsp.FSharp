@@ -293,51 +293,53 @@ module Statement =
                 (pstmt .>> spaces
                 .>> (skipMany (ppunctuationTerminator .>> spaces)))
 
+        let pcolonKeyword : _ Parser =
+            appendToken Tokens.TokenType.Colon (pchar ':')
+
+        let ploop pstmt =
+            let pInlineStmts =
+                many (notFollowedByString ":" >>. pstmt .>> ws .>> skipMany (ppunctuationTerminator .>> ws))
+
+            let pstmts = pstmts' pstmt
+
+            let pLoopHeader =
+                genKeywordParser Tokens.TokenType.Loop "loop"
+                >>. ws >>. pInlineStmts
+                .>> genKeywordParser Tokens.TokenType.While "while"
+                .>> ws .>>. pexpr
+                .>>. opt (updateScope (fun ss ->
+                            { ss with
+                                Scopes = Scope.appendScope ss.Scopes
+                            })
+                        >>? genKeywordParser Tokens.TokenType.Step "step"
+                        .>> ws >>. pInlineStmts
+                        .>> updateScope (fun ss ->
+                                { ss with
+                                    Scopes = Scope.removeScope ss.Scopes
+                                })
+                        )
+                .>> pcolonKeyword
+            let p =
+                pipe2
+                    pLoopHeader
+                    ((ws >>? skipNewline >>. spaces >>. pstmts .>> pendKeyword)
+                    <|> (spaces >>. pInlineStmts .>> optional pendKeyword))
+                    (fun ((preStmts, expr), stepStmts) body ->
+                        let stepStmts = Option.defaultValue [] stepStmts
+                        Loop(preStmts, expr, stepStmts, body))
+            updateScope (fun ss ->
+                { ss with
+                    Scopes = Scope.appendScope ss.Scopes
+                })
+            >>? p
+            .>> updateScope (fun ss ->
+                    { ss with
+                        Scopes = Scope.removeScope ss.Scopes
+                    })
+
         let pstmt =
             let pstmt, pstmtRef = createParserForwardedToRef<PosStatement, _>()
 
-            let pcolonKeyword : _ Parser =
-                appendToken Tokens.TokenType.Colon (pchar ':')
-            let pLoop =
-                let pInlineStmts =
-                    many (notFollowedByString ":" >>. pstmt .>> ws .>> skipMany (ppunctuationTerminator .>> ws))
-
-                let pstmts = pstmts' pstmt
-
-                let pLoopHeader =
-                    genKeywordParser Tokens.TokenType.Loop "loop"
-                    >>. ws >>. pInlineStmts
-                    .>> genKeywordParser Tokens.TokenType.While "while"
-                    .>> ws .>>. pexpr
-                    .>>. opt (updateScope (fun ss ->
-                                { ss with
-                                    Scopes = Scope.appendScope ss.Scopes
-                                })
-                            >>? genKeywordParser Tokens.TokenType.Step "step"
-                            .>> ws >>. pInlineStmts
-                            .>> updateScope (fun ss ->
-                                    { ss with
-                                        Scopes = Scope.removeScope ss.Scopes
-                                    })
-                            )
-                    .>> pcolonKeyword
-                let p =
-                    pipe2
-                        pLoopHeader
-                        ((ws >>? skipNewline >>. spaces >>. pstmts .>> pendKeyword)
-                        <|> (spaces >>. pInlineStmts .>> optional pendKeyword))
-                        (fun ((preStmts, expr), stepStmts) body ->
-                            let stepStmts = Option.defaultValue [] stepStmts
-                            Loop(preStmts, expr, stepStmts, body))
-                updateScope (fun ss ->
-                    { ss with
-                        Scopes = Scope.appendScope ss.Scopes
-                    })
-                >>? p
-                .>> updateScope (fun ss ->
-                        { ss with
-                            Scopes = Scope.removeScope ss.Scopes
-                        })
             let pInlineStmts =
                 updateScope (fun ss ->
                     { ss with
@@ -469,7 +471,7 @@ module Statement =
                     pIf
                     pAct
                     pFor
-                    pLoop
+                    (ploop pstmt)
                     pAssign pstmts
                     pcallProc
                     notFollowedBy (pchar '-' >>. ws >>. (skipNewline <|> skipChar '-' <|> eof)) // `-` завершает локацию
