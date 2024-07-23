@@ -80,11 +80,14 @@ type Highlights =
         VarHighlights: VarHighlights
         LocHighlights: LocHighlights
     }
-let highlightsEmpty =
-    {
-        VarHighlights = VarHighlights.empty
-        LocHighlights = LocHighlights.empty
-    }
+
+module Highlights =
+    let empty =
+        {
+            VarHighlights = VarHighlights.empty
+            LocHighlights = LocHighlights.empty
+        }
+
 type HoverDescription =
     | FuncDescription of Defines.PredefFunc
     // | VarDescription of Defines.
@@ -123,7 +126,7 @@ module State =
             Hovers = []
             IsEndOptional = false
             LastSymbolPos = FParsec.Position("", 0L, 1L, 1L)
-            Highlights = highlightsEmpty
+            Highlights = Highlights.empty
             NotDefinedLocs = Map.empty
             PStmts = FParsec.Primitives.failFatally "PStmts not implemented"
             SingleQuotNestedCount = 0

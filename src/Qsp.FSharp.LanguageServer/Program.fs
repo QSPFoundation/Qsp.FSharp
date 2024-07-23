@@ -247,7 +247,7 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
     let mutable parserResult = None
 
     let mutable hovers = []
-    let mutable highlights = Qsp.Parser.Generic.highlightsEmpty
+    let mutable highlights = Qsp.Parser.Generic.Highlights.empty
     let mutable config = QspConfig.Default
     let getVarHighlight (pos:Position) =
         highlights.VarHighlights.Ranges
