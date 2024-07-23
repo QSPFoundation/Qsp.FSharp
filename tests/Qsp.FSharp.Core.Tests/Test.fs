@@ -21,7 +21,7 @@ open Fuchu
 [<Tests>]
 let pexprTest =
     let runExpr str =
-        runStateEither pexpr Qsp.Parser.Generic.emptyState str
+        runStateEither pexpr Qsp.Parser.Generic.State.empty str
         |> snd
     let sprintExpr =
         Show.simpleShowExpr (failwithf "showStmtsInline not implemented %A")
@@ -273,7 +273,7 @@ let pexprTest =
 [<Tests>]
 let assignTest =
     let runExpr str =
-        Qsp.Parser.Generic.runStateEither (Qsp.Parser.Main.pAssign FParsec.Primitives.pzero) Qsp.Parser.Generic.emptyState str
+        Qsp.Parser.Generic.runStateEither (Qsp.Parser.Main.pAssign FParsec.Primitives.pzero) Qsp.Parser.Generic.State.empty str
         |> snd
     testList "assignTest" [
         testCase "implicit assign implicit var" <| fun () ->
@@ -511,7 +511,7 @@ let stringLiteralWithTokenTest =
     let runEither str =
         Qsp.Parser.Generic.runStateEither
             (stringLiteralWithToken pexpr)
-            { Qsp.Parser.Generic.emptyState with
+            { Qsp.Parser.Generic.State.empty with
                 PStmts = Parser.Main.pstmts
             }
             str
@@ -603,7 +603,7 @@ let pbracesTests =
     let runEither str =
         Qsp.Parser.Generic.runStateEither
             (pbraces Tokens.TokenType.StringBraced)
-            Qsp.Parser.Generic.emptyState
+            Qsp.Parser.Generic.State.empty
             str
         |> snd
     testList "stringLiteralWithTokenTest" [
@@ -637,7 +637,7 @@ let pbracesTests =
 [<Tests>]
 let pcallProcTests =
     let runStmts str =
-        Qsp.Parser.Generic.runStateEither Qsp.Parser.Main.pcallProc Qsp.Parser.Generic.emptyState str
+        Qsp.Parser.Generic.runStateEither Qsp.Parser.Main.pcallProc Qsp.Parser.Generic.State.empty str
         |> snd
     testList "pcallProcTests" [
         testCase "pcallProcTests base" <| fun () ->
@@ -740,12 +740,12 @@ let ifTests =
     let runStmts str =
         Qsp.Parser.Generic.runStateEither
             Qsp.Parser.Main.pstmt
-            Qsp.Parser.Generic.emptyState str
+            Qsp.Parser.Generic.State.empty str
         |> snd
     let runStmtsEof str =
         Qsp.Parser.Generic.runStateEither
             (Qsp.Parser.Main.pstmt .>> eof)
-            Qsp.Parser.Generic.emptyState str
+            Qsp.Parser.Generic.State.empty str
         |> snd
     testList "ifTests" [
         testCase "inline if" <| fun () ->
@@ -939,12 +939,12 @@ let forTests =
     let runStmts str =
         Qsp.Parser.Generic.runStateEither
             Qsp.Parser.Main.pstmt
-            Qsp.Parser.Generic.emptyState str
+            Qsp.Parser.Generic.State.empty str
         |> snd
     let runStmtsEof str =
         Qsp.Parser.Generic.runStateEither
             (Qsp.Parser.Main.pstmt .>> eof)
-            Qsp.Parser.Generic.emptyState str
+            Qsp.Parser.Generic.State.empty str
         |> snd
     testList "forTests" [
         testCase "multiline `for i = 4 + x to 45 / x + y:`" <| fun () ->
@@ -1002,12 +1002,12 @@ let stmtTests =
     let runStmts str =
         Qsp.Parser.Generic.runStateEither
             Qsp.Parser.Main.pstmt
-            Qsp.Parser.Generic.emptyState str
+            Qsp.Parser.Generic.State.empty str
         |> snd
     let runStmtsEof str =
         Qsp.Parser.Generic.runStateEither
             (Qsp.Parser.Main.pstmt .>> eof)
-            Qsp.Parser.Generic.emptyState str
+            Qsp.Parser.Generic.State.empty str
         |> snd
     testList "stmtTests" [
         testCase "inline act" <| fun () ->

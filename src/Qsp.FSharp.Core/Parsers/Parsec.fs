@@ -544,7 +544,7 @@ let ploc2 =
             updateUserState (fun st ->
                 { st with LastSymbolPos = p}))
 let emptyState =
-    { emptyState with PStmts = pstmts }
+    { State.empty with PStmts = pstmts }
 
 let start str =
     runParserOnString (ploc2 .>> eof)

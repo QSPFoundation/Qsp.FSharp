@@ -120,20 +120,23 @@ and State =
         DoubleQuotNestedCount: int
         HtmlAttDoubleNested: int
     }
-let emptyState =
-    {
-        Tokens = []
-        SemanticErrors = []
-        Hovers = []
-        IsEndOptional = false
-        LastSymbolPos = FParsec.Position("", 0L, 1L, 1L)
-        Highlights = highlightsEmpty
-        NotDefinedLocs = Map.empty
-        PStmts = FParsec.Primitives.failFatally "PStmts not implemented"
-        SingleQuotNestedCount = 0
-        DoubleQuotNestedCount = 0
-        HtmlAttDoubleNested = 0
-    }
+
+module State =
+    let empty =
+        {
+            Tokens = []
+            SemanticErrors = []
+            Hovers = []
+            IsEndOptional = false
+            LastSymbolPos = FParsec.Position("", 0L, 1L, 1L)
+            Highlights = highlightsEmpty
+            NotDefinedLocs = Map.empty
+            PStmts = FParsec.Primitives.failFatally "PStmts not implemented"
+            SingleQuotNestedCount = 0
+            DoubleQuotNestedCount = 0
+            HtmlAttDoubleNested = 0
+        }
+
 let updateScope fn =
     updateUserState (fun x ->
         let ss = x.Highlights.VarHighlights.VarScopeSystem
