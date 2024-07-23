@@ -37,17 +37,6 @@ let optList p = p <|>% []
 
 let nl<'UserState> = skipMany1 newline : Parser<unit, 'UserState>
 
-let stringLiteral<'UserState> =
-    let normalChar c = satisfy (fun c' -> c' <> c)
-    let p c = manyChars (normalChar c <|> attempt(pchar c >>. pchar c))
-
-    let bet openedChar closedChar = between (pchar openedChar) (pchar closedChar)
-    bet '"' '"' (p '"')
-    <|> bet '\'' '\'' (p '\'')
-    <|> bet '{' '}' (p '}') // TODO: забавно: проверил компилятор, и тот напрочь не воспринимает экранирование `}}`
-    : Parser<_, 'UserState>
-
-
 /// Дело в том, что названия переменных могут начинаться с ключевых слов ("**if**SomethingTrue", например), а значит, чтобы это пресечь, можно воспользоваться именно этой функцией так:
 /// ```fsharp
 /// pstring "if" .>>? notFollowedVar

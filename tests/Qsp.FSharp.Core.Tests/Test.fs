@@ -464,26 +464,6 @@ let exprShowTests =
             )
     ]
 
-[<Tests>]
-let stringLiteralTest =
-    testList "stringLiteralTest" [
-        testCase "1" <| fun () ->
-            Assert.Equal("", Right " ", runEither stringLiteral "\" \"")
-        testCase "2" <| fun () ->
-            Assert.Equal("", Right "\"", runEither stringLiteral "\"\"\"\"")
-        testCase "3" <| fun () ->
-            Assert.Equal("", Right "\"'\"", runEither stringLiteral "\"\"\"'\"\"\"")
-        testCase "5" <| fun () ->
-            Assert.Equal("", Right "", runEither stringLiteral "''")
-        testCase "6" <| fun () ->
-            Assert.Equal("", Right "'", runEither stringLiteral "''''")
-        testCase "4" <| fun () ->
-            Assert.Equal("", Right "\"", runEither stringLiteral "'\"'")
-        testCase "braces1" <| fun () ->
-            Assert.Equal("", Right "abc", runEither stringLiteral "{abc}")
-        testCase "braces escaped" <| fun () ->
-            Assert.Equal("", Right "}", runEither stringLiteral "{}}}")
-    ]
 let emptyPos = NoEqualityPosition Position.empty
 let emptyPoss x = x |> List.map (fun x -> emptyPos, x)
 let StaticStmts x =
