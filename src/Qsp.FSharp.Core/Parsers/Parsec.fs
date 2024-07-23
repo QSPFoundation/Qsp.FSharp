@@ -370,6 +370,62 @@ module Statement =
                 (fun (((var, fromExpr), toExpr), stepExpr) body ->
                     For(var, fromExpr, toExpr, stepExpr, body))
 
+        let pIf pInlineStmts pInlineStmts1 pstmts =
+            let pifKeyword : _ Parser =
+                genKeywordParser Tokens.TokenType.If "if"
+            let pelseifKeyword : _ Parser =
+                genKeywordParser Tokens.TokenType.ElseIf "elseif"
+            let pelseKeyword : _ Parser =
+                genKeywordParser Tokens.TokenType.Else "else"
+            let pifHeader = pifKeyword .>> ws >>. pexpr .>> pcolonKeyword
+            let pelseifHeader = pelseifKeyword .>> ws >>. pexpr .>> pcolonKeyword
+
+            let setIsEndOptionalTo boolean =
+                updateUserState (fun x -> { x with IsEndOptional = boolean })
+
+            let pElse1 =
+                pelseKeyword .>> opt (skipChar ':') .>> ws
+                >>. (pInlineStmts1 .>> opt pendKeyword
+                    <|> (spaces >>. pstmts .>> pendKeyword))
+            let pend =
+                getUserState
+                >>= fun x ->
+                    if x.IsEndOptional then
+                        optional pendKeyword
+                    else
+                        pendKeyword >>% ()
+
+            let pelseIf =
+                let p =
+                    ws .>>? skipNewline >>. spaces >>. pstmts .>> setIsEndOptionalTo false
+                    <|> (spaces >>. pInlineStmts .>> setIsEndOptionalTo true)
+                many1 ((getPosition |>> (fparsecPosToPos >> NoEqualityPosition)) .>>.? pelseifHeader .>>. p)
+                .>>. (pElse1 <|> (pend >>% []))
+                |>> fun (elifs, elseBody) ->
+                    let rec f = function
+                        | ((pos, expr), thenBody)::xs ->
+                            [pos, If(expr, thenBody, f xs)]
+                        | [] -> elseBody
+                    f elifs
+
+            // `end` нужен, чтобы инструкции, определенные ниже, не ушли в тело `if`
+            // ```qsps
+            // if expr:
+            //     stmt1
+            // end & ! без него `stmt2` станет принадлежать телу `if`
+            // stmt2
+            // ...
+            // ```
+
+            // `if expr: stmt1 & stmt2 & ...` — такому выражению `end` не нужен, поскольку эту роль выполняет конец строки.
+            // Также работает и с `elif expr: stmt1 & stmt2 & ...`, и с `else expr: stmt1 & stmt2 & ...`.
+            pipe2
+                (pifHeader .>> ws)
+                ((pInlineStmts1 .>>. (pelseIf <|> pElse1 <|> (opt pendKeyword >>% []))
+                <|> (spaces >>. pstmts .>>. (pelseIf <|> pElse1 <|> (pendKeyword >>% [])))))
+                (fun expr (thenBody, elseBody) ->
+                    If(expr, thenBody, elseBody))
+
         let pstmt =
             let pstmt, pstmtRef = createParserForwardedToRef<PosStatement, _>()
 
@@ -410,67 +466,12 @@ module Statement =
                     }
                 )
 
-            let pIf =
-                let pifKeyword : _ Parser =
-                    genKeywordParser Tokens.TokenType.If "if"
-                let pelseifKeyword : _ Parser =
-                    genKeywordParser Tokens.TokenType.ElseIf "elseif"
-                let pelseKeyword : _ Parser =
-                    genKeywordParser Tokens.TokenType.Else "else"
-                let pifHeader = pifKeyword .>> ws >>. pexpr .>> pcolonKeyword
-                let pelseifHeader = pelseifKeyword .>> ws >>. pexpr .>> pcolonKeyword
-
-                let setIsEndOptionalTo boolean =
-                    updateUserState (fun x -> { x with IsEndOptional = boolean })
-
-                let pElse1 =
-                    pelseKeyword .>> opt (skipChar ':') .>> ws
-                    >>. (pInlineStmts1 .>> opt pendKeyword
-                        <|> (spaces >>. pstmts .>> pendKeyword))
-                let pend =
-                    getUserState
-                    >>= fun x ->
-                        if x.IsEndOptional then
-                            optional pendKeyword
-                        else
-                            pendKeyword >>% ()
-
-                let pelseIf =
-                    let p =
-                        ws .>>? skipNewline >>. spaces >>. pstmts .>> setIsEndOptionalTo false
-                        <|> (spaces >>. pInlineStmts .>> setIsEndOptionalTo true)
-                    many1 ((getPosition |>> (fparsecPosToPos >> NoEqualityPosition)) .>>.? pelseifHeader .>>. p)
-                    .>>. (pElse1 <|> (pend >>% []))
-                    |>> fun (elifs, elseBody) ->
-                        let rec f = function
-                            | ((pos, expr), thenBody)::xs ->
-                                [pos, If(expr, thenBody, f xs)]
-                            | [] -> elseBody
-                        f elifs
-
-                // `end` нужен, чтобы инструкции, определенные ниже, не ушли в тело `if`
-                // ```qsps
-                // if expr:
-                //     stmt1
-                // end & ! без него `stmt2` станет принадлежать телу `if`
-                // stmt2
-                // ...
-                // ```
-
-                // `if expr: stmt1 & stmt2 & ...` — такому выражению `end` не нужен, поскольку эту роль выполняет конец строки.
-                // Также работает и с `elif expr: stmt1 & stmt2 & ...`, и с `else expr: stmt1 & stmt2 & ...`.
-                pipe2
-                    (pifHeader .>> ws)
-                    ((pInlineStmts1 .>>. (pelseIf <|> pElse1 <|> (opt pendKeyword >>% []))
-                    <|> (spaces >>. pstmts .>>. (pelseIf <|> pElse1 <|> (pendKeyword >>% [])))))
-                    (fun expr (thenBody, elseBody) ->
-                        If(expr, thenBody, elseBody))
             let p =
                 choice [
                     pcomment
                     pexit
                     psign
-                    pIf
+                    (pIf pInlineStmts pInlineStmts1 pstmts)
                     (pAct pInlineStmts pstmts)
                     (pFor pInlineStmts pstmts)
                     (ploop pstmt)
