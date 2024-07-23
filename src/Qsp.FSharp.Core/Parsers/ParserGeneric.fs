@@ -54,11 +54,13 @@ type VarHighlights =
         VarScopeSystem: Scope.ScopeSystem<Ast.VarName, Tokens.InlineRange * VarHighlightKind>
         Ranges: (Tokens.InlineRange * Scope.VarId) list
     }
-let varHighlightsEmpty =
-    {
-        VarScopeSystem = Scope.scopeSystemEmpty
-        Ranges = []
-    }
+
+module VarHighlights =
+    let empty =
+        {
+            VarScopeSystem = Scope.scopeSystemEmpty
+            Ranges = []
+        }
 
 type LocHighlights =
     {
@@ -77,7 +79,7 @@ type Highlights =
     }
 let highlightsEmpty =
     {
-        VarHighlights = varHighlightsEmpty
+        VarHighlights = VarHighlights.empty
         LocHighlights = locHighlightsEmpty
     }
 type HoverDescription =
