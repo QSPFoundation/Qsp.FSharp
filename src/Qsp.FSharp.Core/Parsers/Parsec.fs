@@ -296,12 +296,7 @@ module Statement =
         let pcolonKeyword : _ Parser =
             appendToken Tokens.TokenType.Colon (pchar ':')
 
-        let ploop pstmt =
-            let pInlineStmts =
-                many (notFollowedByString ":" >>. pstmt .>> ws .>> skipMany (ppunctuationTerminator .>> ws))
-
-            let pstmts = pstmts' pstmt
-
+        let ploop pInlineStmts pstmts =
             let pLoopHeader =
                 genKeywordParser Tokens.TokenType.Loop "loop"
                 >>. ws >>. pInlineStmts
@@ -474,7 +469,7 @@ module Statement =
                     (pIf pInlineStmts pInlineStmts1 pstmts)
                     (pAct pInlineStmts pstmts)
                     (pFor pInlineStmts pstmts)
-                    (ploop pstmt)
+                    (ploop pInlineStmts pstmts)
                     pAssign pstmts
                     pcallProc
                     notFollowedBy (pchar '-' >>. ws >>. (skipNewline <|> skipChar '-' <|> eof)) // `-` завершает локацию
