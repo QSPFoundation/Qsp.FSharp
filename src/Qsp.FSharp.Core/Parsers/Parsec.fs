@@ -350,6 +350,26 @@ module Statement =
                 (fun expr body ->
                     Act(expr, body))
 
+        let pFor pInlineStmts pstmts =
+            let pForHeader =
+                genKeywordParser Tokens.TokenType.For "for" >>. ws
+                >>. (pstringVar VarHighlightKind.WriteAccess false
+                    <|> (pImplicitVarWhenAssign ident false |>> fun name -> NumericType, name))
+                .>> ws .>> appendToken Tokens.TokenType.OperatorAssignment (pchar '=')
+                .>> ws .>>. pexpr
+                .>> genKeywordParser Tokens.TokenType.To "to"
+                .>> ws .>>. pexpr
+                .>>. opt (genKeywordParser Tokens.TokenType.Step "step"
+                        .>> ws >>. pexpr)
+                .>> pcolonKeyword
+
+            pipe2
+                pForHeader
+                ((ws >>? skipNewline >>. spaces >>. pstmts .>> pendKeyword)
+                <|> (spaces >>. pInlineStmts .>> optional pendKeyword))
+                (fun (((var, fromExpr), toExpr), stepExpr) body ->
+                    For(var, fromExpr, toExpr, stepExpr, body))
+
         let pstmt =
             let pstmt, pstmtRef = createParserForwardedToRef<PosStatement, _>()
 
@@ -390,26 +410,6 @@ module Statement =
                     }
                 )
 
-
-            let pFor =
-                let pForHeader =
-                    genKeywordParser Tokens.TokenType.For "for" >>. ws
-                    >>. (pstringVar VarHighlightKind.WriteAccess false
-                        <|> (pImplicitVarWhenAssign ident false |>> fun name -> NumericType, name))
-                    .>> ws .>> appendToken Tokens.TokenType.OperatorAssignment (pchar '=')
-                    .>> ws .>>. pexpr
-                    .>> genKeywordParser Tokens.TokenType.To "to"
-                    .>> ws .>>. pexpr
-                    .>>. opt (genKeywordParser Tokens.TokenType.Step "step"
-                            .>> ws >>. pexpr)
-                    .>> pcolonKeyword
-
-                pipe2
-                    pForHeader
-                    ((ws >>? skipNewline >>. spaces >>. pstmts .>> pendKeyword)
-                    <|> (spaces >>. pInlineStmts .>> optional pendKeyword))
-                    (fun (((var, fromExpr), toExpr), stepExpr) body ->
-                        For(var, fromExpr, toExpr, stepExpr, body))
             let pIf =
                 let pifKeyword : _ Parser =
                     genKeywordParser Tokens.TokenType.If "if"
@@ -472,7 +472,7 @@ module Statement =
                     psign
                     pIf
                     (pAct pInlineStmts pstmts)
-                    pFor
+                    (pFor pInlineStmts pstmts)
                     (ploop pstmt)
                     pAssign pstmts
                     pcallProc
