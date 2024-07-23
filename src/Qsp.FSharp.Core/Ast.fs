@@ -1,4 +1,4 @@
-module Qsp.Ast
+namespace Qsp.Ast
 open FsharpMyExtension
 open Qsp
 
