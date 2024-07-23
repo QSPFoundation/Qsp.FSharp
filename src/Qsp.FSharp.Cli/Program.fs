@@ -105,7 +105,7 @@ module Parser =
         let emptyState =
             { emptyState with PStmts = pstmts }
         let p =
-            spaces >>. pstmt
+            spaces >>. Statement.Parser.pstmt
             .>> (getPosition >>= fun p ->
                     updateUserState (fun st ->
                         { st with LastSymbolPos = p}))

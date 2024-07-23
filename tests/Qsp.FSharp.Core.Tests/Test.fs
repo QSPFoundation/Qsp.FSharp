@@ -285,7 +285,7 @@ let pexprTest =
 [<Tests>]
 let assignTest =
     let runExpr str =
-        Qsp.Parser.Generic.runStateEither (Qsp.Parser.Main.pAssign FParsec.Primitives.pzero) Qsp.Parser.Generic.State.empty str
+        Qsp.Parser.Generic.runStateEither (Qsp.Parser.Main.Statement.Parser.pAssign FParsec.Primitives.pzero) Qsp.Parser.Generic.State.empty str
         |> snd
     testList "assignTest" [
         testCase "implicit assign implicit var" <| fun () ->
@@ -629,7 +629,7 @@ let pbracesTests =
 [<Tests>]
 let pcallProcTests =
     let runStmts str =
-        Qsp.Parser.Generic.runStateEither Qsp.Parser.Main.pcallProc Qsp.Parser.Generic.State.empty str
+        Qsp.Parser.Generic.runStateEither Qsp.Parser.Main.Statement.Parser.pcallProc Qsp.Parser.Generic.State.empty str
         |> snd
     testList "pcallProcTests" [
         testCase "pcallProcTests base" <| fun () ->
@@ -731,12 +731,12 @@ let StarPl arg = Proc("*pl", [arg])
 let ifTests =
     let runStmts str =
         Qsp.Parser.Generic.runStateEither
-            Qsp.Parser.Main.pstmt
+            Qsp.Parser.Main.Statement.Parser.pstmt
             Qsp.Parser.Generic.State.empty str
         |> snd
     let runStmtsEof str =
         Qsp.Parser.Generic.runStateEither
-            (Qsp.Parser.Main.pstmt .>> eof)
+            (Qsp.Parser.Main.Statement.Parser.pstmt .>> eof)
             Qsp.Parser.Generic.State.empty str
         |> snd
     testList "ifTests" [
@@ -930,12 +930,12 @@ let ifTests =
 let forTests =
     let runStmts str =
         Qsp.Parser.Generic.runStateEither
-            Qsp.Parser.Main.pstmt
+            Qsp.Parser.Main.Statement.Parser.pstmt
             Qsp.Parser.Generic.State.empty str
         |> snd
     let runStmtsEof str =
         Qsp.Parser.Generic.runStateEither
-            (Qsp.Parser.Main.pstmt .>> eof)
+            (Qsp.Parser.Main.Statement.Parser.pstmt .>> eof)
             Qsp.Parser.Generic.State.empty str
         |> snd
     testList "forTests" [
@@ -993,12 +993,12 @@ let forTests =
 let stmtTests =
     let runStmts str =
         Qsp.Parser.Generic.runStateEither
-            Qsp.Parser.Main.pstmt
+            Qsp.Parser.Main.Statement.Parser.pstmt
             Qsp.Parser.Generic.State.empty str
         |> snd
     let runStmtsEof str =
         Qsp.Parser.Generic.runStateEither
-            (Qsp.Parser.Main.pstmt .>> eof)
+            (Qsp.Parser.Main.Statement.Parser.pstmt .>> eof)
             Qsp.Parser.Generic.State.empty str
         |> snd
     testList "stmtTests" [
