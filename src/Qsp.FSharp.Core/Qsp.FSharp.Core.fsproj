@@ -12,11 +12,11 @@
     <Compile Include="Scope.fs" />
     <Compile Include="Defines.fs" />
     <Compile Include="Ast.fs" />
-    <Compile Include="Tokens.fs" />
     <Compile Include="Show.fs" />
-    <Compile Include="ParserGeneric.fs" />
-    <Compile Include="ParserExpr.fs" />
-    <Compile Include="Parsec.fs" />
+    <Compile Include="Parsers\Tokens.fs" />
+    <Compile Include="Parsers\ParserGeneric.fs" />
+    <Compile Include="Parsers\ParserExpr.fs" />
+    <Compile Include="Parsers\Parsec.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
