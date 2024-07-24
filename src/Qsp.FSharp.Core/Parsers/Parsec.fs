@@ -508,50 +508,54 @@ module Statements =
         let pstmts1 : Parser<Statements> =
             Intermediate.pstmts1 Intermediate.pstmt
 
-let psharpKeyword : _ Parser =
-    appendToken Tokens.TokenType.SharpBeginLoc (pchar '#')
-let pminusKeyword : _ Parser =
-    appendToken Tokens.TokenType.MinusEndLoc (pchar '-') // хотя здесь больше подошел бы обычный `end`
-let ploc =
-    let pendKeyword =
-        applyRange (pstringCI "end" .>>? notFollowedVarCont)
-        >>= fun (range, _) ->
-            appendToken2 Tokens.TokenType.End range
-            >>. appendSemanticError range "Лишний `end`"
-    pipe2
-        (psharpKeyword .>> ws
-         >>. (applyRange
-                (many1Strings
-                    (many1Satisfy (isNoneOf " \t\n")
-                     <|> (many1Satisfy (isAnyOf " \t") .>>? notFollowedByNewline))
-                 <?> "location name")
-              >>= fun (r, name) ->
-                let pCheckLocExists r2 locName =
-                    pGetDefLocPos locName
-                    >>= function
-                        | Some r ->
-                            sprintf "Локация уже определена в\n%A" r
-                            |> appendSemanticError r2
-                        | None -> preturn ()
+module Location =
+    module Parser =
+        let psharpKeyword : _ Parser =
+            appendToken Tokens.TokenType.SharpBeginLoc (pchar '#')
 
-                let locNameLower = String.toLower name
-                pCheckLocExists r locNameLower
-                >>. updateUserState (fun st ->
-                        { st with
-                            NotDefinedLocs =
-                                Map.remove locNameLower st.NotDefinedLocs // ну да, к чему проверки? И так удалит
-                        }
+        let pminusKeyword : _ Parser =
+            appendToken Tokens.TokenType.MinusEndLoc (pchar '-') // хотя здесь больше подошел бы обычный `end`
+
+        let ploc =
+            let pendKeyword =
+                applyRange (pstringCI "end" .>>? notFollowedVarCont)
+                >>= fun (range, _) ->
+                    appendToken2 Tokens.TokenType.End range
+                    >>. appendSemanticError range "Лишний `end`"
+            pipe2
+                (psharpKeyword .>> ws
+                >>. (applyRange
+                        (many1Strings
+                            (many1Satisfy (isNoneOf " \t\n")
+                            <|> (many1Satisfy (isAnyOf " \t") .>>? notFollowedByNewline))
+                        <?> "location name")
+                    >>= fun (r, name) ->
+                        let pCheckLocExists r2 locName =
+                            pGetDefLocPos locName
+                            >>= function
+                                | Some r ->
+                                    sprintf "Локация уже определена в\n%A" r
+                                    |> appendSemanticError r2
+                                | None -> preturn ()
+
+                        let locNameLower = String.toLower name
+                        pCheckLocExists r locNameLower
+                        >>. updateUserState (fun st ->
+                                { st with
+                                    NotDefinedLocs =
+                                        Map.remove locNameLower st.NotDefinedLocs // ну да, к чему проверки? И так удалит
+                                }
+                            )
+                        >>. appendLocHighlight r locNameLower VarHighlightKind.WriteAccess // и все равно добавить, даже в случае семантической ошибки? Хм, ¯\_(ツ)_/¯
+                        >>. appendToken2 Tokens.TokenType.StringQuotedSingle r
+                        >>. preturn name
                     )
-                >>. appendLocHighlight r locNameLower VarHighlightKind.WriteAccess // и все равно добавить, даже в случае семантической ошибки? Хм, ¯\_(ツ)_/¯
-                >>. appendToken2 Tokens.TokenType.StringQuotedSingle r
-                >>. preturn name
-             )
-         .>> spaces)
-        (many (Statements.Parser.pstmts1 .>> many (pendKeyword .>> spaces)) |>> List.concat
-         .>> (pminusKeyword .>> ws
-              .>> appendToken Tokens.TokenType.Comment
-                    (skipManySatisfy ((<>) '\n'))))
-        (fun name body -> Location(name, body))
+                .>> spaces)
+                (many (Statements.Parser.pstmts1 .>> many (pendKeyword .>> spaces)) |>> List.concat
+                .>> (pminusKeyword .>> ws
+                    .>> appendToken Tokens.TokenType.Comment
+                            (skipManySatisfy ((<>) '\n'))))
+                (fun name body -> Location(name, body))
 
 let ploc2 =
     let ploc =
@@ -564,7 +568,7 @@ let ploc2 =
             |> Scope.addAsWrite ("result", id)
             |> snd
         )
-        >>? ploc
+        >>? Location.Parser.ploc
         .>> updateScope (fun ss ->
             { ss with
                 Scopes = Scope.removeScope ss.Scopes
@@ -573,7 +577,8 @@ let ploc2 =
     spaces >>. many (ploc .>> spaces)
     .>> (getPosition >>= fun p ->
             updateUserState (fun st ->
-                { st with LastSymbolPos = p}))
+                { st with LastSymbolPos = p }))
+
 let emptyState =
     { State.empty with PStmts = Statements.Parser.pstmts }
 
