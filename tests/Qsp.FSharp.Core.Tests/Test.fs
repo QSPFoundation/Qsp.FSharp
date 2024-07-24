@@ -504,7 +504,7 @@ let stringLiteralWithTokenTest =
         Qsp.Parser.Generic.runStateEither
             (stringLiteralWithToken pexpr)
             { Qsp.Parser.Generic.State.empty with
-                PStmts = Parser.Main.pstmts
+                PStmts = Parser.Main.Statements.Parser.pstmts
             }
             str
         |> snd
@@ -731,12 +731,12 @@ let StarPl arg = Proc("*pl", [arg])
 let ifTests =
     let runStmts str =
         Qsp.Parser.Generic.runStateEither
-            Qsp.Parser.Main.Statement.Parser.pstmt
+            Qsp.Parser.Main.Statements.Parser.Intermediate.pstmt
             Qsp.Parser.Generic.State.empty str
         |> snd
     let runStmtsEof str =
         Qsp.Parser.Generic.runStateEither
-            (Qsp.Parser.Main.Statement.Parser.pstmt .>> eof)
+            (Qsp.Parser.Main.Statements.Parser.Intermediate.pstmt .>> eof)
             Qsp.Parser.Generic.State.empty str
         |> snd
     testList "ifTests" [
@@ -930,12 +930,12 @@ let ifTests =
 let forTests =
     let runStmts str =
         Qsp.Parser.Generic.runStateEither
-            Qsp.Parser.Main.Statement.Parser.pstmt
+            Qsp.Parser.Main.Statements.Parser.Intermediate.pstmt
             Qsp.Parser.Generic.State.empty str
         |> snd
     let runStmtsEof str =
         Qsp.Parser.Generic.runStateEither
-            (Qsp.Parser.Main.Statement.Parser.pstmt .>> eof)
+            (Qsp.Parser.Main.Statements.Parser.Intermediate.pstmt .>> eof)
             Qsp.Parser.Generic.State.empty str
         |> snd
     testList "forTests" [
@@ -993,12 +993,12 @@ let forTests =
 let stmtTests =
     let runStmts str =
         Qsp.Parser.Generic.runStateEither
-            Qsp.Parser.Main.Statement.Parser.pstmt
+            Qsp.Parser.Main.Statements.Parser.Intermediate.pstmt
             Qsp.Parser.Generic.State.empty str
         |> snd
     let runStmtsEof str =
         Qsp.Parser.Generic.runStateEither
-            (Qsp.Parser.Main.Statement.Parser.pstmt .>> eof)
+            (Qsp.Parser.Main.Statements.Parser.Intermediate.pstmt .>> eof)
             Qsp.Parser.Generic.State.empty str
         |> snd
     testList "stmtTests" [

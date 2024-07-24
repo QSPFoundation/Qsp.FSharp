@@ -10,9 +10,6 @@ open Qsp.Parser.Expr
 
 module Statement =
     module Parser =
-        let ppunctuationTerminator : _ Parser =
-            appendToken Tokens.PunctuationTerminatorStatement (pchar '&')
-
         let pImplicitVarWhenAssign p isLocal =
             applyRange p
             >>= fun (range, (name:string)) ->
@@ -283,16 +280,6 @@ module Statement =
         let pendKeyword : _ Parser =
             genKeywordParser Tokens.TokenType.End "end"
 
-        let pstmts' pstmt =
-            many
-                (pstmt .>> spaces
-                .>> (skipMany (ppunctuationTerminator .>> spaces)))
-
-        let pstmts1' pstmt =
-            many1
-                (pstmt .>> spaces
-                .>> (skipMany (ppunctuationTerminator .>> spaces)))
-
         let pcolonKeyword : _ Parser =
             appendToken Tokens.TokenType.Colon (pchar ':')
 
@@ -421,45 +408,11 @@ module Statement =
                 (fun expr (thenBody, elseBody) ->
                     If(expr, thenBody, elseBody))
 
-        let pstmt =
-            let pstmt, pstmtRef = createParserForwardedToRef<PosStatement, _>()
-
-            let pInlineStmts =
-                updateScope (fun ss ->
-                    { ss with
-                        Scopes = Scope.appendScope ss.Scopes
-                    }
-                )
-                >>. many (pstmt .>> ws .>> skipMany (ppunctuationTerminator .>> ws))
-                .>> updateScope (fun ss ->
-                    { ss with
-                        Scopes = Scope.removeScope ss.Scopes
-                    }
-                )
-            let pInlineStmts1 =
-                updateScope (fun ss ->
-                    { ss with
-                        Scopes = Scope.appendScope ss.Scopes
-                    }
-                )
-                >>? many1 (pstmt .>> ws .>> skipMany (ppunctuationTerminator .>> ws))
-                .>> updateScope (fun ss ->
-                    { ss with
-                        Scopes = Scope.removeScope ss.Scopes
-                    }
-                )
-            let pstmts =
-                updateScope (fun ss ->
-                    { ss with
-                        Scopes = Scope.appendScope ss.Scopes
-                    }
-                )
-                >>. pstmts' pstmt
-                .>> updateScope (fun ss ->
-                    { ss with
-                        Scopes = Scope.removeScope ss.Scopes
-                    }
-                )
+        let pstmt
+            (pInlineStmts: Parser<Statements, _>)
+            (pInlineStmts1: Parser<Statements, _>)
+            (pstmts: Parser<Statements, _>)
+            : Parser<PosStatement, _> =
 
             let p =
                 choice [
@@ -475,14 +428,85 @@ module Statement =
                     notFollowedBy (pchar '-' >>. ws >>. (skipNewline <|> skipChar '-' <|> eof)) // `-` завершает локацию
                     >>. (pexpr |>> fun arg -> Proc("*pl", [arg]))
                 ]
-            pstmtRef := (getPosition |>> (fparsecPosToPos >> NoEqualityPosition)) .>>.? p
-            pstmt
+            let posStmt =
+                (getPosition |>> (fparsecPosToPos >> NoEqualityPosition)) .>>.? p
+            posStmt
 
+module Statements =
+    module Parser =
+        module Intermediate =
+            let pInlineStmts pstmt =
+                updateScope (fun scopeSystem ->
+                    { scopeSystem with
+                        Scopes = Scope.appendScope scopeSystem.Scopes
+                    }
+                )
+                >>. many (pstmt .>> ws .>> skipMany (ppunctuationTerminator .>> ws))
+                .>> updateScope (fun scopeSystem ->
+                    { scopeSystem with
+                        Scopes = Scope.removeScope scopeSystem.Scopes
+                    }
+                )
 
-let pstmts =
-    Statement.Parser.pstmts' Statement.Parser.pstmt
-let pstmts1 =
-    Statement.Parser.pstmts1' Statement.Parser.pstmt
+            let pInlineStmts1 pstmt =
+                updateScope (fun scopeSystem ->
+                    { scopeSystem with
+                        Scopes = Scope.appendScope scopeSystem.Scopes
+                    }
+                )
+                >>? many1 (pstmt .>> ws .>> skipMany (ppunctuationTerminator .>> ws))
+                .>> updateScope (fun scopeSystem ->
+                    { scopeSystem with
+                        Scopes = Scope.removeScope scopeSystem.Scopes
+                    }
+                )
+
+            let pstmts pstmt =
+                updateScope (fun scopeSystem ->
+                    { scopeSystem with
+                        Scopes = Scope.appendScope scopeSystem.Scopes
+                    }
+                )
+                >>. many (
+                    pstmt .>> spaces
+                    .>> (skipMany (ppunctuationTerminator .>> spaces))
+                )
+                .>> updateScope (fun scopeSystem ->
+                    { scopeSystem with
+                        Scopes = Scope.removeScope scopeSystem.Scopes
+                    }
+                )
+
+            let pstmts1 pstmt =
+                updateScope (fun scopeSystem ->
+                    { scopeSystem with
+                        Scopes = Scope.appendScope scopeSystem.Scopes
+                    }
+                )
+                >>? many1 (
+                    pstmt .>> spaces
+                    .>> (skipMany (ppunctuationTerminator .>> spaces))
+                )
+                .>> updateScope (fun scopeSystem ->
+                    { scopeSystem with
+                        Scopes = Scope.removeScope scopeSystem.Scopes
+                    }
+                )
+
+            let pstmt =
+                let pstmt, pstmtRef = createParserForwardedToRef<PosStatement, _>()
+                pstmtRef.Value <-
+                    Statement.Parser.pstmt
+                        (pInlineStmts pstmt)
+                        (pInlineStmts1 pstmt)
+                        (pstmts pstmt)
+                pstmt
+
+        let pstmts : Parser<Statements> =
+            Intermediate.pstmts Intermediate.pstmt
+
+        let pstmts1 : Parser<Statements> =
+            Intermediate.pstmts1 Intermediate.pstmt
 
 let psharpKeyword : _ Parser =
     appendToken Tokens.TokenType.SharpBeginLoc (pchar '#')
@@ -523,7 +547,7 @@ let ploc =
                 >>. preturn name
              )
          .>> spaces)
-        (many (pstmts1 .>> many (pendKeyword .>> spaces)) |>> List.concat
+        (many (Statements.Parser.pstmts1 .>> many (pendKeyword .>> spaces)) |>> List.concat
          .>> (pminusKeyword .>> ws
               .>> appendToken Tokens.TokenType.Comment
                     (skipManySatisfy ((<>) '\n'))))
@@ -551,7 +575,7 @@ let ploc2 =
             updateUserState (fun st ->
                 { st with LastSymbolPos = p}))
 let emptyState =
-    { State.empty with PStmts = pstmts }
+    { State.empty with PStmts = Statements.Parser.pstmts }
 
 let start str =
     runParserOnString (ploc2 .>> eof)

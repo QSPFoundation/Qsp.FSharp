@@ -202,10 +202,13 @@ and Statement =
     | Label of string
     | Comment of string
     | Exit
+
+type Statements = PosStatement list
+
 type LocationName = string
 /// ```qsp
 /// # location name
 /// 'asdf'
 /// - произвольный набор символов
 /// ```
-type Location = Location of LocationName * PosStatement list
+type Location = Location of LocationName * Statements
