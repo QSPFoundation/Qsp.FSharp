@@ -15,7 +15,7 @@
     <Compile Include="Show.fs" />
     <Compile Include="Parsers\Tokens.fs" />
     <Compile Include="Parsers\ParserGeneric.fs" />
-    <Compile Include="Parsers\ParserExpr.fs" />
+    <Compile Include="Parsers\Expr.fs" />
     <Compile Include="Parsers\Statement.fs" />
     <Compile Include="Parsers\Statements.fs" />
     <Compile Include="Parsers\Location.fs" />
