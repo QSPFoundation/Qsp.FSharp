@@ -285,7 +285,7 @@ let pexprTest =
 [<Tests>]
 let assignTest =
     let runExpr str =
-        Qsp.Parser.Generic.runStateEither (Qsp.Parser.Main.Statement.Parser.pAssign FParsec.Primitives.pzero) Qsp.Parser.Generic.State.empty str
+        Qsp.Parser.Generic.runStateEither (Statement.Parser.pAssign FParsec.Primitives.pzero) Qsp.Parser.Generic.State.empty str
         |> snd
     testList "assignTest" [
         testCase "implicit assign implicit var" <| fun () ->
@@ -629,7 +629,7 @@ let pbracesTests =
 [<Tests>]
 let pcallProcTests =
     let runStmts str =
-        Qsp.Parser.Generic.runStateEither Qsp.Parser.Main.Statement.Parser.pcallProc Qsp.Parser.Generic.State.empty str
+        Qsp.Parser.Generic.runStateEither Statement.Parser.pcallProc Qsp.Parser.Generic.State.empty str
         |> snd
     testList "pcallProcTests" [
         testCase "pcallProcTests base" <| fun () ->

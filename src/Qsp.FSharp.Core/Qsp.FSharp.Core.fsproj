@@ -16,6 +16,7 @@
     <Compile Include="Parsers\Tokens.fs" />
     <Compile Include="Parsers\ParserGeneric.fs" />
     <Compile Include="Parsers\ParserExpr.fs" />
+    <Compile Include="Parsers\Statement.fs" />
     <Compile Include="Parsers\Parsec.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
