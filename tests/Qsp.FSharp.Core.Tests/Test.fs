@@ -14,8 +14,6 @@ open FParsec
 open Qsp
 open Qsp.Ast
 open Qsp.Parser.Generic
-open Qsp.Parser.Expr
-
 
 open Fuchu
 
@@ -33,7 +31,7 @@ let noEqualityPositionTests =
 [<Tests>]
 let pexprTest =
     let runExpr str =
-        runStateEither pexpr Qsp.Parser.Generic.State.empty str
+        runStateEither Expr.Parser.pexpr Qsp.Parser.Generic.State.empty str
         |> snd
     let sprintExpr =
         Show.simpleShowExpr (failwithf "showStmtsInline not implemented %A")
@@ -502,7 +500,7 @@ let exprEqual (note, expr1, expr2) =
 let stringLiteralWithTokenTest =
     let runEither str =
         Qsp.Parser.Generic.runStateEither
-            (stringLiteralWithToken pexpr)
+            (stringLiteralWithToken Expr.Parser.pexpr)
             { Qsp.Parser.Generic.State.empty with
                 PStmts = Statements.Parser.pstmts
             }
