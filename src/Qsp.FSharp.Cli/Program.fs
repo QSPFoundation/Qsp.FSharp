@@ -102,15 +102,13 @@ module Parser =
     open Qsp.Parser.Generic
     open Qsp.Parser.Main
     let parserStmt str =
-        let emptyState =
-            { emptyState with PStmts = pstmts }
         let p =
             spaces >>. Statements.Parser.Intermediate.pstmt
             .>> (getPosition >>= fun p ->
                     updateUserState (fun st ->
                         { st with LastSymbolPos = p}))
         runParserOnString p
-            emptyState
+            Document.emptyState
             ""
             str
 
@@ -293,7 +291,7 @@ let main argv =
             |> threadsExec threads
                 (Either.bind (fun path ->
                     ThreadSafePrint.printfn "parse: %s" path
-                    match Qsp.Parser.Main.startOnFile enc path with
+                    match Qsp.Parser.Main.Document.startOnFile enc path with
                     | FParsec.CharParsers.Success(locs, st, _) ->
                         locs
                         |> List.choose (fun (Location (locName, loc)) ->

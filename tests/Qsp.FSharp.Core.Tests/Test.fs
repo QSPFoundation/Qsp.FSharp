@@ -1047,7 +1047,7 @@ module TestOnMocks =
     type T = Location list
     let enc = System.Text.Encoding.UTF8
     let startOnFile path =
-        match Qsp.Parser.Main.startOnFile enc path with
+        match Qsp.Parser.Main.Document.startOnFile enc path with
         | Success(x, _, _) -> x
         | Failure(x, _, _) -> failwithf "%s\n%s" path x
     let replaceOrNot expPath actPath =
