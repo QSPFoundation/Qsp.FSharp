@@ -2,6 +2,9 @@ module Program
 open Argu
 open FsharpMyExtension
 open FsharpMyExtension.Either
+
+open Qsp.Ast
+
 type FilePath = string
 type Txt2qspConfig = { Path: string; Args: string }
 
@@ -111,8 +114,6 @@ module Parser =
             Document.emptyState
             ""
             str
-
-open Qsp.Ast
 
 let patternMatching pattern =
     let rec stmtsOrRawEqual (acc:_ list) x =
