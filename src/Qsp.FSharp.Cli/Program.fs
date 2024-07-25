@@ -103,7 +103,7 @@ type CliArguments =
 module Parser =
     open FParsec
     open Qsp.Parser.Generic
-    open Qsp.Parser.Main
+
     let parserStmt str =
         let p =
             spaces >>. Statements.Parser.Intermediate.pstmt
@@ -292,7 +292,7 @@ let main argv =
             |> threadsExec threads
                 (Either.bind (fun path ->
                     ThreadSafePrint.printfn "parse: %s" path
-                    match Qsp.Parser.Main.Document.startOnFile enc path with
+                    match Document.startOnFile enc path with
                     | FParsec.CharParsers.Success(locs, st, _) ->
                         locs
                         |> List.choose (fun (Location (locName, loc)) ->
