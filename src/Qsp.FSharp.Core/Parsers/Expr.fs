@@ -65,7 +65,7 @@ module Parser =
                 (appendToken TokenType.Underscore (pchar '_')
                 >>? ((ws1 >>? skipNewline) <|> skipNewline) >>. spaces)
 
-    let term expr =
+    let term expr (pstmts: Statements Parser) =
         let getDesc (varType, (name:string)) =
             match varType with
             | StringType ->
@@ -188,7 +188,7 @@ module Parser =
         let pval =
             choice [
                 // TODO: `pbraces` — он точно нужен?
-                stringLiteralWithToken expr |>> String
+                stringLiteralWithToken expr pstmts |>> String
                 appendToken TokenType.ConstantNumericInteger
                     (pint32 |>> Int)
             ]
@@ -227,9 +227,9 @@ module Parser =
             ]
         pterm <|> ptuple
 
-    let pexpr : _ Parser =
+    let pexpr (pstmts: Ast.Statements Parser) : _ Parser =
         let pExpr, pExprRef = createParserForwardedToRef()
-        let term = term pExpr
+        let term = term pExpr pstmts
         let pchar c typ =
             appendToken typ (pchar c)
         let pstringCI c typ =

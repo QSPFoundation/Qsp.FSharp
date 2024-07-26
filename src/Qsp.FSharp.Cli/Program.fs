@@ -111,7 +111,7 @@ module Parser =
                     updateUserState (fun st ->
                         { st with LastSymbolPos = p}))
         runParserOnString p
-            Document.emptyState
+            State.empty
             ""
             str
 

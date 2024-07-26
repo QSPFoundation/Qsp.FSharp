@@ -29,16 +29,13 @@ module Parser =
                 updateUserState (fun st ->
                     { st with LastSymbolPos = p }))
 
-let emptyState =
-    { State.empty with PStmts = Statements.Parser.pstmts }
-
 let start str =
     runParserOnString (Parser.pdocument .>> eof)
-        emptyState
+        State.empty
         ""
         str
 let startOnFile enc path =
     runParserOnFile (Parser.pdocument .>> eof)
-        emptyState
+        State.empty
         path
         enc

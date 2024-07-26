@@ -33,6 +33,7 @@ module Parser =
             >>. preturn name
 
     let pAssign stmts =
+        let pexpr = pexpr stmts
         let assdef isLocal name ass =
             let asscode =
                 let p =
@@ -107,7 +108,9 @@ module Parser =
                 pImlicitAssign
             ]
 
-    let pcallProc =
+    let pcallProc pstmts =
+        let pexpr = pexpr pstmts
+
         let f defines p =
             applyRange p
             >>= fun (range, name) ->
@@ -292,7 +295,7 @@ module Parser =
             genKeywordParser Tokens.TokenType.Loop "loop"
             >>. ws >>. pInlineStmts
             .>> genKeywordParser Tokens.TokenType.While "while"
-            .>> ws .>>. pexpr
+            .>> ws .>>. (pexpr pstmts)
             .>>. opt (updateScope (fun ss ->
                         { ss with
                             Scopes = Scope.appendScope ss.Scopes
@@ -327,7 +330,7 @@ module Parser =
         let pactKeyword : _ Parser =
             genKeywordParser Tokens.TokenType.Act "act"
 
-        let pactHeader = pactKeyword .>> ws >>. sepBy1 pexpr (char_ws ',') .>> pcolonKeyword
+        let pactHeader = pactKeyword .>> ws >>. sepBy1 (pexpr pstmts) (char_ws ',') .>> pcolonKeyword
 
         pipe2
             pactHeader
@@ -337,6 +340,8 @@ module Parser =
                 Act(expr, body))
 
     let pFor pInlineStmts pstmts =
+        let pexpr = pexpr pstmts
+
         let pForHeader =
             genKeywordParser Tokens.TokenType.For "for" >>. ws
             >>. (pstringVar VarHighlightKind.WriteAccess false
@@ -357,6 +362,7 @@ module Parser =
                 For(var, fromExpr, toExpr, stepExpr, body))
 
     let pIf pInlineStmts pInlineStmts1 pstmts =
+        let pexpr = pexpr pstmts
         let pifKeyword : _ Parser =
             genKeywordParser Tokens.TokenType.If "if"
         let pelseifKeyword : _ Parser =
@@ -428,9 +434,9 @@ module Parser =
                 (pFor pInlineStmts pstmts)
                 (ploop pInlineStmts pstmts)
                 pAssign pstmts
-                pcallProc
+                pcallProc pstmts
                 notFollowedBy (pchar '-' >>. ws >>. (skipNewline <|> skipChar '-' <|> eof)) // `-` завершает локацию
-                >>. (pexpr |>> fun arg -> Proc("*pl", [arg]))
+                >>. (pexpr pstmts |>> fun arg -> Proc("*pl", [arg]))
             ]
         let posStmt =
             (getPosition |>> (fparsecPosToPos >> NoEqualityPosition)) .>>.? p

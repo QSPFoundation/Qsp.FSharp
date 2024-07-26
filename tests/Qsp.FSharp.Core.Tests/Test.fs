@@ -31,7 +31,7 @@ let noEqualityPositionTests =
 [<Tests>]
 let pexprTest =
     let runExpr str =
-        runStateEither Expr.Parser.pexpr Qsp.Parser.Generic.State.empty str
+        runStateEither (Expr.Parser.pexpr pzero) Qsp.Parser.Generic.State.empty str
         |> snd
     let sprintExpr =
         Show.simpleShowExpr (failwithf "showStmtsInline not implemented %A")
@@ -500,10 +500,8 @@ let exprEqual (note, expr1, expr2) =
 let stringLiteralWithTokenTest =
     let runEither str =
         Qsp.Parser.Generic.runStateEither
-            (stringLiteralWithToken Expr.Parser.pexpr)
-            { Qsp.Parser.Generic.State.empty with
-                PStmts = Statements.Parser.pstmts
-            }
+            (stringLiteralWithToken (Expr.Parser.pexpr Statements.Parser.pstmts) Statements.Parser.pstmts)
+            State.empty
             str
         |> snd
     let f str =
@@ -627,7 +625,10 @@ let pbracesTests =
 [<Tests>]
 let pcallProcTests =
     let runStmts str =
-        Qsp.Parser.Generic.runStateEither Statement.Parser.pcallProc Qsp.Parser.Generic.State.empty str
+        runStateEither
+            (Statement.Parser.pcallProc Statements.Parser.pstmts)
+            State.empty
+            str
         |> snd
     testList "pcallProcTests" [
         testCase "pcallProcTests base" <| fun () ->

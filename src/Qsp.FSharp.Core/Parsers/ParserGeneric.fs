@@ -110,8 +110,6 @@ and State =
         LastSymbolPos : FParsec.Position
         /// Локации, которые неопределенны именно в этом документе, но переходы к ним есть
         NotDefinedLocs: Map<Ast.LocationName, Tokens.InlineRange list>
-        // Я тут, это самое, оставлю. Никто не возражает?
-        PStmts: Parser<Ast.PosStatement list>
         /// `&lt;a gt ''x''>`
         SingleQuotNestedCount: int
         DoubleQuotNestedCount: int
@@ -128,7 +126,6 @@ module State =
             LastSymbolPos = FParsec.Position("", 0L, 1L, 1L)
             Highlights = Highlights.empty
             NotDefinedLocs = Map.empty
-            PStmts = FParsec.Primitives.failFatally "PStmts not implemented"
             SingleQuotNestedCount = 0
             DoubleQuotNestedCount = 0
             HtmlAttDoubleNested = 0
@@ -294,10 +291,7 @@ open Tokens
 let charsReplicate n (c:char) =
     System.String.Concat (Array.replicate n c)
 
-// Это такой фокус, чтобы напрочь во всем запутаться. А кто говорил, что это чисто функциональное программирование? Ну-ну.
-let pstmts : _ Parser =
-    getUserState >>= fun st -> st.PStmts
-let stringLiteralWithToken pexpr : _ Parser =
+let stringLiteralWithToken pexpr (pstmts: Ast.Statements Parser) : _ Parser =
     let bet tokenType openedChar closedChar pnested punnested pgetNested =
         let p nestedCount =
             many1Satisfy (fun c' -> not (c' = closedChar || c' = '\n' || c' = '<'))
