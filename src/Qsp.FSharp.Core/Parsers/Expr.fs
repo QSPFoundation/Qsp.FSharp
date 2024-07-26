@@ -219,7 +219,7 @@ module Parser =
                 | [x] -> x
                 | xs -> Expr.Tuple xs
 
-        ptermRef :=
+        ptermRef.Value <-
             choice [
                 pval
                 pDirectCallFunc
@@ -281,7 +281,7 @@ module Parser =
         let pNo =
             // TODO: `no` — ассоциативный оператор, потому допустимо такое: `no (no -1)`
             let pNo, pNoRef = createParserForwardedToRef()
-            pNoRef :=
+            pNoRef.Value <-
                 pstringCI "no" TokenType.Procedure >>? notFollowedVarCont >>. ws >>. pObj pNo
                 |>> fun e1 -> UnarExpr(No, e1)
             pNo <|> pObj pNo .>> ws
@@ -294,5 +294,5 @@ module Parser =
                 ((pstringCI "or" TokenType.Procedure >>? notFollowedVarCont >>. ws >>% Or)
                 .>> ws |>> fun op e1 e2 -> Expr(op, e1, e2))
 
-        pExprRef := pOr
+        pExprRef.Value <- pOr
         pExpr
