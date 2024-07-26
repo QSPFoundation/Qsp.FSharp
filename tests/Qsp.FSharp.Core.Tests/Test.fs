@@ -500,7 +500,7 @@ let exprEqual (note, expr1, expr2) =
 let stringLiteralWithTokenTest =
     let runEither str =
         Qsp.Parser.Generic.runStateEither
-            (stringLiteralWithToken (Expr.Parser.pexpr Statements.Parser.pstmts) Statements.Parser.pstmts)
+            (Value.Parser.stringLiteralWithToken (Expr.Parser.pexpr Statements.Parser.pstmts) Statements.Parser.pstmts)
             State.empty
             str
         |> snd

@@ -186,12 +186,7 @@ module Parser =
                     >>% Func(Predef x.SymbolicName, args)
             <|> pcallFunctionOrArrOrVar
         let pval =
-            choice [
-                // TODO: `pbraces` — он точно нужен?
-                stringLiteralWithToken expr pstmts |>> String
-                appendToken TokenType.ConstantNumericInteger
-                    (pint32 |>> Int)
-            ]
+            Value.Parser.pvalue expr pstmts
             |>> Val
         let pDirectCallFunc =
             appendToken TokenType.KeywordSymbol (pchar '@')
