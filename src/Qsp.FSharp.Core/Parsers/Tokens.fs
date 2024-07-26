@@ -2,7 +2,7 @@ module Qsp.Tokens
 
 type Range = FParsec.Position * FParsec.Position
 
-[<Struct>]
+[<RequireQualifiedAccess; Struct>]
 type TokenType =
     | If
     | ElseIf

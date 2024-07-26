@@ -396,4 +396,4 @@ let pbraces tokenType : _ Parser =
                 x::nl::xs |> System.String.Concat)
 
 let ppunctuationTerminator : _ Parser =
-    appendToken Tokens.PunctuationTerminatorStatement (pchar '&')
+    appendToken TokenType.PunctuationTerminatorStatement (pchar '&')

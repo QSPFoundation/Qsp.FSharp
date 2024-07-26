@@ -60,34 +60,34 @@ module CommandResponse =
     let highlighting ranges =
         let map (t: TokenType): string =
             match t with
-            | ConstantNumericInteger -> "constantNumericInteger"
-            | NameLabel -> "string"
-            | LabelColon -> "punctuationSeparatorColon"
-            | InterpolationEnd -> "interpolationEnd"
-            | InterpolationBegin -> "interpolationBegin"
-            | Procedure -> "procedure"
-            | Type -> "storage"
-            | Variable -> "variable"
-            | Keyword -> "keyword"
-            | KeywordSymbol -> "keywordSymbol"
-            | Comment -> "comment"
-            | Function -> "function"
-            | If
-            | ElseIf
-            | Else
-            | Act
-            | Colon
-            | End
-            | Underscore
-            | Exit
-            | For
-            | To
-            | Step
-            | Loop
-            | While
-            | SharpBeginLoc
-            | MinusEndLoc -> "keywordControl"
-            | BinaryOperator op ->
+            | TokenType.ConstantNumericInteger -> "constantNumericInteger"
+            | TokenType.NameLabel -> "string"
+            | TokenType.LabelColon -> "punctuationSeparatorColon"
+            | TokenType.InterpolationEnd -> "interpolationEnd"
+            | TokenType.InterpolationBegin -> "interpolationBegin"
+            | TokenType.Procedure -> "procedure"
+            | TokenType.Type -> "storage"
+            | TokenType.Variable -> "variable"
+            | TokenType.Keyword -> "keyword"
+            | TokenType.KeywordSymbol -> "keywordSymbol"
+            | TokenType.Comment -> "comment"
+            | TokenType.Function -> "function"
+            | TokenType.If
+            | TokenType.ElseIf
+            | TokenType.Else
+            | TokenType.Act
+            | TokenType.Colon
+            | TokenType.End
+            | TokenType.Underscore
+            | TokenType.Exit
+            | TokenType.For
+            | TokenType.To
+            | TokenType.Step
+            | TokenType.Loop
+            | TokenType.While
+            | TokenType.SharpBeginLoc
+            | TokenType.MinusEndLoc -> "keywordControl"
+            | TokenType.BinaryOperator op ->
                 match op with
                 | Ast.Plus
                 | Ast.Minus
@@ -109,19 +109,19 @@ module CommandResponse =
                 | Ast.Or
                 | Ast.And ->
                     "operatorLogical"
-            | UnaryOperator(unaryOperator) ->
+            | TokenType.UnaryOperator(unaryOperator) ->
                 match unaryOperator with
                 | Ast.UnarOp.Obj -> "operator"
                 | Ast.UnarOp.Loc -> "operator"
                 | Ast.UnarOp.No -> "operatorLogical"
                 | Ast.UnarOp.Neg -> "operatorArithmetic"
-            | OperatorAssignment -> "operatorAssignment"
-            | PunctuationTerminatorStatement -> "punctuationTerminatorStatement"
-            | StringQuotedSingle
-            | StringQuotedDouble
-            | StringBraced -> "string"
-            | BraceSquareOpened
-            | BraceSquareClosed -> "metaBraceSquare"
+            | TokenType.OperatorAssignment -> "operatorAssignment"
+            | TokenType.PunctuationTerminatorStatement -> "punctuationTerminatorStatement"
+            | TokenType.StringQuotedSingle
+            | TokenType.StringQuotedDouble
+            | TokenType.StringBraced -> "string"
+            | TokenType.BraceSquareOpened
+            | TokenType.BraceSquareClosed -> "metaBraceSquare"
         {
             Kind = "highlighting"
             Data =

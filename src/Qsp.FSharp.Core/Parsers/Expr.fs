@@ -42,7 +42,7 @@ module Parser =
                             let scope = if isLocal then "локальная" else "глобальная"
                             sprintf "Пользовательская %s переменная строчного типа" scope
                 | NumericType -> failwith "NumericType Not Implemented"
-            appendToken2 Tokens.Variable range
+            appendToken2 TokenType.Variable range
             >>. appendHover2 (RawDescription msg) range
             >>. appendVarHighlight range (typ, varName) varHighlightKind isLocal
             >>. preturn (typ, varName)
