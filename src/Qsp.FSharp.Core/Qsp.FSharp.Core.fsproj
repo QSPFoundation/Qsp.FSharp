@@ -13,6 +13,7 @@
     <Compile Include="Defines.fs" />
     <Compile Include="Ast.fs" />
     <Compile Include="Printer\Value.fs" />
+    <Compile Include="Printer\Expr.fs" />
     <Compile Include="Show.fs" />
     <Compile Include="Parsers\Tokens.fs" />
     <Compile Include="Parsers\ParserGeneric.fs" />

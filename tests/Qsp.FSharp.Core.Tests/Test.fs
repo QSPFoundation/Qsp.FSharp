@@ -13,6 +13,7 @@ open FParsec
 #endif
 open Qsp
 open Qsp.Ast
+open Qsp.Printer.Ast
 open Qsp.Parser.Generic
 open Qsp.Parser.Ast
 
@@ -35,7 +36,7 @@ let pexprTest =
         runStateEither (Expr.Parser.pexpr pzero) Qsp.Parser.Generic.State.empty str
         |> snd
     let sprintExpr =
-        Show.simpleShowExpr (failwithf "showStmtsInline not implemented %A")
+        Expr.Printer.simpleShowExpr (failwithf "showStmtsInline not implemented %A")
         >> FsharpMyExtension.ShowList.show
     let runExprShow str =
         runExpr str
@@ -440,7 +441,7 @@ let showAssignTest =
 [<Tests>]
 let exprShowTests =
     let show expr =
-        Show.showExpr (fun _ -> ShowList.empty) expr
+        Expr.Printer.showExpr (fun _ -> ShowList.empty) expr
         |> ShowList.show
 
     testList "exprShowTests" [
