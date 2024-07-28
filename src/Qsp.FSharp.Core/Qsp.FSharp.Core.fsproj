@@ -21,12 +21,12 @@
     <Compile Include="Printer\Ast\Document.fs" />
     <Compile Include="Parser\Tokens.fs" />
     <Compile Include="Parser\ParserGeneric.fs" />
-    <Compile Include="Parser\Value.fs" />
-    <Compile Include="Parser\Expr.fs" />
-    <Compile Include="Parser\Statement.fs" />
-    <Compile Include="Parser\Statements.fs" />
-    <Compile Include="Parser\Location.fs" />
-    <Compile Include="Parser\Document.fs" />
+    <Compile Include="Parser\Ast\Value.fs" />
+    <Compile Include="Parser\Ast\Expr.fs" />
+    <Compile Include="Parser\Ast\Statement.fs" />
+    <Compile Include="Parser\Ast\Statements.fs" />
+    <Compile Include="Parser\Ast\Location.fs" />
+    <Compile Include="Parser\Ast\Document.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
