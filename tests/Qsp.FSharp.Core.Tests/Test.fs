@@ -412,7 +412,7 @@ let assignTest =
 let showAssignTest =
     let showAssign str =
         let emptyPos = NoEqualityPosition Position.empty
-        Statement.Printer.showStmt (Statement.Printer.UsingSpaces 4) Statement.Printer.FormatConfig.Default (emptyPos, str)
+        Statement.Printer.showStmt (Statement.Printer.UsingSpaces 4) Printer.FormatConfig.Default (emptyPos, str)
         |> ShowList.joinEmpty "\n"
         |> ShowList.show
 
@@ -720,11 +720,11 @@ let pcallProcTests =
     ]
 
 let printStmts stmts =
-    List.collect (Statement.Printer.showStmt (Statement.Printer.UsingSpaces 4) Statement.Printer.FormatConfig.Default) stmts
+    List.collect (Statement.Printer.showStmt (Statement.Printer.UsingSpaces 4) Printer.FormatConfig.Default) stmts
     |> ShowList.joinEmpty "\n"
     |> ShowList.show
 let printStmt stmt =
-    Statement.Printer.showStmt (Statement.Printer.UsingSpaces 4) Statement.Printer.FormatConfig.Default stmt
+    Statement.Printer.showStmt (Statement.Printer.UsingSpaces 4) Printer.FormatConfig.Default stmt
     |> ShowList.joinEmpty "\n"
     |> ShowList.show
 let StarPl arg = Proc("*pl", [arg])
@@ -1095,7 +1095,7 @@ module TestOnMocks =
                 let act = startOnFile srcPath
                 // act |> Json.serf parseExpPath
                 // failwithf "\"%s\" не найден, потому пришлось его создать. Естественно, все тесты пошли коту под хвост." parseExpPath
-                act |> Qsp.Show.printLocs Statement.Printer.UsingTabs Statement.Printer.FormatConfig.Default
+                act |> Qsp.Show.printLocs Statement.Printer.UsingTabs Printer.FormatConfig.Default
         let exp =
             if System.IO.File.Exists showExpPath then
                 System.IO.File.ReadAllText showExpPath

@@ -199,11 +199,11 @@ type UpdateFileParms = {
 
 type QspConfig =
     {
-        FormatConfig: Statement.Printer.FormatConfig
+        FormatConfig: Printer.FormatConfig
     }
     static member Default =
         {
-            FormatConfig = Statement.Printer.FormatConfig.Default
+            FormatConfig = Printer.FormatConfig.Default
         }
 
 type Config =

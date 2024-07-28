@@ -6,18 +6,8 @@ module Printer =
     open FsharpMyExtension.ShowList
 
     open Qsp
+    open Qsp.Printer
     open Qsp.Ast
-
-    type FormatConfig =
-        {
-            IsSplitStringPl: bool
-            TrimWhitespaceWhenSplit: bool
-        }
-        static member Default =
-            {
-                IsSplitStringPl = false
-                TrimWhitespaceWhenSplit = false
-            }
 
     let showAssign showStmtsInline = function
         | AssignWhat.AssignArr(var, args) ->

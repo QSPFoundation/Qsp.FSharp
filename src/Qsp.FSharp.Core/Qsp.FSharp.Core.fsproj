@@ -12,6 +12,7 @@
     <Compile Include="Scope.fs" />
     <Compile Include="Defines.fs" />
     <Compile Include="Ast.fs" />
+    <Compile Include="Printer\FormatConfig.fs" />
     <Compile Include="Printer\Value.fs" />
     <Compile Include="Printer\Expr.fs" />
     <Compile Include="Printer\Statement.fs" />
