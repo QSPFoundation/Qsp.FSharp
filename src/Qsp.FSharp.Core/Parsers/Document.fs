@@ -1,5 +1,5 @@
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Qsp.Ast.Document
+module Qsp.Parser.Ast.Document
 open FParsec
 
 open Qsp.Parser

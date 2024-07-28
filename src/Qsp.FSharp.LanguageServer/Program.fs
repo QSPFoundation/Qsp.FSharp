@@ -162,7 +162,7 @@ type Commands() =
 
             // return
         // }
-        Ast.Document.start documentText
+        Parser.Ast.Document.start documentText
 let isValidDoc uri =
     // git-файлы лучше обходить стороной, чтобы не смущать пространство лишний раз
     let uri = System.Uri uri
