@@ -1,9 +1,10 @@
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Qsp.Ast.Statements
+module Qsp.Parser.Ast.Statements
 
 module Parser =
     open FParsec
 
+    open Qsp.Ast
     open Qsp.Parser
     open Qsp.Parser.Generic
     open Qsp.Parser.Ast

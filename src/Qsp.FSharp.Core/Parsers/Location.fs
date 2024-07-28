@@ -7,6 +7,7 @@ module Parser =
 
     open Qsp
     open Qsp.Ast
+    open Qsp.Parser.Ast
     open Qsp.Parser.Generic
 
     let psharpKeyword : _ Parser =
