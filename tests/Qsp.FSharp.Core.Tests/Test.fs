@@ -14,6 +14,7 @@ open FParsec
 open Qsp
 open Qsp.Ast
 open Qsp.Parser.Generic
+open Qsp.Parser.Ast
 
 open Fuchu
 

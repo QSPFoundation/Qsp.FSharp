@@ -8,6 +8,7 @@ module Parser =
 
     open Qsp
     open Qsp.Parser.Generic
+    open Qsp.Parser.Ast
     open Qsp.Tokens
 
     let pbinaryOperator : _ Parser =
