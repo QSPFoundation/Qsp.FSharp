@@ -4,7 +4,9 @@ open FsharpMyExtension.Either
 open LanguageServerProtocol
 open LanguageServerProtocol.Server
 open LanguageServerProtocol.Types
+
 open Qsp
+open Qsp.Printer.Ast
 
 // берётся — `FSharp.Compiler.Range.range`
 type VscodeRange =
@@ -197,11 +199,11 @@ type UpdateFileParms = {
 
 type QspConfig =
     {
-        FormatConfig: Qsp.Show.FormatConfig
+        FormatConfig: Statement.Printer.FormatConfig
     }
     static member Default =
         {
-            FormatConfig = Qsp.Show.FormatConfig.Default
+            FormatConfig = Statement.Printer.FormatConfig.Default
         }
 
 type Config =
@@ -556,9 +558,9 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
                                     }
                                   NewText =
                                     if p.Options.InsertSpaces then
-                                        Qsp.Show.UsingSpaces p.Options.TabSize
+                                        Statement.Printer.UsingSpaces p.Options.TabSize
                                     else
-                                        Qsp.Show.UsingTabs
+                                        Statement.Printer.UsingTabs
                                     |> fun indentsOpt -> Qsp.Show.printLocs indentsOpt config.FormatConfig x }
                                 |> Array.singleton
                                 |> Some
