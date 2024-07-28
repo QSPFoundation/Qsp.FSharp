@@ -4,6 +4,7 @@ open FsharpMyExtension
 open FsharpMyExtension.Either
 
 open Qsp.Ast
+open Qsp.Parser.Ast
 
 type FilePath = string
 type Txt2qspConfig = { Path: string; Args: string }

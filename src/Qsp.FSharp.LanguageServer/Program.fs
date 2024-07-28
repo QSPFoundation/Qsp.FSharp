@@ -6,6 +6,7 @@ open LanguageServerProtocol.Server
 open LanguageServerProtocol.Types
 
 open Qsp
+open Qsp.Printer
 open Qsp.Printer.Ast
 
 // берётся — `FSharp.Compiler.Range.range`
@@ -558,9 +559,9 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
                                     }
                                   NewText =
                                     if p.Options.InsertSpaces then
-                                        Statement.Printer.UsingSpaces p.Options.TabSize
+                                        IndentsOption.UsingSpaces p.Options.TabSize
                                     else
-                                        Statement.Printer.UsingTabs
+                                        IndentsOption.UsingTabs
                                     |> fun indentsOpt -> Document.print indentsOpt config.FormatConfig x }
                                 |> Array.singleton
                                 |> Some

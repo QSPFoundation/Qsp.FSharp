@@ -29,10 +29,6 @@ module Printer =
 
     let (|AssingName|) = function AssignArr(x, _) -> x | AssignVar x -> x
 
-    type IndentsOption =
-        | UsingSpaces of int
-        | UsingTabs
-
     let spaceBetween (s:ShowS) : ShowS =
         showSpace << s << showSpace
 
