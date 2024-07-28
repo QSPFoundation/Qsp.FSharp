@@ -9,7 +9,7 @@ module Parser =
     open Qsp.Ast
     open Qsp.Parser
     open Qsp.Parser.Generic
-    open Qsp.Ast.Expr.Parser
+    open Qsp.Parser.Ast.Expr.Parser
 
     let pImplicitVarWhenAssign p isLocal =
         applyRange p

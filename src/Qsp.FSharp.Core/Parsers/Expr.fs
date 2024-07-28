@@ -1,5 +1,5 @@
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Qsp.Ast.Expr
+module Qsp.Parser.Ast.Expr
 
 module Parser =
     open FParsec
@@ -7,6 +7,7 @@ module Parser =
     open FsharpMyExtension.Either
 
     open Qsp
+    open Qsp.Ast
     open Qsp.Parser.Generic
     open Qsp.Parser.Ast
     open Qsp.Tokens
