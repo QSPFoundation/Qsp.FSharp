@@ -19,14 +19,14 @@
     <Compile Include="Printer\Ast\Statement.fs" />
     <Compile Include="Printer\Ast\Location.fs" />
     <Compile Include="Printer\Ast\Document.fs" />
-    <Compile Include="Parsers\Tokens.fs" />
-    <Compile Include="Parsers\ParserGeneric.fs" />
-    <Compile Include="Parsers\Value.fs" />
-    <Compile Include="Parsers\Expr.fs" />
-    <Compile Include="Parsers\Statement.fs" />
-    <Compile Include="Parsers\Statements.fs" />
-    <Compile Include="Parsers\Location.fs" />
-    <Compile Include="Parsers\Document.fs" />
+    <Compile Include="Parser\Tokens.fs" />
+    <Compile Include="Parser\ParserGeneric.fs" />
+    <Compile Include="Parser\Value.fs" />
+    <Compile Include="Parser\Expr.fs" />
+    <Compile Include="Parser\Statement.fs" />
+    <Compile Include="Parser\Statements.fs" />
+    <Compile Include="Parser\Location.fs" />
+    <Compile Include="Parser\Document.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
