@@ -3,7 +3,7 @@ module Qsp.Ast.Document
 open FParsec
 
 open Qsp.Parser
-open Qsp.Ast
+open Qsp.Parser.Ast
 open Qsp.Parser.Generic
 
 module Parser =
