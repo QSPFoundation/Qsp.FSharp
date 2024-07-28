@@ -14,11 +14,11 @@
     <Compile Include="Ast.fs" />
     <Compile Include="Printer\FormatConfig.fs" />
     <Compile Include="Printer\IndentsOption.fs" />
-    <Compile Include="Printer\Value.fs" />
-    <Compile Include="Printer\Expr.fs" />
-    <Compile Include="Printer\Statement.fs" />
-    <Compile Include="Printer\Location.fs" />
-    <Compile Include="Printer\Document.fs" />
+    <Compile Include="Printer\Ast\Value.fs" />
+    <Compile Include="Printer\Ast\Expr.fs" />
+    <Compile Include="Printer\Ast\Statement.fs" />
+    <Compile Include="Printer\Ast\Location.fs" />
+    <Compile Include="Printer\Ast\Document.fs" />
     <Compile Include="Parsers\Tokens.fs" />
     <Compile Include="Parsers\ParserGeneric.fs" />
     <Compile Include="Parsers\Value.fs" />
