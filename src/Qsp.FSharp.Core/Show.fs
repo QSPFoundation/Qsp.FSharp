@@ -1,7 +1,9 @@
 module Qsp.Show
 open FsharpMyExtension
 open FsharpMyExtension.ShowList
+
 open Qsp.Ast
+open Qsp.Printer.Ast
 
 type FormatConfig =
     {
@@ -14,68 +16,6 @@ type FormatConfig =
             TrimWhitespaceWhenSplit = false
         }
 
-let showVarType = function
-    | StringType -> showChar '$'
-    | NumericType -> empty
-
-let showVar (typ:VarType, varName:string) =
-    showVarType typ << showString varName
-
-let rec showStringLines showExpr showStmtsInline (lines:list<Line>) =
-    lines
-    |> List.map (
-        List.collect (
-            function
-            | StringKind x ->
-                showString (x.Replace("'", "''"))
-                |> List.singleton
-            | ExprKind x ->
-                showExpr x
-                |> show
-                |> fun x -> x.Replace("'", "''") // TODO: стоит ли говорить, что все эти былины с `.Replace("'", "''")` нужно превратить в нормальный код?
-                |> showString
-                |> bet "<<" ">>"
-                |> List.singleton
-            | HyperLinkKind(x, body) ->
-                let attValue =
-                    match x with
-                    | Raw x ->
-                        x.Replace("'", "''")
-                        |> showString
-                    | StaticStmts(x) ->
-                        showStmtsInline x
-                        |> show
-                        |> fun x -> x.Replace("'", "''")
-                        |> showString
-                let header =
-                    showString "<a href=\"exec: "
-                    << attValue
-                    << showString "\">"
-                match showStringLines showExpr showStmtsInline body with
-                | [] ->
-                    header
-                    << showString "</a>"
-                    |> List.singleton
-                | [x] ->
-                    header
-                    << x
-                    << showString "</a>"
-                    |> List.singleton
-                | xs ->
-                    xs
-                    |> List.mapStartMidEnd
-                        (fun x -> header << x)
-                        id
-                        (fun x -> x << showString "</a>")
-                    |> fun x -> x // TODO: и все строки позже соединятся воедино, даже пробелов не удостоятся, ага.
-        ) >> joinsEmpty empty
-    )
-let showValue showExpr showStmtsInline = function
-    | Int x -> showByToString x
-    | String lines ->
-        showStringLines showExpr showStmtsInline lines
-        |> joinsEmpty (showString "\n")
-        |> bet "'" "'"
 let ops = Op.toString >> showString
 
 let unar = function No -> "no" | Obj -> "obj" | Neg -> "-" | Loc -> "loc"
@@ -103,8 +43,8 @@ let showTupleArgs xs =
 
 let rec simpleShowExpr showStmtsInline expr : ShowS =
     let rec f = function
-        | Val v -> showValue (simpleShowExpr showStmtsInline) showStmtsInline v
-        | Var v -> showVar v
+        | Val v -> Value.Printer.showValue (simpleShowExpr showStmtsInline) showStmtsInline v
+        | Var v -> Value.Printer.showVar v
         | Func(name, args) ->
             let args =
                 if List.isEmpty args then
@@ -144,12 +84,12 @@ let rec simpleShowExpr showStmtsInline expr : ShowS =
         | Tuple args ->
             showTupleArgs (List.map f args)
         | Arr(var, args) ->
-            showVar var << showArrayArgs (List.map f args)
+            Value.Printer.showVar var << showArrayArgs (List.map f args)
     f expr
 
 let rec showExpr showStmtsInline = function
-    | Val v -> showValue (showExpr showStmtsInline) showStmtsInline v
-    | Var v -> showVar v
+    | Val v -> Value.Printer.showValue (showExpr showStmtsInline) showStmtsInline v
+    | Var v -> Value.Printer.showVar v
     | Func(name, args) ->
         let args =
             if List.isEmpty args then
@@ -170,13 +110,13 @@ let rec showExpr showStmtsInline = function
     | Tuple args ->
         showTupleArgs (List.map (showExpr showStmtsInline) args)
     | Arr(var, args) ->
-        showVar var << showArrayArgs (List.map (showExpr showStmtsInline) args)
+        Value.Printer.showVar var << showArrayArgs (List.map (showExpr showStmtsInline) args)
 
 let showAssign showStmtsInline = function
     | AssignWhat.AssignArr(var, args) ->
-        showVar var
+        Value.Printer.showVar var
         << showArrayArgs (List.map (showExpr showStmtsInline) args)
-    | AssignWhat.AssignVar var -> showVar var
+    | AssignWhat.AssignVar var -> Value.Printer.showVar var
 
 let (|OneStmt|_|) = function
     | [pos, x] ->
@@ -212,7 +152,7 @@ let showStmt indentsOption (formatConfig:FormatConfig) =
             |> join "&"
         let showAssign = showAssign showStmtsInline
         let showExpr = showExpr showStmtsInline
-        let showStringLines = showStringLines showExpr showStmtsInline
+        let showStringLines = Value.Printer.showStringLines showExpr showStmtsInline
         let showLocal isLocal =
             if isLocal then
                 showString "local" << showSpace
@@ -307,7 +247,7 @@ let showStmt indentsOption (formatConfig:FormatConfig) =
         | For(var, fromExpr, toExpr, stepExpr, body) ->
             let header =
                 showString "for"
-                << showSpace << showVar var
+                << showSpace << Value.Printer.showVar var
                 << showSpace << showChar '='
                 << showSpace << showExpr fromExpr
                 << showSpace << showString "to"
