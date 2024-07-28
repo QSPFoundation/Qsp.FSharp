@@ -16,6 +16,7 @@
     <Compile Include="Printer\Value.fs" />
     <Compile Include="Printer\Expr.fs" />
     <Compile Include="Printer\Statement.fs" />
+    <Compile Include="Printer\Location.fs" />
     <Compile Include="Show.fs" />
     <Compile Include="Parsers\Tokens.fs" />
     <Compile Include="Parsers\ParserGeneric.fs" />
