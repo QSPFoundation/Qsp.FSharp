@@ -561,7 +561,7 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
                                         Statement.Printer.UsingSpaces p.Options.TabSize
                                     else
                                         Statement.Printer.UsingTabs
-                                    |> fun indentsOpt -> Qsp.Show.printLocs indentsOpt config.FormatConfig x }
+                                    |> fun indentsOpt -> Document.print indentsOpt config.FormatConfig x }
                                 |> Array.singleton
                                 |> Some
                                 |> LspResult.success

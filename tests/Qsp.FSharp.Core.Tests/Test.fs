@@ -1095,7 +1095,7 @@ module TestOnMocks =
                 let act = startOnFile srcPath
                 // act |> Json.serf parseExpPath
                 // failwithf "\"%s\" не найден, потому пришлось его создать. Естественно, все тесты пошли коту под хвост." parseExpPath
-                act |> Qsp.Show.printLocs Statement.Printer.UsingTabs Printer.FormatConfig.Default
+                act |> Document.print Statement.Printer.UsingTabs Printer.FormatConfig.Default
         let exp =
             if System.IO.File.Exists showExpPath then
                 System.IO.File.ReadAllText showExpPath
