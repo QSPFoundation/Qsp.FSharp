@@ -6,6 +6,7 @@ module Parser =
 
     open Qsp.Parser
     open Qsp.Parser.Generic
+    open Qsp.Parser.Ast
 
     module Intermediate =
         let pInlineStmts pstmt =
