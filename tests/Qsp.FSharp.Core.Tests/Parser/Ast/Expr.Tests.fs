@@ -4,6 +4,7 @@ open FParsec
 open FsharpMyExtension.Either
 
 open Qsp
+open Qsp.Defines
 open Qsp.Ast
 open Qsp.Printer.Ast
 open Qsp.Parser.Generic
@@ -18,10 +19,6 @@ let pexprTest =
     let sprintExpr =
         Expr.Printer.simpleShowExpr (failwithf "showStmtsInline not implemented %A")
         >> FsharpMyExtension.ShowList.show
-
-    let runExprShow str =
-        runExpr str
-        |> Either.map sprintExpr
 
     let equalWithShow (exp:Expr) (act:Either<_, Expr>) =
         match act with
@@ -122,18 +119,65 @@ let pexprTest =
                 )
             ))
 
-        testCase "2" <| fun () ->
-            let input = "var1[var1 + var2] and func(arg1, arg2[expr], x + y)"
-            let exp = "var1[var1 + var2] and func(arg1, arg2[expr], x + y)"
-            Assert.Equal("", Right exp, runExprShow input)
-        testCase "3" <| fun () ->
-            let input = "a = 10 or b = 20 and c = 30"
-            let exp = "(a = 10) or ((b = 20) and (c = 30))"
-            Assert.Equal("", Right exp, runExprShow input)
-        testCase "4" <| fun () ->
-            let input = "a = pstam> (pmaxstam/4)*2 and pstam <= (pmaxstam/4)*3"
-            let exp = "((a = pstam) > ((pmaxstam / 4) * 2)) and (pstam <= ((pmaxstam / 4) * 3))"
-            Assert.Equal("", Right exp, runExprShow input)
+        testf
+            "var1[var1 + var2] and func(arg1, arg2[expr], x + y)"
+            (Expr (
+                And,
+                Arr (
+                    (NumericType, "var1"),
+                    [
+                        Expr (
+                            Plus,
+                            Var (NumericType, "var1"),
+                            Var (NumericType, "var2")
+                        )
+                    ]
+                ),
+                Func (
+                    Predef PredefFunc.Func,
+                    [
+                        Var (NumericType, "arg1")
+                        Arr ((NumericType, "arg2"), [Var (NumericType, "expr")])
+                        Expr (Plus, Var (NumericType, "x"), Var (NumericType, "y"))
+                    ]
+                )
+            ))
+
+        testf
+            "a = 10 or b = 20 and c = 30"
+            (Expr (
+                Or,
+                Expr (Eq, Var (NumericType, "a"), Val (Int 10)),
+                Expr (
+                    And,
+                    Expr (Eq, Var (NumericType, "b"), Val (Int 20)),
+                    Expr (Eq, Var (NumericType, "c"), Val (Int 30))
+                )
+            ))
+
+        testf
+            "a = pstam > (pmaxstam / 4) * 2 and pstam <= (pmaxstam / 4) * 3"
+            (Expr (
+                And,
+                Expr (
+                    Gt,
+                    Expr (Eq, Var (NumericType, "a"), Var (NumericType, "pstam")),
+                    Expr (
+                        Times,
+                        Expr (Divide, Var (NumericType, "pmaxstam"), Val (Int 4)),
+                        Val (Int 2)
+                    )
+                ),
+                Expr (
+                    Le,
+                    Var (NumericType, "pstam"),
+                    Expr (
+                        Times,
+                        Expr (Divide, Var (NumericType, "pmaxstam"), Val (Int 4)),
+                        Val (Int 3)
+                    )
+                )
+            ))
 
         testf
             "1 + 2 * 3"
