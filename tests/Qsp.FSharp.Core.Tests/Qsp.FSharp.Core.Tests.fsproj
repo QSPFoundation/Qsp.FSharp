@@ -12,7 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <Compile Include="Printer\Ast\Expr.Tests.fs" />
+    <Compile Include="Parser\Ast\Expr.Tests.fs" />
     <Compile Include="Test.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
