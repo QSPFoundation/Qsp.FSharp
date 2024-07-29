@@ -1,4 +1,4 @@
-module Qsp.Printer.Ast.Expr.Tests
+module Qsp.Parser.Ast.Expr.Tests
 open Fuchu
 open FParsec
 open FsharpMyExtension.Either
