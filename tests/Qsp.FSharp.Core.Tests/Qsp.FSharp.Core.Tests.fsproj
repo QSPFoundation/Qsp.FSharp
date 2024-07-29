@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <Compile Include="Printer\Ast\Expr.Tests.fs" />
     <Compile Include="Parser\Ast\Expr.Tests.fs" />
     <Compile Include="Parser\Ast\Statement.Tests.fs" />
     <Compile Include="Test.fs" />

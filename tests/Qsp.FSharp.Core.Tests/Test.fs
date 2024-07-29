@@ -64,44 +64,6 @@ let showAssignTest =
     ]
 
 [<Tests>]
-let exprShowTests =
-    let show expr =
-        Expr.Printer.showExpr (fun _ -> ShowList.empty) expr
-        |> ShowList.show
-
-    testList "exprShowTests" [
-        testCase "tuple (a, b + c)" <| fun () ->
-            Assert.Equal(
-                "",
-                "(a, b + c)",
-                Tuple [
-                    Var (NumericType, "a")
-                    Expr (
-                        Plus,
-                        Var (NumericType, "b"),
-                        Var (NumericType, "c")
-                    )
-                ]
-                |> show
-            )
-        testCase "tuple (a + b, c, 'e')" <| fun () ->
-            Assert.Equal(
-                "",
-                "(a + b, c, 'e')",
-                Tuple [
-                    Expr (
-                        Plus,
-                        Var (NumericType, "a"),
-                        Var (NumericType, "b")
-                    )
-                    Var (NumericType, "c")
-                    Val (Value.String [[ LineKind.StringKind "e" ]])
-                ]
-                |> show
-            )
-    ]
-
-[<Tests>]
 let stringLiteralWithTokenTest =
     let runEither str =
         Qsp.Parser.Generic.runStateEither
