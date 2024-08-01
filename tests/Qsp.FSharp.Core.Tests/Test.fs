@@ -24,15 +24,6 @@ open Tests
 
 // #load "Parsec.fs"
 
-let printStmts stmts =
-    List.collect (Statement.Printer.showStmt (IndentsOption.UsingSpaces 4) Printer.FormatConfig.Default) stmts
-    |> ShowList.joinEmpty "\n"
-    |> ShowList.show
-let printStmt stmt =
-    Statement.Printer.showStmt (IndentsOption.UsingSpaces 4) Printer.FormatConfig.Default stmt
-    |> ShowList.joinEmpty "\n"
-    |> ShowList.show
-
 [<EntryPoint;System.STAThread>]
 let main args =
     let isFullTest () =
