@@ -39,7 +39,7 @@ let addExpToPath path =
     path
     |> Path.changeFileNameWithoutExt (sprintf "%sExp")
 
-let outputDir = @"..\..\..\Mocks"
+let outputDir = @"mocks"
 
 let copyAsExp path =
     System.IO.File.Copy(path, addExpToPath path, true)
@@ -83,7 +83,7 @@ let mockTestList = "mock tests"
 
 [<Tests>]
 let showTests =
-    let mocksDir = outputDir + @"\Src"
+    let mocksDir = System.IO.Path.Combine(outputDir, "src")
     let tests =
         if System.IO.Directory.Exists mocksDir then
             System.IO.Directory.GetFiles(mocksDir, "*.qsps")
@@ -92,5 +92,7 @@ let showTests =
                     showTest path
                     Assert.Equal("", true, true)
             )
-        else [||]
+        else
+            printfn "Mock games in %s don't exist" mocksDir
+            [||]
     testList mockTestList tests
