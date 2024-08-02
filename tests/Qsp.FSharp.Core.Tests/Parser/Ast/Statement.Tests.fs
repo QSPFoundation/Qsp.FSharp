@@ -542,7 +542,7 @@ let ifTests =
                     "    stmt1"
                     "    act 'arg': pl"
                     "elseif expr2:"
-                    "    if expr3: stmt2 else stmt3 if expr4: stmt4 elseif expr5: stmt5"
+                    "    if expr3: stmt2 else stmt3 & if expr4: stmt4 elseif expr5: stmt5"
                     "    stmt6"
                     "end"
                 ] |> String.concat "\n"

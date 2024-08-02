@@ -19,6 +19,7 @@
     <Compile Include="Parser\Ast\Value.Tests.fs" />
     <Compile Include="Parser\Ast\Expr.Tests.fs" />
     <Compile Include="Parser\Ast\Statement.Tests.fs" />
+    <Compile Include="Parser\Ast\Statements.Tests.fs" />
     <Compile Include="TestsOnMocks.fs" />
     <Compile Include="Test.fs" />
   </ItemGroup>
