@@ -548,23 +548,40 @@ let ifTests =
                 ] |> String.concat "\n"
 
             let exp =
-              (If
-                 (Var (NumericType, "expr1"),
-                  [StarPl (Var (NumericType, "stmt1"));
-                   Act ([Val (String [[StringKind "arg"]])], [Proc ("pl", [])])],
-                  [If
-                     (Var (NumericType, "expr2"),
-                      [If
-                         (Var (NumericType, "expr3"),
-                          [StarPl (Var (NumericType, "stmt2"))],
-                          [StarPl (Var (NumericType, "stmt3"));
-                           If
-                             (Var (NumericType, "expr4"),
-                              [StarPl (Var (NumericType, "stmt4"))],
-                              [If
-                                 (Var (NumericType, "expr5"),
-                                  [StarPl (Var (NumericType, "stmt5"))], [])])]);
-                       StarPl (Var (NumericType, "stmt6"))], [])]))
+                If (
+                    Var (NumericType, "expr1"),
+                    [
+                        StarPl (Var (NumericType, "stmt1"))
+                        Act ([Val (String [[StringKind "arg"]])], [Proc ("pl", [])])
+                    ],
+                    [
+                        If (
+                            Var (NumericType, "expr2"),
+                            [
+                                If (
+                                    Var (NumericType, "expr3"),
+                                    [ StarPl (Var (NumericType, "stmt2")) ],
+                                    [
+                                        StarPl (Var (NumericType, "stmt3"))
+                                        If (
+                                            Var (NumericType, "expr4"),
+                                            [ StarPl (Var (NumericType, "stmt4")) ],
+                                            [
+                                                If (
+                                                    Var (NumericType, "expr5"),
+                                                    [
+                                                        StarPl (Var (NumericType, "stmt5"))
+                                                    ],
+                                                    []
+                                                )
+                                            ])
+                                    ])
+                                StarPl (Var (NumericType, "stmt6"))
+                            ],
+                            []
+                        )
+                    ]
+                )
             equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
     ]
 
