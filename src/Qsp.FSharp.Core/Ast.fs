@@ -192,7 +192,7 @@ and AssignWhat =
     | AssignArr of var: Var * args: Expr list
 and PosStatement = NoEqualityPosition * Statement
 and Statement =
-    | Assign of isLocal:bool * AssignWhat * Expr
+    | Assign of isLocal:bool * AssignWhat list * Expr
     | AssignCode of AssignWhat * PosStatement list
     | Proc of string * Expr list
     | If of Expr * PosStatement list * PosStatement list

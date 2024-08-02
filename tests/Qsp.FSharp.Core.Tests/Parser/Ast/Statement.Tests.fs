@@ -18,83 +18,137 @@ let assignTest =
         testCase "implicit assign implicit var" <| fun () ->
             let input = "x = 21 + 21"
             let exp =
-                (Assign
-                   (false, AssignVar (NumericType, "x"),
-                    Expr (Plus, Val (Int 21), Val (Int 21))))
+                (Assign (
+                    false,
+                    [ AssignVar (NumericType, "x") ],
+                    Expr (Plus, Val (Int 21), Val (Int 21))
+                ))
             Assert.Equal("", Right exp, runExpr input)
         testCase "implicit assign implicit array var" <| fun () ->
             let input = "x[expr] = 42"
             let exp =
-                (Assign
-                   (false, AssignArr ((NumericType, "x"), [ Var (NumericType, "expr") ]),
-                    Val (Int 42)))
+                (Assign (
+                    false,
+                    [ AssignArr ((NumericType, "x"), [ Var (NumericType, "expr") ]) ],
+                    Val (Int 42)
+                ))
             Assert.Equal("", Right exp, runExpr input)
         testCase "implicit `-=` implicit var" <| fun () ->
             let input = "years -= 10"
             let exp =
-              (Assign
-                 (false, AssignVar (NumericType, "years"),
-                  Expr (Minus, Var (NumericType, "years"), Val (Int 10))))
+                Assign (
+                    false,
+                    [ AssignVar (NumericType, "years") ],
+                    Expr (Minus, Var (NumericType, "years"), Val (Int 10))
+                )
             Assert.Equal("", Right exp, runExpr input)
         testCase "implicit `-=` implicit var 2" <| fun () ->
             let input = "php -= 3*emdmg*2 - parm"
             let exp =
-                (Assign
-                   (false, AssignVar (NumericType, "php"),
-                    Expr
-                      (Minus, Var (NumericType, "php"),
-                       Expr
-                         (Minus,
-                          Expr
-                            (Times,
-                             Expr (Times, Val (Int 3), Var (NumericType, "emdmg")),
-                             Val (Int 2)), Var (NumericType, "parm")))))
+                Assign (
+                    false,
+                    [ AssignVar (NumericType, "php") ],
+                    Expr (
+                        Minus,
+                        Var (NumericType, "php"),
+                        Expr (
+                            Minus,
+                            Expr (
+                                Times,
+                                Expr (
+                                    Times,
+                                    Val (Int 3),
+                                    Var (NumericType, "emdmg")
+                                ),
+                                Val (Int 2)
+                            ),
+                            Var (NumericType, "parm")
+                        )
+                    )
+                )
             Assert.Equal("", Right exp, runExpr input)
         testCase "5" <| fun () ->
             let input = "a = a = no -a > b"
             let exp =
-                (Assign
-                   (false, AssignVar (NumericType, "a"),
-                    Expr
-                      (Eq, Var (NumericType, "a"),
-                       UnarExpr
-                         (No,
-                          Expr
-                            (Gt, UnarExpr (Neg, Var (NumericType, "a")),
-                             Var (NumericType, "b"))))))
+                Assign (
+                    false,
+                    [ AssignVar (NumericType, "a") ],
+                    Expr (
+                        Eq,
+                        Var (NumericType, "a"),
+                        UnarExpr (
+                            No,
+                            Expr
+                                (
+                                    Gt,
+                                    UnarExpr (Neg, Var (NumericType, "a")),
+                                    Var (NumericType, "b")
+                                )
+                        )
+                    )
+                )
             Assert.Equal("", Right exp, runExpr input)
         testCase "implicit assign explicit array var" <| fun () ->
             let input = "$x[expr] = 42"
             let exp =
-                (Assign
-                   (false, AssignArr ((StringType, "x"), [Var (NumericType, "expr")]),
-                    Val (Int 42)))
+                Assign (
+                    false,
+                    [ AssignArr ((StringType, "x"), [Var (NumericType, "expr")]) ],
+                    Val (Int 42)
+                )
             Assert.Equal("", Right exp, runExpr input)
         testCase "implicit assign explicit two demention array" <| fun () ->
             let input = "$x[firstKeyExpr, secondKeyExpr] = 42"
             let exp =
-                (Assign
-                   (false, AssignArr ((StringType, "x"), [ Var (NumericType, "firstKeyExpr"); Var (NumericType, "secondKeyExpr") ]),
-                    Val (Int 42)))
+                Assign (
+                    false,
+                    [
+                        AssignArr (
+                            (StringType, "x"),
+                            [
+                                Var (NumericType, "firstKeyExpr")
+                                Var (NumericType, "secondKeyExpr")
+                            ]
+                        )
+                    ],
+                    Val (Int 42)
+                )
             Assert.Equal("", Right exp, runExpr input)
         testCase "implicit assign explicit tree demention array" <| fun () ->
             let input = "$x[firstKeyExpr, secondKeyExpr, $thirdKeyExpr] = 42"
             let exp =
-                (Assign
-                   (false, AssignArr ((StringType, "x"), [ Var (NumericType, "firstKeyExpr"); Var (NumericType, "secondKeyExpr"); Var (StringType, "thirdKeyExpr") ]),
-                    Val (Int 42)))
+                Assign (
+                    false,
+                    [
+                        AssignArr (
+                            (StringType, "x"),
+                            [
+                                Var (NumericType, "firstKeyExpr")
+                                Var (NumericType, "secondKeyExpr")
+                                Var (StringType, "thirdKeyExpr")
+                            ]
+                        )
+                    ],
+                    Val (Int 42)
+                )
             Assert.Equal("", Right exp, runExpr input)
         testCase "#x = 21 + 21" <| fun () ->
             let input = "#x = 21 + 21"
             let exp =
-                (Assign
-                   (false, AssignVar (NumericType, "#x"),
-                    Expr (Plus, Val (Int 21), Val (Int 21))))
+                Assign (
+                    false,
+                    [ AssignVar (NumericType, "#x") ],
+                    Expr (Plus, Val (Int 21), Val (Int 21))
+                )
             Assert.Equal("", Right exp, runExpr input)
         testCase "`x[] = 1`" <| fun () ->
             let input = "x[] = 1"
             let exp =
-                Assign (false, AssignArr((NumericType, "x"), []), Val (Int 1))
+                Assign (
+                    false,
+                    [ AssignArr((NumericType, "x"), []) ],
+                    Val (Int 1)
+                )
             Assert.Equal("", Right exp, runExpr input)
         // ложные случаи:
         testCase "attempt assign function" <| fun () ->
@@ -552,9 +606,11 @@ let stmtTests =
         testCase "stmt `years -= 10`" <| fun () ->
             let input = "years -= 10"
             let exp =
-              (Assign
-                 (false, AssignVar (NumericType, "years"),
-                  Expr (Minus, Var (NumericType, "years"), Val (Int 10))))
+                Assign (
+                    false,
+                    [ AssignVar (NumericType, "years") ],
+                    Expr (Minus, Var (NumericType, "years"), Val (Int 10))
+                )
             equalTwoPosStmt("", Right (emptyPos, exp), runStmtsEof input)
         testCase "call function as expression" <| fun () ->
             // f(1) — должно обрабатываться раньше, чем `callProc arg1, arg2`

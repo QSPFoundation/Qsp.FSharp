@@ -34,11 +34,11 @@ module Parser =
 
     let pAssign stmts =
         let pexpr = pexpr stmts
-        let assdef isLocal name ass =
+        let assdef isLocal name (ass: AssignWhat list) =
             let asscode =
                 let p =
                     between (pchar '{' >>. spaces) (spaces >>. char_ws '}') stmts
-                    |>> fun stmts -> AssignCode(ass, stmts)
+                    |>> fun stmts -> AssignCode(List.head ass, stmts)
                 updateScope (fun ss ->
                     { ss with
                         Scopes = Scope.appendScope ss.Scopes
@@ -76,7 +76,7 @@ module Parser =
                 |>> fun arrayArgs ->
                     AssignArr(name, arrayArgs)
 
-            (arr .>> ws) <|>% AssignVar name >>=? assdef isLocal name
+            (arr .>> ws) <|>% AssignVar name |>> List.singleton >>=? assdef isLocal name
 
         let pSetOrLet =
             appendToken Tokens.TokenType.Type
