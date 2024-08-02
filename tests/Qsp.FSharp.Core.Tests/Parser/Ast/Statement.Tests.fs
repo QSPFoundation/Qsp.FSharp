@@ -370,6 +370,112 @@ let exprEqual (note, expr1, expr2) =
     | _ -> failtestf "Expected:\n%A\n\nActual:\n%A\nWarning: ignores Position when comparing!" expr1 expr2
 
 [<Tests>]
+let loopTests =
+    let runStmts str =
+        runStateEither
+            Statements.Parser.Intermediate.pstmt
+            State.empty str
+        |> snd
+    testList "loopTests" [
+        testCase "loop while i <= countObj:\n  statement\nend" <| fun () ->
+            Assert.Equal(
+                "",
+                Right (
+                    emptyPos,
+                    Statement.Loop (
+                        [],
+                        Expr (
+                            Le,
+                            Var (NumericType, "i"),
+                            Func (Predef Defines.PredefFunc.Countobj, [])
+                        ),
+                        [],
+                        [
+                            emptyPos, StarPl (Var (NumericType, "statement"))
+                        ]
+                    )
+                ),
+                (
+                    [
+                        "loop while i <= countObj:"
+                        "  statement"
+                        "end"
+                    ]
+                    |> String.concat System.Environment.NewLine
+                    |> runStmts
+                )
+            )
+
+        testCase "loop i = 1 while i <= countObj:\n  statement\nend" <| fun () ->
+            Assert.Equal(
+                "",
+                Right (
+                    emptyPos,
+                    Statement.Loop (
+                        [
+                            emptyPos, Assign (false, [AssignVar (NumericType, "i")], Val (Int 1))
+                        ],
+                        Expr (
+                            Le,
+                            Var (NumericType, "i"),
+                            Func (Predef Defines.PredefFunc.Countobj, [])
+                        ),
+                        [],
+                        [
+                            emptyPos, StarPl (Var (NumericType, "statement"))
+                        ]
+                    )
+                ),
+                (
+                    [
+                        "loop i = 1 while i <= countObj:"
+                        "  statement"
+                        "end"
+                    ]
+                    |> String.concat System.Environment.NewLine
+                    |> runStmts
+                )
+            )
+
+        testCase "loop i = 1 while i <= countObj step i += 1:\n  statement\nend" <| fun () ->
+            Assert.Equal(
+                "",
+                Right (
+                    emptyPos,
+                    Statement.Loop (
+                        [
+                            emptyPos, Assign (false, [AssignVar (NumericType, "i")], Val (Int 1))
+                        ],
+                        Expr (
+                            Le,
+                            Var (NumericType, "i"),
+                            Func (Predef Defines.PredefFunc.Countobj, [])
+                        ),
+                        [
+                            emptyPos, Assign (
+                                false,
+                                [AssignVar (NumericType, "i")],
+                                Expr (Plus, Var (NumericType, "i"), Val (Int 1))
+                            )
+                        ],
+                        [
+                            emptyPos, StarPl (Var (NumericType, "statement"))
+                        ]
+                    )
+                ),
+                (
+                    [
+                        "loop i = 1 while i <= countObj step i += 1:"
+                        "  statement"
+                        "end"
+                    ]
+                    |> String.concat "\n"
+                    |> runStmts
+                )
+            )
+    ]
+
+[<Tests>]
 let ifTests =
     let runStmts str =
         runStateEither
