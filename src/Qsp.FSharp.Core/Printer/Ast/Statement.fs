@@ -9,11 +9,16 @@ module Printer =
     open Qsp.Printer
     open Qsp.Ast
 
-    let showAssign showStmtsInline = function
+    let showAssignmentLhs showStmtsInline = function
         | AssignWhat.AssignArr(var, args) ->
             Value.Printer.showVar var
             << Expr.Printer.showArrayArgs (List.map (Expr.Printer.showExpr showStmtsInline) args)
         | AssignWhat.AssignVar var -> Value.Printer.showVar var
+
+    let showAssignmentLhss showStmtsInline (lhss: AssignWhat list) =
+        lhss
+        |> List.map (showAssignmentLhs showStmtsInline)
+        |> joinsEmpty (showString ", ")
 
     let (|OneStmt|_|) = function
         | [pos, x] ->
@@ -43,7 +48,7 @@ module Printer =
             let showStmtsInline xs : ShowS =
                 List.collect f' xs // TODO
                 |> join "&"
-            let showAssign = showAssign showStmtsInline
+            let showAssign = showAssignmentLhss showStmtsInline
             let showExpr = Expr.Printer.showExpr showStmtsInline
             let showStringLines = Value.Printer.showStringLines showExpr showStmtsInline
             let showLocal isLocal =
@@ -51,9 +56,9 @@ module Printer =
                     showString "local" << showSpace
                 else id
             match stmt with
-            | Assign(isLocal, (AssingName name' as ass), Expr((Plus|Minus) as op, Var name, e)) when name' = name ->
+            | Assign(isLocal, ([AssingName name'] as ass), Expr((Plus|Minus) as op, Var name, e)) when name' = name ->
                 [showLocal isLocal << showAssign ass << spaceBetween (Expr.Printer.ops op << showChar '=') << showExpr e]
-            | Assign(isLocal, (AssingName name' as ass), Expr((Plus|Minus) as op, e, Var name)) when name' = name ->
+            | Assign(isLocal, ([AssingName name'] as ass), Expr((Plus|Minus) as op, e, Var name)) when name' = name ->
                 [showLocal isLocal << showAssign ass << spaceBetween (showChar '=' << Expr.Printer.ops op) << showExpr e]
             | Assign(isLocal, ass, e) ->
                 [showLocal isLocal << showAssign ass << spaceBetween (showChar '=') << showExpr e]
@@ -165,7 +170,7 @@ module Printer =
                 ]
             | Comment s -> [showChar '!' << showString s]
             | AssignCode(ass, stmts) ->
-                let header = showAssign ass << spaceBetween (showChar '=') << showChar '{'
+                let header = showAssignmentLhs showStmtsInline ass << spaceBetween (showChar '=') << showChar '{'
                 [
                     if List.isEmpty stmts then
                         yield header << showChar '}'
