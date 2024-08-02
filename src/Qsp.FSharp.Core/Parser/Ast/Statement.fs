@@ -32,80 +32,99 @@ module Parser =
             >>. appendVarHighlight range (NumericType, name) VarHighlightKind.WriteAccess isLocal
             >>. preturn name
 
-    let pAssign stmts =
-        let pexpr = pexpr stmts
-        let assdef isLocal name (ass: AssignWhat list) =
-            let asscode =
-                let p =
-                    between (pchar '{' >>. spaces) (spaces >>. char_ws '}') stmts
-                    |>> fun stmts -> AssignCode(List.head ass, stmts)
-                updateScope (fun ss ->
-                    { ss with
-                        Scopes = Scope.appendScope ss.Scopes
-                    }
-                    |> Scope.addAsWrite ("args", id)
-                    |> snd
-                    |> Scope.addAsWrite ("result", id)
-                    |> snd
-                )
-                >>? p
-                .>> updateScope (fun ss ->
-                    { ss with
-                        Scopes = Scope.removeScope ss.Scopes
-                    }
-                )
-            let str_ws s =
-                appendToken Tokens.TokenType.OperatorAssignment
-                    (pstring s)
-                .>> ws
+    let pAssign pstmts =
+        let pAssingCode pstmts lhs : _ Parser =
+            updateScope (fun ss ->
+                { ss with
+                    Scopes = Scope.appendScope ss.Scopes
+                }
+                |> Scope.addAsWrite ("args", id)
+                |> snd
+                |> Scope.addAsWrite ("result", id)
+                |> snd
+            )
+            >>? (
+                between (pchar '{' >>. spaces) (spaces >>. char_ws '}') pstmts
+                |>> fun stmts -> AssignCode(lhs, stmts)
+            )
+            .>> updateScope (fun ss ->
+                { ss with
+                    Scopes = Scope.removeScope ss.Scopes
+                }
+            )
 
-            choice [
-                str_ws "-=" >>. pexpr |>> fun defExpr -> Assign(isLocal, ass, Expr.Expr(Minus, Var name, defExpr))
-                str_ws "/=" >>. pexpr |>> fun defExpr -> Assign(isLocal, ass, Expr.Expr(Divide, Var name, defExpr))
-                str_ws "+=" >>. pexpr |>> fun defExpr -> Assign(isLocal, ass, Expr.Expr(Plus, Var name, defExpr))
-                str_ws "*=" >>. pexpr |>> fun defExpr -> Assign(isLocal, ass, Expr.Expr(Times, Var name, defExpr))
-                str_ws "=" >>. (asscode <|> (pexpr |>> fun defExpr -> Assign(isLocal, ass, defExpr)))
-            ]
+        let pexpr = pexpr pstmts
 
-        let assign isLocal name =
-            let arr =
+        let str_ws s =
+            appendToken Tokens.TokenType.OperatorAssignment
+                (pstring s)
+            .>> ws
+
+        let assdef isLocal (args: AssignWhat list) =
+            match args with
+            | [ arg ] ->
+                let var = AssignWhat.getVar arg
+                choice [
+                    str_ws "-=" >>. pexpr |>> fun defExpr ->
+                        Assign(isLocal, args, Expr.Expr(Minus, Var var, defExpr))
+                    str_ws "/=" >>. pexpr |>> fun defExpr ->
+                        Assign(isLocal, args, Expr.Expr(Divide, Var var, defExpr))
+                    str_ws "+=" >>. pexpr |>> fun defExpr ->
+                        Assign(isLocal, args, Expr.Expr(Plus, Var var, defExpr))
+                    str_ws "*=" >>. pexpr |>> fun defExpr ->
+                        Assign(isLocal, args, Expr.Expr(Times, Var var, defExpr))
+                    str_ws "=" >>. (
+                        pAssingCode pstmts arg
+                        <|> (pexpr |>> fun defExpr -> Assign(isLocal, args, defExpr))
+                    )
+                ]
+            | args ->
+                str_ws "=" >>. (
+                    pAssingCode pstmts (List.head args)
+                    <|> (pexpr |>> fun defExpr -> Assign(isLocal, args, defExpr))
+                )
+
+        let pAssignArg isLocal : _ Parser =
+            let pVarName =
+                pstringVar VarHighlightKind.WriteAccess isLocal
+                <|> (pImplicitVarWhenAssign ident isLocal |>> fun name -> NumericType, name)
+
+            let pArray =
                 between
                     (appendToken Tokens.TokenType.BraceSquareOpened (pchar '[' .>> ws))
                     (appendToken Tokens.TokenType.BraceSquareClosed (pchar ']'))
                     (sepBy pexpr (pchar ',' >>. ws))
-                |>> fun arrayArgs ->
-                    AssignArr(name, arrayArgs)
 
-            (arr .>> ws) <|>% AssignVar name |>> List.singleton >>=? assdef isLocal name
+            pVarName .>>? ws .>>.? opt pArray
+            |>> fun (var, optArray) ->
+                match optArray with
+                | None ->
+                    AssignWhat.AssignVar var
+                | Some arrayArgs ->
+                    AssignWhat.AssignArr(var, arrayArgs)
+
+        let assign isLocal =
+            pAssignArg isLocal .>>? ws
+            |>> List.singleton
+            >>=? assdef isLocal
 
         let pSetOrLet =
             appendToken Tokens.TokenType.Type
                 ((pstringCI "set" <|> pstringCI "let") .>>? notFollowedVarCont)
             .>> ws
-            >>. (pstringVar VarHighlightKind.WriteAccess false
-                <|> (pImplicitVarWhenAssign ident false |>> fun name -> NumericType, name))
-            .>>? ws >>=? assign false
+            >>. assign false
+
         let pLocal =
             appendToken Tokens.TokenType.Type
                 (pstringCI "local" .>>? notFollowedVarCont)
             .>> ws
-            >>. (pstringVar VarHighlightKind.WriteAccess true
-                <|> (pImplicitVarWhenAssign ident true |>> fun name -> NumericType, name))
-            .>> ws >>=? assign true
-        let pExplicitAssign =
-            pstringVar VarHighlightKind.WriteAccess false
-            .>>? ws >>=? assign false
+            >>. assign true
 
-        let pImlicitAssign =
-            pImplicitVarWhenAssign notFollowedByBinOpIdent false .>>? ws
-            >>=? fun name ->
-                assign false (NumericType, name)
         choice
             [
                 pLocal
                 pSetOrLet
-                pExplicitAssign
-                pImlicitAssign
+                assign false
             ]
 
     let pcallProc pstmts =

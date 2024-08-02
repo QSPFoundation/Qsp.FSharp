@@ -158,7 +158,7 @@ let assignTest =
                     "Error in Ln: 1 Col: 1"
                     "f(expr) = 42"
                     "^"
-                    "Expecting: '$', 'let' (case-insensitive), 'local' (case-insensitive) or 'set'"
+                    "Expecting: 'let' (case-insensitive), 'local' (case-insensitive) or 'set'"
                     "(case-insensitive)"
                     ""
                     "The parser backtracked after:"

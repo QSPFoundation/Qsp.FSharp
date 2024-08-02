@@ -160,6 +160,12 @@ type 'Predef PredefUndef =
     | Undef of string
 type VarName = string
 type Var = VarType * VarName
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+[<RequireQualifiedAccess>]
+module Var =
+    let getName ((_, name): Var) = name
+
 type StmtsOrRaw =
     | Raw of string
     | StaticStmts of PosStatement list
@@ -212,3 +218,13 @@ type LocationName = string
 /// - произвольный набор символов
 /// ```
 type Location = Location of LocationName * Statements
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+[<RequireQualifiedAccess>]
+module AssignWhat =
+    let getVar = function
+        | AssignWhat.AssignVar(var)
+        | AssignWhat.AssignArr(var, _) ->
+            var
+
+    let getName = getVar >> Var.getName
