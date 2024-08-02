@@ -104,8 +104,9 @@ module Parser =
                     AssignWhat.AssignArr(var, arrayArgs)
 
         let assign isLocal =
-            pAssignArg isLocal .>>? ws
-            |>> List.singleton
+            sepBy1
+                (pAssignArg isLocal .>>? ws)
+                (pchar ',' .>> ws)
             >>=? assdef isLocal
 
         let pSetOrLet =

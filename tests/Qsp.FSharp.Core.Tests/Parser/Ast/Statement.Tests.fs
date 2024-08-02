@@ -165,7 +165,7 @@ let assignTest =
                     "  Error in Ln: 1 Col: 2"
                     "  f(expr) = 42"
                     "   ^"
-                    "  Expecting: '*=', '+=', '-=', '/=', '=', '[' or '_'"
+                    "  Expecting: '*=', '+=', ',', '-=', '/=', '=', '[' or '_'"
                     ""
                 ] |> String.concat "\r\n"
             Assert.Equal("", Left exp, runExpr input)
@@ -187,6 +187,60 @@ let assignTest =
                 runExpr input
                 |> Option.ofEither
             Assert.None("", act)
+        testCase "num, $str, arrNum[0], $arrStr['key'] = $tuple" <| fun () ->
+            Assert.Equal (
+                "",
+                Right (
+                    Assign (
+                        false,
+                        [
+                            AssignWhat.AssignVar (VarType.NumericType, "num")
+                            AssignWhat.AssignVar (VarType.StringType, "str")
+                            AssignArr (
+                                (NumericType, "arrNum"),
+                                [
+                                    Expr.Val (Value.Int 0)
+                                ]
+                            )
+                            AssignArr (
+                                (VarType.StringType, "arrStr"),
+                                [
+                                    Expr.Val (Value.String [[LineKind.StringKind "key"]])
+                                ]
+                            )
+                        ],
+                        Expr.Var (VarType.StringType, "tuple")
+                    )
+                ),
+                runExpr "num, $str, arrNum[0], $arrStr['key'] = $tuple"
+            )
+        testCase "local num, $str, arrNum[0], $arrStr['key'] = $tuple" <| fun () ->
+            Assert.Equal (
+                "",
+                Right (
+                    Assign (
+                        true,
+                        [
+                            AssignWhat.AssignVar (VarType.NumericType, "num")
+                            AssignWhat.AssignVar (VarType.StringType, "str")
+                            AssignArr (
+                                (NumericType, "arrNum"),
+                                [
+                                    Expr.Val (Value.Int 0)
+                                ]
+                            )
+                            AssignArr (
+                                (VarType.StringType, "arrStr"),
+                                [
+                                    Expr.Val (Value.String [[LineKind.StringKind "key"]])
+                                ]
+                            )
+                        ],
+                        Expr.Var (VarType.StringType, "tuple")
+                    )
+                ),
+                runExpr "local num, $str, arrNum[0], $arrStr['key'] = $tuple"
+            )
     ]
 
 [<Tests>]
