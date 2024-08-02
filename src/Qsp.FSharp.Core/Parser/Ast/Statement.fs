@@ -316,17 +316,21 @@ module Parser =
             >>. ws >>. pInlineStmts
             .>> genKeywordParser Tokens.TokenType.While "while"
             .>> ws .>>. (pexpr pstmts)
-            .>>. opt (updateScope (fun ss ->
-                        { ss with
-                            Scopes = Scope.appendScope ss.Scopes
-                        })
-                    >>? genKeywordParser Tokens.TokenType.Step "step"
-                    .>> ws >>. pInlineStmts
-                    .>> updateScope (fun ss ->
-                            { ss with
-                                Scopes = Scope.removeScope ss.Scopes
-                            })
-                    )
+            .>>. opt (
+                updateScope (fun ss ->
+                    { ss with
+                        Scopes = Scope.appendScope ss.Scopes
+                    }
+                )
+                >>? (
+                    genKeywordParser Tokens.TokenType.Step "step" .>> ws >>. pInlineStmts
+                )
+                .>> updateScope (fun ss ->
+                    { ss with
+                        Scopes = Scope.removeScope ss.Scopes
+                    }
+                )
+            )
             .>> pcolonKeyword
         let p =
             pipe2
