@@ -10,13 +10,16 @@ module Parser =
     open Qsp.Parser.Ast
 
     module Intermediate =
+        let skipSeparators1 =
+            skipMany1 (ppunctuationTerminator .>> ws)
+
         let pInlineStmts pstmt =
             updateScope (fun scopeSystem ->
                 { scopeSystem with
                     Scopes = Scope.appendScope scopeSystem.Scopes
                 }
             )
-            >>. many (pstmt .>> ws .>> skipMany (ppunctuationTerminator .>> ws))
+            >>. sepEndBy (pstmt .>> ws) skipSeparators1
             .>> updateScope (fun scopeSystem ->
                 { scopeSystem with
                     Scopes = Scope.removeScope scopeSystem.Scopes
@@ -29,7 +32,7 @@ module Parser =
                     Scopes = Scope.appendScope scopeSystem.Scopes
                 }
             )
-            >>? many1 (pstmt .>> ws .>> skipMany (ppunctuationTerminator .>> ws))
+            >>? sepEndBy1 (pstmt .>> ws) skipSeparators1
             .>> updateScope (fun scopeSystem ->
                 { scopeSystem with
                     Scopes = Scope.removeScope scopeSystem.Scopes
