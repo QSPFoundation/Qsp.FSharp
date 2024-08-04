@@ -7,10 +7,13 @@ module Printer =
 
     open Qsp.Ast
 
-    let show indentsOption isSplitStringPl xs =
-        List.map (lines << Location.Printer.showLoc indentsOption isSplitStringPl) xs
+    let show indentsOption isSplitStringPl (document: Document) =
+        document
+        |> List.map (
+            DocumentElement.Printer.show indentsOption isSplitStringPl
+        )
 
 let print indentsOption isSplitStringPl xs =
     Printer.show indentsOption isSplitStringPl xs
-    |> joinEmpty "\n\n"
+    |> joinEmpty "\n"
     |> show
