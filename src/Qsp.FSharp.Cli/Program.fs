@@ -296,10 +296,13 @@ let main argv =
                     match Document.startOnFile enc path with
                     | FParsec.CharParsers.Success(locs, st, _) ->
                         locs
-                        |> List.choose (fun (Location (locName, loc)) ->
-                            match patternMatching pattern loc with
-                            | [] -> None
-                            | xs -> Some(locName, xs)
+                        |> List.choose (fun x ->
+                            match x with
+                            | DocumentElement.Location (Location (locName, loc)) ->
+                                match patternMatching pattern loc with
+                                | [] -> None
+                                | xs -> Some(locName, xs)
+                            | _ -> None
                         )
                         |> fun res -> Right (path, res)
                     | FParsec.CharParsers.Failure(errMsg, err, _) ->

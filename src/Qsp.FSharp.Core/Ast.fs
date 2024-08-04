@@ -219,6 +219,13 @@ type LocationName = string
 /// ```
 type Location = Location of LocationName * Statements
 
+[<RequireQualifiedAccess>]
+type DocumentElement =
+    | Location of Location
+    | CommentLine of string
+
+type Document = DocumentElement list
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 [<RequireQualifiedAccess>]
 module AssignWhat =

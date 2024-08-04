@@ -18,6 +18,7 @@
     <Compile Include="Printer\Ast\Expr.fs" />
     <Compile Include="Printer\Ast\Statement.fs" />
     <Compile Include="Printer\Ast\Location.fs" />
+    <Compile Include="Printer\Ast\DocumentElement.fs" />
     <Compile Include="Printer\Ast\Document.fs" />
     <Compile Include="Parser\Tokens.fs" />
     <Compile Include="Parser\ParserGeneric.fs" />
@@ -26,6 +27,7 @@
     <Compile Include="Parser\Ast\Statement.fs" />
     <Compile Include="Parser\Ast\Statements.fs" />
     <Compile Include="Parser\Ast\Location.fs" />
+    <Compile Include="Parser\Ast\DocumentElement.fs" />
     <Compile Include="Parser\Ast\Document.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
