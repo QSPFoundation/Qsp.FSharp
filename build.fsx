@@ -21,8 +21,9 @@ let serverProjPath = serverProjDir </> sprintf "%s.fsproj" serverProjName
 let parserProjName = "Qsp.FSharp.Core"
 let parserProjDir = "src" </> "Qsp.FSharp.Core"
 let parserProjPath = parserProjDir </> sprintf "%s.fsproj" parserProjName
-let utilityProjName = "Utility"
-let utilityProjpath = "Utility" </> sprintf "%s.fsproj" utilityProjName
+let utilityProjDir = "src" </> "Qsp.FSharp.Cli"
+let utilityProjName = "Qsp.FSharp.Cli"
+let utilityProjPath = utilityProjDir </> sprintf "%s.fsproj" utilityProjName
 // --------------------------------------------------------------------------------------
 // Helpers
 // --------------------------------------------------------------------------------------
@@ -167,7 +168,7 @@ Target.create "BuildTest" (fun _ ->
 )
 
 Target.create "BuildUtility" (fun _ ->
-    utilityProjpath
+    utilityProjPath
     |> Fake.IO.Path.getDirectory
     |> dotnetBuild
 )
