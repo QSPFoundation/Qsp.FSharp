@@ -200,7 +200,7 @@ let parse patternRaw locs =
 
 [<EntryPoint>]
 let main argv =
-    let argParser = ArgumentParser.Create<CliArguments>(programName = "Utility.exe")
+    let argParser = ArgumentParser.Create<CliArguments>(programName = "qsp-toolbox")
     match argv with
     | [||] ->
         argParser.PrintUsage() |> printfn "%s"
