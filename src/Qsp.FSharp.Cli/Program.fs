@@ -87,7 +87,8 @@ let doDir txt2qspConfig updateSourceIfExists threads dir =
     xs
     |> threadsExec threads (doFile txt2qspConfig updateSourceIfExists)
 
-type CliArguments =
+[<RequireQualifiedAccess>]
+type SearchCliArguments =
     | Working_Directory of path:FilePath
     | [<Mandatory>] Txt2qsp of path:FilePath * args:string
     | Source_Path of path:FilePath
@@ -101,6 +102,16 @@ type CliArguments =
             | Source_Path _ -> "path to encoded game (.qps) or decoded source game (.qsps)."
             | UpdateSourceIfExists -> "decodes the source, even if it exists."
             | Threads _ -> "number of threads per file, by default is 1."
+
+[<RequireQualifiedAccess>]
+type CliArguments =
+    | [<CliPrefix(CliPrefix.None)>] Search of ParseResults<SearchCliArguments>
+
+    interface IArgParserTemplate with
+        member s.Usage =
+            match s with
+            | Search _ -> "searching code in QSP games by pattern"
+
 module Parser =
     open FParsec
     open Qsp.Parser.Generic
@@ -219,109 +230,111 @@ let main argv =
             1
 
         | Ok results ->
-            let updateSourceIfExists =
-                results.TryGetResult UpdateSourceIfExists
-                |> Option.isSome
+            match results.GetSubCommand() with
+            | CliArguments.Search results ->
+                let updateSourceIfExists =
+                    results.TryGetResult SearchCliArguments.UpdateSourceIfExists
+                    |> Option.isSome
 
-            let txt2qspConfig =
-                let path, args = results.GetResult Txt2qsp
-                { Path = path; Args = args }
+                let txt2qspConfig =
+                    let path, args = results.GetResult SearchCliArguments.Txt2qsp
+                    { Path = path; Args = args }
 
-            let threads =
-                results.TryGetResult Threads
-                |> Option.defaultValue 1
+                let threads =
+                    results.TryGetResult SearchCliArguments.Threads
+                    |> Option.defaultValue 1
 
-            let folder =
-                results.TryGetResult Working_Directory
+                let folder =
+                    results.TryGetResult SearchCliArguments.Working_Directory
 
-            let folderExec folder =
-                doDir txt2qspConfig updateSourceIfExists threads folder
+                let folderExec folder =
+                    doDir txt2qspConfig updateSourceIfExists threads folder
 
-            let path =
-                results.TryGetResult Source_Path
+                let path =
+                    results.TryGetResult SearchCliArguments.Source_Path
 
-            let pathExec () =
-                path
-                |> Option.map (fun src ->
-                    match String.toLower (System.IO.Path.GetExtension src) with
-                    | ".qsp" | ".gam" ->
-                        doFile txt2qspConfig updateSourceIfExists src
-                    | ".qsps" -> Right src // TODO: updateSourceIfExists
-                    | ext ->
-                        Left (sprintf "expected .qsp or .qsps extension but %s\nin\n%s" ext src)
-                )
-
-            let getPattern () =
-                let getPattern () =
-                    // the ideal solution would be to parse the text on the fly, but need to somehow define the boundaries of Stream
-                    let terminator = ";;"
-                    printfn "input statement (`%s` — end):" terminator
-                    let rec f acc =
-                        let line = System.Console.ReadLine()
-                        let acc = line::acc
-                        if line.Contains terminator then
-                            List.rev acc |> System.String.Concat
-                        else
-                            f acc
-                    f []
-                let rec f () =
-                    let patternRaw = getPattern ()
-                    match Parser.parserStmt patternRaw with
-                    | FParsec.CharParsers.Success(pattern, st, _) ->
-                        pattern
-                    | FParsec.CharParsers.Failure(err, st, _) ->
-                        printfn "%s" err
-                        f ()
-                f ()
-
-            let parse locs =
-                let pattern = getPattern ()
-                locs
-                |> List.map (fun (Location (locName, loc)) ->
-                    locName, patternMatching pattern loc
-                )
-
-            let all () =
-                match folder with
-                | Some folder ->
-                    let pattern = getPattern ()
-                    folderExec folder
-                    |> threadsExec threads
-                        (Either.bind (fun path ->
-                            ThreadSafePrint.printfn "parse: %s" path
-                            match Document.startOnFile enc path with
-                            | FParsec.CharParsers.Success(locs, st, _) ->
-                                locs
-                                |> List.choose (fun x ->
-                                    match x with
-                                    | DocumentElement.Location (Location (locName, loc)) ->
-                                        match patternMatching pattern loc with
-                                        | [] -> None
-                                        | xs -> Some(locName, xs)
-                                    | _ -> None
-                                )
-                                |> fun res -> Right (path, res)
-                            | FParsec.CharParsers.Failure(errMsg, err, _) ->
-                                Left errMsg
-                        )
+                let pathExec () =
+                    path
+                    |> Option.map (fun src ->
+                        match String.toLower (System.IO.Path.GetExtension src) with
+                        | ".qsp" | ".gam" ->
+                            doFile txt2qspConfig updateSourceIfExists src
+                        | ".qsps" -> Right src // TODO: updateSourceIfExists
+                        | ext ->
+                            Left (sprintf "expected .qsp or .qsps extension but %s\nin\n%s" ext src)
                     )
-                | None -> [| Left "not defined --working-directory" |]
-            // let tree =
-            //     pathExec ()
-            //     |> Either.bind (fun path ->
-            //         match Qsp.Parser.Main.startOnFile enc path with
-            //         | FParsec.CharParsers.Success(tree, st, _) ->
-            //             Right tree
-            //         | FParsec.CharParsers.Failure(err, st, _) ->
-            //             Left err
-            //     )
-            // tree
-            // |> Either.bind parse
-            // |> sprintf "%A"
-            // |> printfn "%A"
 
-            all ()
-            |> Seq.map (sprintf "%A")
-            |> uncurry System.IO.File.WriteAllLines "output.log"
+                let getPattern () =
+                    let getPattern () =
+                        // the ideal solution would be to parse the text on the fly, but need to somehow define the boundaries of Stream
+                        let terminator = ";;"
+                        printfn "input statement (`%s` — end):" terminator
+                        let rec f acc =
+                            let line = System.Console.ReadLine()
+                            let acc = line::acc
+                            if line.Contains terminator then
+                                List.rev acc |> System.String.Concat
+                            else
+                                f acc
+                        f []
+                    let rec f () =
+                        let patternRaw = getPattern ()
+                        match Parser.parserStmt patternRaw with
+                        | FParsec.CharParsers.Success(pattern, st, _) ->
+                            pattern
+                        | FParsec.CharParsers.Failure(err, st, _) ->
+                            printfn "%s" err
+                            f ()
+                    f ()
 
-            0
+                let parse locs =
+                    let pattern = getPattern ()
+                    locs
+                    |> List.map (fun (Location (locName, loc)) ->
+                        locName, patternMatching pattern loc
+                    )
+
+                let all () =
+                    match folder with
+                    | Some folder ->
+                        let pattern = getPattern ()
+                        folderExec folder
+                        |> threadsExec threads
+                            (Either.bind (fun path ->
+                                ThreadSafePrint.printfn "parse: %s" path
+                                match Document.startOnFile enc path with
+                                | FParsec.CharParsers.Success(locs, st, _) ->
+                                    locs
+                                    |> List.choose (fun x ->
+                                        match x with
+                                        | DocumentElement.Location (Location (locName, loc)) ->
+                                            match patternMatching pattern loc with
+                                            | [] -> None
+                                            | xs -> Some(locName, xs)
+                                        | _ -> None
+                                    )
+                                    |> fun res -> Right (path, res)
+                                | FParsec.CharParsers.Failure(errMsg, err, _) ->
+                                    Left errMsg
+                            )
+                        )
+                    | None -> [| Left "not defined --working-directory" |]
+                // let tree =
+                //     pathExec ()
+                //     |> Either.bind (fun path ->
+                //         match Qsp.Parser.Main.startOnFile enc path with
+                //         | FParsec.CharParsers.Success(tree, st, _) ->
+                //             Right tree
+                //         | FParsec.CharParsers.Failure(err, st, _) ->
+                //             Left err
+                //     )
+                // tree
+                // |> Either.bind parse
+                // |> sprintf "%A"
+                // |> printfn "%A"
+
+                all ()
+                |> Seq.map (sprintf "%A")
+                |> uncurry System.IO.File.WriteAllLines "output.log"
+
+                0
