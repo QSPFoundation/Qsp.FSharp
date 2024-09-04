@@ -34,12 +34,12 @@
             "problemMatcher": []
         },
         {
-            "label": "BuildUtility",
+            "label": "CliBuild",
             "type": "shell",
             "command": "build.cmd",
             "args": [
                 "-t",
-                "BuildUtility"
+                "CliBuild"
             ],
             "problemMatcher": []
         },

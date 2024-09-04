@@ -167,7 +167,7 @@ Target.create "BuildTest" (fun _ ->
     |> dotnetBuild
 )
 
-Target.create "BuildUtility" (fun _ ->
+Target.create "CliBuild" (fun _ ->
     utilityProjPath
     |> Fake.IO.Path.getDirectory
     |> dotnetBuild
