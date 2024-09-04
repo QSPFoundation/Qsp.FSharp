@@ -2,11 +2,11 @@ module Qsp.FSharp.Cli.Search
 open Argu
 open FsharpMyExtension
 open FsharpMyExtension.Either
-
 open Qsp.Ast
 open Qsp.Parser.Ast
 
-type FilePath = string
+open Qsp.FSharp.Cli.Commons
+
 type Txt2qspConfig = { Path: string; Args: string }
 
 let qspSourceExt = ".qsps"

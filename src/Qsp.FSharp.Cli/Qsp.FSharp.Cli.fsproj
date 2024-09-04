@@ -11,7 +11,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <Compile Include="Commons.fs" />
     <Compile Include="Search.fs" />
+    <Compile Include="Lint.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
