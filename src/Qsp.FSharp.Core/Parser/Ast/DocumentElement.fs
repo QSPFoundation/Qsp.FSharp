@@ -31,7 +31,8 @@ module Parser =
         choice [
             newlineReturn "" <?> "empty comment line"
             appendToken Tokens.TokenType.Comment
-                (many1Satisfy2L ((<>) '#') ((<>) '\n') "comment line" .>> optional newline)
+                (many1Satisfy2L ((<>) '#') ((<>) '\n') "comment line")
+            .>> optional newline
         ]
 
     let parser : DocumentElement Parser =
