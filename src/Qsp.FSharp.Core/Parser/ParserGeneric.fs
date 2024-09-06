@@ -2,7 +2,9 @@ module Qsp.Parser.Generic
 open FParsec
 open FsharpMyExtension
 open FsharpMyExtension.Either
+
 open Qsp
+open Qsp.Tokens
 
 let fparsecPosToPos (pos:FParsec.Position) =
     Ast.Position.create pos.StreamName pos.Index pos.Line pos.Column
@@ -93,15 +95,56 @@ type HoverDescription =
     // | VarDescription of Defines.
     | RawDescription of string
 
-type 'a Parser = Parser<'a, State>
+[<RequireQualifiedAccess>]
+type SemanticErrorType =
+    | UndefinedFunction
+    | UndefinedFunctionOverload of string * Defines.VarType * Defines.OverloadType<unit>
+    | UndefinedProcedureOverload of string * Defines.OverloadType<unit>
+    | UndefinedProcedure
+    | ProcedureOverride
+    | FunctionOverride
+    | RedundantEnd
+    | LocationDuplication of InlineRange
 
-and State =
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+[<RequireQualifiedAccess>]
+module SemanticErrorType =
+    let getDescription (typ: SemanticErrorType) =
+        match typ with
+        | SemanticErrorType.RedundantEnd ->
+            "Лишний `end`"
+        | SemanticErrorType.UndefinedFunction ->
+            [
+                "Такой функции нет, а если есть, то напишите мне, автору расширения, пожалуйста, и я непременно добавлю."
+                "Когда-нибудь добавлю: 'Возможно, вы имели ввиду: ...'"
+            ]
+            |> String.concat "\n"
+        | SemanticErrorType.UndefinedProcedure ->
+            [
+                "Такой процедуры нет, а если есть, то напишите мне, автору расширения, пожалуйста, и я непременно добавлю."
+                "Когда-нибудь добавлю: 'Возможно, вы имели ввиду: ...'"
+            ]
+            |> String.concat "\n"
+        | SemanticErrorType.ProcedureOverride ->
+            "Нельзя переопределять процедуру"
+        | SemanticErrorType.FunctionOverride ->
+            "Нельзя переопределять функцию"
+        | SemanticErrorType.LocationDuplication r ->
+            sprintf "Локация уже определена в\n%A" r
+        | SemanticErrorType.UndefinedFunctionOverload(functionName, returnType, overloadType) ->
+            Defines.Show.printFuncSignature functionName returnType overloadType
+            |> sprintf "Ожидается одна из перегрузок:\n%s"
+        | SemanticErrorType.UndefinedProcedureOverload(procedureName, overloadType) ->
+            Defines.Show.printSignature procedureName overloadType
+            |> sprintf "Ожидается одна из перегрузок:\n%s"
+
+type State =
     {
         Tokens: Tokens.Token list
         /// Здесь ошибки только те, что могут определиться во время поверхностного семантического разбора, то есть это то, что не нуждается в нескольких проходах. Например, можно определить, что в коде пытаются переопределить встроенную функцию, и это будет ошибкой.
         ///
         /// А если хочется понять, что инструкция `gt 'some loc'` верна, то придется пройтись дважды, чтобы определить, существует ли вообще `'some loc'`. Если бы локации определялись последовательно, то есть нельзя было бы обратиться к той, что — ниже, тогда потребовался только один проход. Но в таком случае придется вводить что-то вроде `rec`, чтобы перейти на локацию, определенную ниже. Но всё это возвращает к той же задаче, потому ну его.
-        SemanticErrors: (Tokens.InlineRange * string) list
+        SemanticErrors: (Tokens.InlineRange * SemanticErrorType) list
         /// Информация обо всём и вся
         Hovers: (Tokens.InlineRange * HoverDescription) list
         Highlights: Highlights
@@ -115,6 +158,8 @@ and State =
         DoubleQuotNestedCount: int
         HtmlAttDoubleNested: int
     }
+
+type 'a Parser = Parser<'a, State>
 
 module State =
     let empty =
@@ -230,10 +275,13 @@ let appendHover2 msg range =
         { st with Hovers = (range, msg) :: st.Hovers }
     )
 
-let appendSemanticError range msg =
+let appendSemanticError range typ =
     updateUserState (fun st ->
-        { st with SemanticErrors =
-                    (range, msg) :: st.SemanticErrors })
+        { st with
+            SemanticErrors =
+                (range, typ) :: st.SemanticErrors
+        }
+    )
 
 let appendHover msg p =
     (getPosition .>>.? p .>>. getPosition)

@@ -8,6 +8,7 @@ open LanguageServerProtocol.Types
 open Qsp
 open Qsp.Printer
 open Qsp.Printer.Ast
+open Qsp.Parser.Generic
 
 // берётся — `FSharp.Compiler.Range.range`
 type VscodeRange =
@@ -316,7 +317,9 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
             genericFromState st
 
             st.SemanticErrors
-            |> List.map (mapFst Position.ofInlineRange)
+            |> List.map (fun (pos, typ) ->
+                Position.ofInlineRange pos, SemanticErrorType.getDescription typ
+            )
             |> publishDiagnostics uri
             |> Async.RunSynchronously
 
@@ -357,7 +360,9 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
             // )
             let xs =
                 st.SemanticErrors
-                |> List.map (mapFst Position.ofInlineRange)
+                |> List.map (fun (pos, typ) ->
+                    Position.ofInlineRange pos, SemanticErrorType.getDescription typ
+                )
             (range, msg) :: xs
             |> publishDiagnostics uri
             |> Async.RunSynchronously

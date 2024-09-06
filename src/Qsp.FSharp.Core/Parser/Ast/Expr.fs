@@ -104,12 +104,7 @@ module Parser =
                         let tokenType = TokenType.Function
                         fun (funType, name) range ->
                             let p =
-                                [
-                                    "Такой функции нет, а если есть, то напишите мне, автору расширения, пожалуйста, и я непременно добавлю."
-                                    "Когда-нибудь добавлю: 'Возможно, вы имели ввиду: ...'"
-                                ]
-                                |> String.concat "\n"
-                                |> appendSemanticError range
+                                appendSemanticError range SemanticErrorType.UndefinedFunction
                             p
                             >>. appendToken2 tokenType range
                             >>% Func(Undef name, args)
@@ -178,10 +173,8 @@ module Parser =
                         |> Defines.getFuncByOverloadType sign
                         |> function
                             | None ->
-                                let msg =
-                                    Defines.Show.printFuncSignature stringName returnType sign
-                                    |> sprintf "Ожидается одна из перегрузок:\n%s"
-                                appendSemanticError range msg
+                                SemanticErrorType.UndefinedFunctionOverload(stringName, returnType, sign)
+                                |> appendSemanticError range
                             | Some () ->
                                 preturn ()
                     p

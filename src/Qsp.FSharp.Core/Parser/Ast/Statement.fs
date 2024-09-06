@@ -22,9 +22,9 @@ module Parser =
                     appendHover2 (RawDescription dscr) range
                 | None ->
                     if Map.containsKey nameLower Defines.procs then
-                        appendSemanticError range "Нельзя переопределять процедуру"
+                        appendSemanticError range SemanticErrorType.ProcedureOverride
                     elif Map.containsKey nameLower Defines.functionsByName then
-                        appendSemanticError range "Нельзя переопределять функцию"
+                        appendSemanticError range SemanticErrorType.FunctionOverride
                     else
                         let dscr = "Пользовательская глобальная переменная числового типа"
                         appendHover2 (RawDescription dscr) range
@@ -142,12 +142,7 @@ module Parser =
                             appendHover2 (RawDescription dscr) range
                             >>% Some sign
                         | None ->
-                            [
-                                "Такой процедуры нет, а если есть, то напишите мне, автору расширения, пожалуйста, и я непременно добавлю."
-                                "Когда-нибудь добавлю: 'Возможно, вы имели ввиду: ...'"
-                            ]
-                            |> String.concat "\n"
-                            |> appendSemanticError range
+                            appendSemanticError range SemanticErrorType.UndefinedProcedure
                             >>% None
                 appendToken2 Tokens.TokenType.Procedure range
                 >>. p
@@ -246,10 +241,8 @@ module Parser =
                 |> Defines.getFuncByOverloadType x
                 |> function
                     | None ->
-                        let msg =
-                            Defines.Show.printSignature name x
-                            |> sprintf "Ожидается одна из перегрузок:\n%s"
-                        appendSemanticError range msg
+                        SemanticErrorType.UndefinedProcedureOverload(name, x)
+                        |> appendSemanticError range
                     | Some () ->
                         preturn ()
                 >>. pLoc

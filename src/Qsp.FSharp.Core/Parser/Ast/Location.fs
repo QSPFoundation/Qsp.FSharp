@@ -21,7 +21,7 @@ module Parser =
             applyRange (pstringCI "end" .>>? notFollowedVarCont)
             >>= fun (range, _) ->
                 appendToken2 Tokens.TokenType.End range
-                >>. appendSemanticError range "Лишний `end`"
+                >>. appendSemanticError range SemanticErrorType.RedundantEnd
         pipe2
             (psharpKeyword .>> ws
             >>. (applyRange
@@ -34,7 +34,7 @@ module Parser =
                         pGetDefLocPos locName
                         >>= function
                             | Some r ->
-                                sprintf "Локация уже определена в\n%A" r
+                                SemanticErrorType.LocationDuplication r
                                 |> appendSemanticError r2
                             | None -> preturn ()
 

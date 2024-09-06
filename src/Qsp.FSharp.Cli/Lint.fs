@@ -1,6 +1,7 @@
 module Qsp.FSharp.Cli.Lint
 open Qsp.Tokens
 open Qsp.Parser
+open Qsp.Parser.Generic
 open Qsp.Parser.Ast
 open FParsec
 open Argu
@@ -39,8 +40,8 @@ module LintCliArguments =
             )
             state.SemanticErrors
             |> List.rev
-            |> List.iter (fun (range, description) ->
-                format range description
+            |> List.iter (fun (range, typ) ->
+                format range (SemanticErrorType.getDescription typ)
             )
 
         match result with
