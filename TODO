@@ -1,5 +1,9 @@
 # Задания
 
+## refactor!: typifies an semantic error description
+
+Нужно вынести надписи "Такой функции не найдено", "лишний End" и т.д. из массива семантических ошибок в отдельный словарь, а заместо `description` сделать enum `SemanticErrorType`.
+
 ## feat(cli): add `format` command
 
 `format` — команда, которая форматирует QSP код.
