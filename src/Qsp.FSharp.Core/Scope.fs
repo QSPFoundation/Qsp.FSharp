@@ -6,7 +6,7 @@ type 'VarName Scopes when 'VarName : comparison = Map<'VarName, VarId> list
 
 [<RequireQualifiedAccess>]
 module Scopes =
-    let push (scopes:_ Scopes) : Scopes<_> = Map.empty::scopes
+    let pushEmpty (scopes:_ Scopes) : Scopes<_> = Map.empty::scopes
 
     let pop (scopes:_ Scopes) : Scopes<_> =
         match scopes with
@@ -32,7 +32,7 @@ module ScopeSystem =
 
     let pushEmptyScope (scopeSystem: ScopeSystem<_,_>) =
         { scopeSystem with
-            Scopes = Scopes.push scopeSystem.Scopes
+            Scopes = Scopes.pushEmpty scopeSystem.Scopes
         }
 
     let popScope (scopeSystem: ScopeSystem<_,_>) =
