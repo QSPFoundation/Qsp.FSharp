@@ -112,14 +112,3 @@ let removeScope (scopes:_ Scopes) =
     match scopes with
     | x::xs -> xs
     | [] -> failwith "scopes is empty"
-
-let test () =
-    let init =
-        {
-            Scopes = [Map.empty]
-            NewVarId = 0
-            Result = Map.empty
-        }
-
-    let (_, x) = addAsRead ("x", (fun xs -> (0, 0)::xs)) init
-    addAsRead ("x", (fun xs -> (0, 0)::xs)) x
