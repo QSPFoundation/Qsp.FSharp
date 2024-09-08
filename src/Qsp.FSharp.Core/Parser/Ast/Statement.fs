@@ -49,7 +49,7 @@ module Parser =
             )
             .>> updateScope (fun ss ->
                 { ss with
-                    Scopes = Scope.removeScope ss.Scopes
+                    Scopes = Scope.Scopes.pop ss.Scopes
                 }
             )
 
@@ -320,7 +320,7 @@ module Parser =
                 )
                 .>> updateScope (fun ss ->
                     { ss with
-                        Scopes = Scope.removeScope ss.Scopes
+                        Scopes = Scope.Scopes.pop ss.Scopes
                     }
                 )
             )
@@ -340,7 +340,7 @@ module Parser =
         >>? p
         .>> updateScope (fun ss ->
                 { ss with
-                    Scopes = Scope.removeScope ss.Scopes
+                    Scopes = Scope.Scopes.pop ss.Scopes
                 })
 
     let pAct pInlineStmts pstmts =

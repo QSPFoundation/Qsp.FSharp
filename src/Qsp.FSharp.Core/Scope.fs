@@ -8,6 +8,11 @@ type 'VarName Scopes when 'VarName : comparison = Map<'VarName, VarId> list
 module Scopes =
     let push (scopes:_ Scopes) : Scopes<_> = Map.empty::scopes
 
+    let pop (scopes:_ Scopes) : Scopes<_> =
+        match scopes with
+        | x::xs -> xs
+        | [] -> failwith "scopes is empty"
+
 type ScopeSystem<'VarName, 'Value> when 'VarName : comparison =
     {
         Scopes: 'VarName Scopes
@@ -109,8 +114,3 @@ let addAsWrite (varName:'VarName, getValue) (scopeSystem: ScopeSystem<_,_>) =
                 }
             varId, x
     | [] -> failwith "the scope cannot be empty"
-
-let removeScope (scopes:_ Scopes) : Scopes<_> =
-    match scopes with
-    | x::xs -> xs
-    | [] -> failwith "scopes is empty"

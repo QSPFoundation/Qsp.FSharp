@@ -22,7 +22,7 @@ module Parser =
             >>. sepEndBy (pstmt .>> ws) skipSeparators1
             .>> updateScope (fun scopeSystem ->
                 { scopeSystem with
-                    Scopes = Scope.removeScope scopeSystem.Scopes
+                    Scopes = Scope.Scopes.pop scopeSystem.Scopes
                 }
             )
 
@@ -35,7 +35,7 @@ module Parser =
             >>? sepEndBy1 (pstmt .>> ws) skipSeparators1
             .>> updateScope (fun scopeSystem ->
                 { scopeSystem with
-                    Scopes = Scope.removeScope scopeSystem.Scopes
+                    Scopes = Scope.Scopes.pop scopeSystem.Scopes
                 }
             )
 
@@ -51,7 +51,7 @@ module Parser =
             )
             .>> updateScope (fun scopeSystem ->
                 { scopeSystem with
-                    Scopes = Scope.removeScope scopeSystem.Scopes
+                    Scopes = Scope.Scopes.pop scopeSystem.Scopes
                 }
             )
 
@@ -67,7 +67,7 @@ module Parser =
             )
             .>> updateScope (fun scopeSystem ->
                 { scopeSystem with
-                    Scopes = Scope.removeScope scopeSystem.Scopes
+                    Scopes = Scope.Scopes.pop scopeSystem.Scopes
                 }
             )
 

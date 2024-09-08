@@ -22,7 +22,7 @@ module Parser =
         >>? Location.Parser.ploc
         .>> updateScope (fun ss ->
             { ss with
-                Scopes = Scope.removeScope ss.Scopes
+                Scopes = Scope.Scopes.pop ss.Scopes
             }
         )
         .>> optional newline
