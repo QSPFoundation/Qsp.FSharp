@@ -16,20 +16,12 @@ module Parser =
         let pInlineStmts pstmt =
             updateScope Scope.ScopeSystem.pushEmptyScope
             >>. sepEndBy (pstmt .>> ws) skipSeparators1
-            .>> updateScope (fun scopeSystem ->
-                { scopeSystem with
-                    Scopes = Scope.Scopes.pop scopeSystem.Scopes
-                }
-            )
+            .>> updateScope Scope.ScopeSystem.popScope
 
         let pInlineStmts1 pstmt =
             updateScope Scope.ScopeSystem.pushEmptyScope
             >>? sepEndBy1 (pstmt .>> ws) skipSeparators1
-            .>> updateScope (fun scopeSystem ->
-                { scopeSystem with
-                    Scopes = Scope.Scopes.pop scopeSystem.Scopes
-                }
-            )
+            .>> updateScope Scope.ScopeSystem.popScope
 
         let pstmts pstmt =
             updateScope Scope.ScopeSystem.pushEmptyScope
@@ -37,11 +29,7 @@ module Parser =
                 pstmt .>> spaces
                 .>> (skipMany (ppunctuationTerminator .>> spaces))
             )
-            .>> updateScope (fun scopeSystem ->
-                { scopeSystem with
-                    Scopes = Scope.Scopes.pop scopeSystem.Scopes
-                }
-            )
+            .>> updateScope Scope.ScopeSystem.popScope
 
         let pstmts1 pstmt =
             updateScope Scope.ScopeSystem.pushEmptyScope
@@ -49,11 +37,7 @@ module Parser =
                 pstmt .>> spaces
                 .>> (skipMany (ppunctuationTerminator .>> spaces))
             )
-            .>> updateScope (fun scopeSystem ->
-                { scopeSystem with
-                    Scopes = Scope.Scopes.pop scopeSystem.Scopes
-                }
-            )
+            .>> updateScope Scope.ScopeSystem.popScope
 
         let pstmt =
             let pstmt, pstmtRef = createParserForwardedToRef<PosStatement, _>()

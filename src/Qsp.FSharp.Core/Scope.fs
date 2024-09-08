@@ -35,6 +35,11 @@ module ScopeSystem =
             Scopes = Scopes.push scopeSystem.Scopes
         }
 
+    let popScope (scopeSystem: ScopeSystem<_,_>) =
+        { scopeSystem with
+            Scopes = Scopes.pop scopeSystem.Scopes
+        }
+
     let addAsRead (varName: 'VarName, getValue) (scopeSystem: ScopeSystem<_,_>) =
         let result = scopeSystem.Result
         let rec f acc (scopes: _ Scopes) =

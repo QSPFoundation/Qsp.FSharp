@@ -45,11 +45,7 @@ module Parser =
                 between (pchar '{' >>. spaces) (spaces >>. char_ws '}') pstmts
                 |>> fun stmts -> AssignCode(lhs, stmts)
             )
-            .>> updateScope (fun ss ->
-                { ss with
-                    Scopes = Scope.Scopes.pop ss.Scopes
-                }
-            )
+            .>> updateScope Scope.ScopeSystem.popScope
 
         let pexpr = pexpr pstmts
 
@@ -312,11 +308,7 @@ module Parser =
                 >>? (
                     genKeywordParser Tokens.TokenType.Step "step" .>> ws >>. pInlineStmts
                 )
-                .>> updateScope (fun ss ->
-                    { ss with
-                        Scopes = Scope.Scopes.pop ss.Scopes
-                    }
-                )
+                .>> updateScope Scope.ScopeSystem.popScope
             )
             .>> pcolonKeyword
         let p =
@@ -329,10 +321,7 @@ module Parser =
                     Loop(preStmts, expr, stepStmts, body))
         updateScope Scope.ScopeSystem.pushEmptyScope
         >>? p
-        .>> updateScope (fun ss ->
-                { ss with
-                    Scopes = Scope.Scopes.pop ss.Scopes
-                })
+        .>> updateScope Scope.ScopeSystem.popScope
 
     let pAct pInlineStmts pstmts =
         let pactKeyword : _ Parser =

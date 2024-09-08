@@ -18,11 +18,7 @@ module Parser =
             >> snd
         )
         >>? Location.Parser.ploc
-        .>> updateScope (fun ss ->
-            { ss with
-                Scopes = Scope.Scopes.pop ss.Scopes
-            }
-        )
+        .>> updateScope Scope.ScopeSystem.popScope
         .>> optional newline
 
     let pCommentLineElement : _ Parser =
