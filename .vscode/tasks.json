@@ -9,7 +9,7 @@
             "command": "build.cmd",
             "args": [
                 "-t",
-                "RunTest"
+                "TestsRun"
             ],
             "group": {
                 "kind": "build",
@@ -25,7 +25,7 @@
                 "fake",
                 "build",
                 "-t",
-                "RunTest"
+                "TestsRun"
             ],
             "group": {
                 "kind": "test",

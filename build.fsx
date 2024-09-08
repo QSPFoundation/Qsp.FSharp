@@ -173,7 +173,7 @@ Target.create "CliBuild" (fun _ ->
     |> dotnetBuild
 )
 
-Target.create "RunTest" (fun _ ->
+Target.create "TestsRun" (fun _ ->
     dotnetRun "netcoreapp3.1" (Path.getDirectory testProjPath)
 )
 
