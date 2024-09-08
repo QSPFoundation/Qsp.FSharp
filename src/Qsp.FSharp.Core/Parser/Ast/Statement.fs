@@ -36,7 +36,7 @@ module Parser =
         let pAssingCode pstmts lhs : _ Parser =
             updateScope (fun ss ->
                 { ss with
-                    Scopes = Scope.appendScope ss.Scopes
+                    Scopes = Scope.Scopes.push ss.Scopes
                 }
                 |> Scope.addAsWrite ("args", id)
                 |> snd
@@ -312,7 +312,7 @@ module Parser =
             .>>. opt (
                 updateScope (fun ss ->
                     { ss with
-                        Scopes = Scope.appendScope ss.Scopes
+                        Scopes = Scope.Scopes.push ss.Scopes
                     }
                 )
                 >>? (
@@ -335,7 +335,7 @@ module Parser =
                     Loop(preStmts, expr, stepStmts, body))
         updateScope (fun ss ->
             { ss with
-                Scopes = Scope.appendScope ss.Scopes
+                Scopes = Scope.Scopes.push ss.Scopes
             })
         >>? p
         .>> updateScope (fun ss ->

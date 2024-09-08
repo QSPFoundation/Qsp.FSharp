@@ -12,7 +12,7 @@ module Parser =
     let pLocationElement : _ Parser =
         updateScope (fun ss ->
             { ss with
-                Scopes = Scope.appendScope ss.Scopes
+                Scopes = Scope.Scopes.push ss.Scopes
             }
             |> Scope.addAsWrite ("args", id)
             |> snd

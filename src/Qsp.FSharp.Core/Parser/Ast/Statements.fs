@@ -16,7 +16,7 @@ module Parser =
         let pInlineStmts pstmt =
             updateScope (fun scopeSystem ->
                 { scopeSystem with
-                    Scopes = Scope.appendScope scopeSystem.Scopes
+                    Scopes = Scope.Scopes.push scopeSystem.Scopes
                 }
             )
             >>. sepEndBy (pstmt .>> ws) skipSeparators1
@@ -29,7 +29,7 @@ module Parser =
         let pInlineStmts1 pstmt =
             updateScope (fun scopeSystem ->
                 { scopeSystem with
-                    Scopes = Scope.appendScope scopeSystem.Scopes
+                    Scopes = Scope.Scopes.push scopeSystem.Scopes
                 }
             )
             >>? sepEndBy1 (pstmt .>> ws) skipSeparators1
@@ -42,7 +42,7 @@ module Parser =
         let pstmts pstmt =
             updateScope (fun scopeSystem ->
                 { scopeSystem with
-                    Scopes = Scope.appendScope scopeSystem.Scopes
+                    Scopes = Scope.Scopes.push scopeSystem.Scopes
                 }
             )
             >>. many (
@@ -58,7 +58,7 @@ module Parser =
         let pstmts1 pstmt =
             updateScope (fun scopeSystem ->
                 { scopeSystem with
-                    Scopes = Scope.appendScope scopeSystem.Scopes
+                    Scopes = Scope.Scopes.push scopeSystem.Scopes
                 }
             )
             >>? many1 (

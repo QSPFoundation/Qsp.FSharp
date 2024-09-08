@@ -4,6 +4,10 @@ open FsharpMyExtension
 type VarId = int
 type 'VarName Scopes when 'VarName : comparison = Map<'VarName, VarId> list
 
+[<RequireQualifiedAccess>]
+module Scopes =
+    let push (scopes:_ Scopes) : Scopes<_> = Map.empty::scopes
+
 type ScopeSystem<'VarName, 'Value> when 'VarName : comparison =
     {
         Scopes: 'VarName Scopes
@@ -106,9 +110,7 @@ let addAsWrite (varName:'VarName, getValue) (scopeSystem: ScopeSystem<_,_>) =
             varId, x
     | [] -> failwith "the scope cannot be empty"
 
-let appendScope (scopes:_ Scopes) = Map.empty::scopes
-
-let removeScope (scopes:_ Scopes) =
+let removeScope (scopes:_ Scopes) : Scopes<_> =
     match scopes with
     | x::xs -> xs
     | [] -> failwith "scopes is empty"
