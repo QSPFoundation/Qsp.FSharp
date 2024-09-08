@@ -30,6 +30,11 @@ module ScopeSystem =
             Result = Map.empty
         }
 
+    let pushEmptyScope (scopeSystem: ScopeSystem<_,_>) =
+        { scopeSystem with
+            Scopes = Scopes.push scopeSystem.Scopes
+        }
+
     let addAsRead (varName: 'VarName, getValue) (scopeSystem: ScopeSystem<_,_>) =
         let result = scopeSystem.Result
         let rec f acc (scopes: _ Scopes) =

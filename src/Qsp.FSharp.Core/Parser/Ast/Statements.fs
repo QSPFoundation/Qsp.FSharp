@@ -14,11 +14,7 @@ module Parser =
             skipMany1 (ppunctuationTerminator .>> ws)
 
         let pInlineStmts pstmt =
-            updateScope (fun scopeSystem ->
-                { scopeSystem with
-                    Scopes = Scope.Scopes.push scopeSystem.Scopes
-                }
-            )
+            updateScope Scope.ScopeSystem.pushEmptyScope
             >>. sepEndBy (pstmt .>> ws) skipSeparators1
             .>> updateScope (fun scopeSystem ->
                 { scopeSystem with
@@ -27,11 +23,7 @@ module Parser =
             )
 
         let pInlineStmts1 pstmt =
-            updateScope (fun scopeSystem ->
-                { scopeSystem with
-                    Scopes = Scope.Scopes.push scopeSystem.Scopes
-                }
-            )
+            updateScope Scope.ScopeSystem.pushEmptyScope
             >>? sepEndBy1 (pstmt .>> ws) skipSeparators1
             .>> updateScope (fun scopeSystem ->
                 { scopeSystem with
@@ -40,11 +32,7 @@ module Parser =
             )
 
         let pstmts pstmt =
-            updateScope (fun scopeSystem ->
-                { scopeSystem with
-                    Scopes = Scope.Scopes.push scopeSystem.Scopes
-                }
-            )
+            updateScope Scope.ScopeSystem.pushEmptyScope
             >>. many (
                 pstmt .>> spaces
                 .>> (skipMany (ppunctuationTerminator .>> spaces))
@@ -56,11 +44,7 @@ module Parser =
             )
 
         let pstmts1 pstmt =
-            updateScope (fun scopeSystem ->
-                { scopeSystem with
-                    Scopes = Scope.Scopes.push scopeSystem.Scopes
-                }
-            )
+            updateScope Scope.ScopeSystem.pushEmptyScope
             >>? many1 (
                 pstmt .>> spaces
                 .>> (skipMany (ppunctuationTerminator .>> spaces))

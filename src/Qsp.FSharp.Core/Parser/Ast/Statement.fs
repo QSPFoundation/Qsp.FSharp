@@ -34,14 +34,12 @@ module Parser =
 
     let pAssign pstmts =
         let pAssingCode pstmts lhs : _ Parser =
-            updateScope (fun ss ->
-                { ss with
-                    Scopes = Scope.Scopes.push ss.Scopes
-                }
-                |> Scope.ScopeSystem.addAsWrite ("args", id)
-                |> snd
-                |> Scope.ScopeSystem.addAsWrite ("result", id)
-                |> snd
+            updateScope (
+                Scope.ScopeSystem.pushEmptyScope
+                >> Scope.ScopeSystem.addAsWrite ("args", id)
+                >> snd
+                >> Scope.ScopeSystem.addAsWrite ("result", id)
+                >> snd
             )
             >>? (
                 between (pchar '{' >>. spaces) (spaces >>. char_ws '}') pstmts
@@ -310,11 +308,7 @@ module Parser =
             .>> genKeywordParser Tokens.TokenType.While "while"
             .>> ws .>>. (pexpr pstmts)
             .>>. opt (
-                updateScope (fun ss ->
-                    { ss with
-                        Scopes = Scope.Scopes.push ss.Scopes
-                    }
-                )
+                updateScope Scope.ScopeSystem.pushEmptyScope
                 >>? (
                     genKeywordParser Tokens.TokenType.Step "step" .>> ws >>. pInlineStmts
                 )
@@ -333,10 +327,7 @@ module Parser =
                 (fun ((preStmts, expr), stepStmts) body ->
                     let stepStmts = Option.defaultValue [] stepStmts
                     Loop(preStmts, expr, stepStmts, body))
-        updateScope (fun ss ->
-            { ss with
-                Scopes = Scope.Scopes.push ss.Scopes
-            })
+        updateScope Scope.ScopeSystem.pushEmptyScope
         >>? p
         .>> updateScope (fun ss ->
                 { ss with

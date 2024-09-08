@@ -10,14 +10,12 @@ open Qsp.Parser.Generic
 
 module Parser =
     let pLocationElement : _ Parser =
-        updateScope (fun ss ->
-            { ss with
-                Scopes = Scope.Scopes.push ss.Scopes
-            }
-            |> Scope.ScopeSystem.addAsWrite ("args", id)
-            |> snd
-            |> Scope.ScopeSystem.addAsWrite ("result", id)
-            |> snd
+        updateScope (
+            Scope.ScopeSystem.pushEmptyScope
+            >> Scope.ScopeSystem.addAsWrite ("args", id)
+            >> snd
+            >> Scope.ScopeSystem.addAsWrite ("result", id)
+            >> snd
         )
         >>? Location.Parser.ploc
         .>> updateScope (fun ss ->
