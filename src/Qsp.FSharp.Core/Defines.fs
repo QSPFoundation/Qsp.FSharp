@@ -413,6 +413,7 @@ type PredefFunc =
     | Arrcomp
     | Arrpos
     | Arrsize
+    | Arritem
     | Countobj
     | Curacts
     | Curloc
@@ -709,6 +710,45 @@ let functions =
                 "`ARRSIZE([$выражение])` - возвращает число элементов в массиве с названием `[$выражение]`."
             ] |> String.concat "\n"
         Arrsize, dscr, arg String Numeric
+        let dscr =
+            [
+                "ArrItem($массив, (#индекс | $индекс)) — возвращает элемент массива по указанному числовому или строковому ключу."
+                ""
+                "Функция появилась в 5.8 версии QSP как замена выражению:"
+                ""
+                "```qsp"
+                "dynamic '<<$arrayName[index]>>'"
+                "```"
+                ""
+                "Которое теперь равнозначно:"
+                ""
+                "```qsp"
+                "ArrItem($arrayName, index)"
+                "```"
+                ""
+                "Пример вывода нескольких массивов без использования `dynamic`:"
+                ""
+                "```qsp"
+                "$arrayName[] = 'mass_1'"
+                "$arrayName[] = 'mass_2'"
+                "$arrayName[] = 'mass_3'"
+                "$arrayName[] = 'mass_4'"
+                "$arrayName[] = 'mass_5'"
+                "! внешний цикл перебирает имена массивов"
+                "loop local j = 0 while j < ArrSize('$arrayName') step j += 1:"
+                "    ! внутренний цикл выводит содержимое массивов"
+                "    loop local i = 0 while i < ArrSize($arrayName[j]) step i += 1:"
+                "        *pl ArrItem($arrayName[j], i)"
+                "    end"
+                "end"
+                "```"
+            ] |> String.concat "\n"
+        let funcs =
+            [
+                [| String; Numeric |], ()
+                [| String; String |], ()
+            ] |> JustOverloads
+        Arritem, dscr, (funcs, Any)
         let dscr =
             [
                 "`INSTR([#выражение 1],[$выражение 2],[$выражение 3])` - возвращает номер позиции символа, с которого начинается вхождение строки `[$выражение 3]` в строку `[$выражение 2]` (или 0, если такой строки нет). Поиск начинается с символа номер `[#выражение 1]`. Параметр `[#выражение 1]` может отсутствовать, при этом он принимается равным 1. Примеры:"
