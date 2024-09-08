@@ -1,4 +1,4 @@
-module Qsp.Parser.Scope
+namespace Qsp.Parser.Scope
 open FsharpMyExtension
 
 type VarId = int
@@ -82,35 +82,35 @@ module ScopeSystem =
             | [] -> failwith "the scope cannot be empty"
         f [] scopeSystem.Scopes
 
-let addAsWrite (varName:'VarName, getValue) (scopeSystem: ScopeSystem<_,_>) =
-    match scopeSystem.Scopes with
-    | m::ms ->
-        match Map.tryFind varName m with
-        | None ->
-            let newVarId = scopeSystem.NewVarId
-            let m = Map.add varName newVarId m
-            let result =
-                Map.add newVarId (varName, getValue []) scopeSystem.Result
-            let scopes = m::ms
-            let x =
-                {
-                    NewVarId = newVarId + 1
-                    Scopes = scopes
-                    Result = result
-                }
-            newVarId, x
-        | Some varId ->
-            let m = Map.add varName varId m
-            let result = scopeSystem.Result
-            let result =
-                let x = mapSnd getValue result.[varId]
-                Map.add varId x result
-            let scopes = m::ms
-            let x =
-                {
-                    NewVarId = scopeSystem.NewVarId
-                    Scopes = scopes
-                    Result = result
-                }
-            varId, x
-    | [] -> failwith "the scope cannot be empty"
+    let addAsWrite (varName: 'VarName, getValue) (scopeSystem: ScopeSystem<_,_>) =
+        match scopeSystem.Scopes with
+        | m::ms ->
+            match Map.tryFind varName m with
+            | None ->
+                let newVarId = scopeSystem.NewVarId
+                let m = Map.add varName newVarId m
+                let result =
+                    Map.add newVarId (varName, getValue []) scopeSystem.Result
+                let scopes = m::ms
+                let x =
+                    {
+                        NewVarId = newVarId + 1
+                        Scopes = scopes
+                        Result = result
+                    }
+                newVarId, x
+            | Some varId ->
+                let m = Map.add varName varId m
+                let result = scopeSystem.Result
+                let result =
+                    let x = mapSnd getValue result.[varId]
+                    Map.add varId x result
+                let scopes = m::ms
+                let x =
+                    {
+                        NewVarId = scopeSystem.NewVarId
+                        Scopes = scopes
+                        Result = result
+                    }
+                varId, x
+        | [] -> failwith "the scope cannot be empty"

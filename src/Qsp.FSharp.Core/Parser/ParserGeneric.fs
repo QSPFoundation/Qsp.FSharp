@@ -222,7 +222,7 @@ let appendVarHighlight (r:Tokens.InlineRange) (var:Ast.Var) highlightKind isLoca
                                 }
                             else
                                 let v = r, highlightKind
-                                let varId, ss = Scope.addAsWrite (snd var, fun xs -> v::xs) varHighlights.VarScopeSystem
+                                let varId, ss = Scope.ScopeSystem.addAsWrite (snd var, fun xs -> v::xs) varHighlights.VarScopeSystem
                                 {
                                     Ranges = (r, varId)::st.Highlights.VarHighlights.Ranges
                                     VarScopeSystem = ss

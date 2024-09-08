@@ -14,9 +14,9 @@ module Parser =
             { ss with
                 Scopes = Scope.Scopes.push ss.Scopes
             }
-            |> Scope.addAsWrite ("args", id)
+            |> Scope.ScopeSystem.addAsWrite ("args", id)
             |> snd
-            |> Scope.addAsWrite ("result", id)
+            |> Scope.ScopeSystem.addAsWrite ("result", id)
             |> snd
         )
         >>? Location.Parser.ploc
