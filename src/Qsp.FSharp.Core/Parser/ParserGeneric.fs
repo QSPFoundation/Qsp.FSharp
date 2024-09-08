@@ -215,7 +215,7 @@ let appendVarHighlight (r:Tokens.InlineRange) (var:Ast.Var) highlightKind isLoca
 
                             if not <| isLocal then
                                 let v = r, highlightKind
-                                let varId, ss = Scope.addAsRead (snd var, (fun xs -> v::xs)) varHighlights.VarScopeSystem
+                                let varId, ss = Scope.ScopeSystem.addAsRead (snd var, (fun xs -> v::xs)) varHighlights.VarScopeSystem
                                 {
                                     Ranges = (r, varId)::st.Highlights.VarHighlights.Ranges
                                     VarScopeSystem = ss

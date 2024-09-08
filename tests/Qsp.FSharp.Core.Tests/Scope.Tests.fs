@@ -4,8 +4,8 @@ open Fuchu
 open Qsp.Parser.Scope
 
 [<Tests>]
-let ``Scope.addAsRead`` =
-    testList "Scope.addAsRead" [
+let ``Scope.ScopeSystem.addAsRead`` =
+    testList "Scope.ScopeSystem.addAsRead" [
         testCase "base" <| fun () ->
             Assert.Equal(
                 "",
@@ -17,8 +17,8 @@ let ``Scope.addAsRead`` =
                 (
                     let (_, scopeSystem) =
                         ScopeSystem.empty
-                        |> addAsRead ("x", (fun xs -> (0, 0)::xs))
-                    addAsRead ("x", (fun xs -> (0, 0)::xs)) scopeSystem
+                        |> ScopeSystem.addAsRead ("x", (fun xs -> (0, 0)::xs))
+                    ScopeSystem.addAsRead ("x", (fun xs -> (0, 0)::xs)) scopeSystem
                 )
             )
     ]

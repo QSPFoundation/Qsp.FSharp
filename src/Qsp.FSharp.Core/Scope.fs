@@ -30,57 +30,57 @@ module ScopeSystem =
             Result = Map.empty
         }
 
-let addAsRead (varName:'VarName, getValue) (scopeSystem: ScopeSystem<_,_>) =
-    let result = scopeSystem.Result
-    let rec f acc (scopes:_ Scopes) =
-        match scopes with
-        | [m] ->
-            match Map.tryFind varName m with
-            | Some varId ->
-                let result =
-                    let x = mapSnd getValue result.[varId]
-                    Map.add varId x result
-                let scopes =
-                    List.fold (fun xs x -> x::xs) scopes acc
-                let x =
-                    {
-                        Scopes = scopes
-                        NewVarId = scopeSystem.NewVarId
-                        Result = result
-                    }
-                varId, x
-            | None ->
-                let m = Map.add varName scopeSystem.NewVarId m
-                let result =
-                    Map.add scopeSystem.NewVarId (varName, getValue []) result
-                let scopes =
-                    List.fold (fun xs x -> x::xs) [m] acc
-                let x =
-                    {
-                        Scopes = scopes
-                        NewVarId = scopeSystem.NewVarId + 1
-                        Result = result
-                    }
-                scopeSystem.NewVarId, x
-        | m::ms ->
-            match Map.tryFind varName m with
-            | Some varId ->
-                let result =
-                    let x = mapSnd getValue result.[varId]
-                    Map.add varId x result
-                let scopes =
-                    List.fold (fun xs x -> x::xs) scopes acc
-                let x =
-                    {
-                        Scopes = scopes
-                        NewVarId = scopeSystem.NewVarId
-                        Result = result
-                    }
-                varId, x
-            | None ->
-                f (m::acc) ms
-        | [] -> failwith "the scope cannot be empty"
-    f [] scopeSystem.Scopes
+    let addAsRead (varName: 'VarName, getValue) (scopeSystem: ScopeSystem<_,_>) =
+        let result = scopeSystem.Result
+        let rec f acc (scopes: _ Scopes) =
+            match scopes with
+            | [m] ->
+                match Map.tryFind varName m with
+                | Some varId ->
+                    let result =
+                        let x = mapSnd getValue result.[varId]
+                        Map.add varId x result
+                    let scopes =
+                        List.fold (fun xs x -> x::xs) scopes acc
+                    let x =
+                        {
+                            Scopes = scopes
+                            NewVarId = scopeSystem.NewVarId
+                            Result = result
+                        }
+                    varId, x
+                | None ->
+                    let m = Map.add varName scopeSystem.NewVarId m
+                    let result =
+                        Map.add scopeSystem.NewVarId (varName, getValue []) result
+                    let scopes =
+                        List.fold (fun xs x -> x::xs) [m] acc
+                    let x =
+                        {
+                            Scopes = scopes
+                            NewVarId = scopeSystem.NewVarId + 1
+                            Result = result
+                        }
+                    scopeSystem.NewVarId, x
+            | m::ms ->
+                match Map.tryFind varName m with
+                | Some varId ->
+                    let result =
+                        let x = mapSnd getValue result.[varId]
+                        Map.add varId x result
+                    let scopes =
+                        List.fold (fun xs x -> x::xs) scopes acc
+                    let x =
+                        {
+                            Scopes = scopes
+                            NewVarId = scopeSystem.NewVarId
+                            Result = result
+                        }
+                    varId, x
+                | None ->
+                    f (m::acc) ms
+            | [] -> failwith "the scope cannot be empty"
+        f [] scopeSystem.Scopes
 
 let addAsWrite (varName:'VarName, getValue) (scopeSystem: ScopeSystem<_,_>) =
     match scopeSystem.Scopes with
