@@ -10,12 +10,17 @@ type ScopeSystem<'VarName, 'Value> when 'VarName : comparison =
         NewVarId: VarId
         Result : Map<VarId, 'VarName * 'Value list>
     }
-let scopeSystemEmpty =
-    {
-        Scopes = [Map.empty]
-        NewVarId = 0
-        Result = Map.empty
-    }
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+[<RequireQualifiedAccess>]
+module ScopeSystem =
+    let empty =
+        {
+            Scopes = [Map.empty]
+            NewVarId = 0
+            Result = Map.empty
+        }
+
 let addAsRead (varName:'VarName, getValue) (scopeSystem: ScopeSystem<_,_>) =
     let result = scopeSystem.Result
     let rec f acc (scopes:_ Scopes) =

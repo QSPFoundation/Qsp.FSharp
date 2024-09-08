@@ -60,7 +60,7 @@ type VarHighlights =
 module VarHighlights =
     let empty =
         {
-            VarScopeSystem = Scope.scopeSystemEmpty
+            VarScopeSystem = Scope.ScopeSystem.empty
             Ranges = []
         }
 
