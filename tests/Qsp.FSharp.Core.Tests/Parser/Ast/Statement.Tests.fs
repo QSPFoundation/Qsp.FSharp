@@ -167,7 +167,7 @@ let assignTest =
                     "   ^"
                     "  Expecting: '*=', '+=', ',', '-=', '/=', '=', '[' or '_'"
                     ""
-                ] |> String.concat "\r\n"
+                ] |> String.concat System.Environment.NewLine
             Assert.Equal("", Left exp, runExpr input)
         testCase "attempt assign var without body" <| fun () ->
             let input = "justName"
