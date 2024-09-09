@@ -34,6 +34,51 @@
             "problemMatcher": []
         },
         {
+            "label": "TestsRunMock",
+            "type": "shell",
+            "command": "dotnet",
+            "args": [
+                "fake",
+                "build",
+                "-t",
+                "TestsRunMock"
+            ],
+            "group": {
+                "kind": "test",
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "TestsRunFull",
+            "type": "shell",
+            "command": "dotnet",
+            "args": [
+                "fake",
+                "build",
+                "-t",
+                "TestsRunFull"
+            ],
+            "group": {
+                "kind": "test",
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "TestsRunInteractiveFull",
+            "type": "shell",
+            "command": "dotnet",
+            "args": [
+                "fake",
+                "build",
+                "-t",
+                "TestsRunInteractiveFull"
+            ],
+            "group": {
+                "kind": "test",
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "CliBuild",
             "type": "shell",
             "command": "build.cmd",

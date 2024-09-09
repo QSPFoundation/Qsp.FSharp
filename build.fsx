@@ -61,8 +61,8 @@ let dotnetBuild =
         |> String.concat " "
     dotnet (sprintf "build %s" commonBuildArgs)
 
-let dotnetRun framework =
-    dotnet (sprintf "run --framework %s" framework)
+let dotnetRun framework args =
+    dotnet (sprintf "run --framework %s -- %s" framework args)
 
 Target.create "CoreMeta" (fun _ ->
     let release = ReleaseNotes.load (parserProjDir </> "RELEASE_NOTES.md")
@@ -173,8 +173,49 @@ Target.create "CliBuild" (fun _ ->
     |> dotnetBuild
 )
 
+[<RequireQualifiedAccess>]
+type TestOnMocksType =
+    | True
+    | Interactive
+
+module TestOnMocksType =
+    let toString typ =
+        match typ with
+        | TestOnMocksType.True -> "true"
+        | TestOnMocksType.Interactive -> "interactive"
+
+let testsRun isTestMain (isTestMocks: TestOnMocksType option) =
+    let args =
+        [
+            if isTestMain then
+                "--test-main"
+            match isTestMocks with
+            | None -> ""
+            | Some typ ->
+                let typ = TestOnMocksType.toString typ
+                sprintf "--test-mocks %s" typ
+        ]
+        |> String.concat " "
+
+    Path.getDirectory testProjPath
+    |> dotnetRun
+        "netcoreapp3.1"
+        args
+
 Target.create "TestsRun" (fun _ ->
-    dotnetRun "netcoreapp3.1" (Path.getDirectory testProjPath)
+    testsRun true None
+)
+
+Target.create "TestsRunMock" (fun _ ->
+    testsRun false (Some TestOnMocksType.True)
+)
+
+Target.create "TestsRunFull" (fun _ ->
+    testsRun true (Some TestOnMocksType.True)
+)
+
+Target.create "TestsRunInteractiveFull" (fun _ ->
+    testsRun true (Some TestOnMocksType.Interactive)
 )
 
 Target.create "TrimTrailingWhitespace" (fun _ ->

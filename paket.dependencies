@@ -44,6 +44,7 @@ group Tests
 
     nuget FSharp.Core >= 4.7.2 lowest_matching: true
     nuget Fuchu >= 1.1 lowest_matching: true
+    nuget Argu >= 6.1.1 lowest_matching: true
 
     source https://gitlab.com/api/v4/projects/28574921/packages/nuget/index.json
     nuget FSharpMyExt >= 2.0.0-prerelease.8 lowest_matching: true

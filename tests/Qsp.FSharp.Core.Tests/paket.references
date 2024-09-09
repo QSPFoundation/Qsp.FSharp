@@ -2,3 +2,4 @@ group Tests
     FSharp.Core
     FuChu
     FSharpMyExt
+    Argu
