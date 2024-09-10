@@ -96,6 +96,13 @@ type InlineRange =
     }
 
 module InlineRange =
+    let create line startColumn endColumn =
+        {
+            Line = line
+            Column1 = startColumn
+            Column2 = endColumn
+        }
+
     let ofFParsecPositions (p1: FParsec.Position) (p2: FParsec.Position) =
         {
             Line = p1.Line // Должно выполняться условие `p1.Line = p2.Line`
