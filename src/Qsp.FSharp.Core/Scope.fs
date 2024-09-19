@@ -17,7 +17,7 @@ type ScopeSystem<'VarName, 'Value> when 'VarName : comparison =
     {
         Scopes: 'VarName Scopes
         NewVarId: VarId
-        Result : Map<VarId, 'VarName * 'Value list>
+        Variables: Map<VarId, 'VarName * 'Value list>
     }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -27,7 +27,7 @@ module ScopeSystem =
         {
             Scopes = [Map.empty]
             NewVarId = 0
-            Result = Map.empty
+            Variables = Map.empty
         }
 
     let pushEmptyScope (scopeSystem: ScopeSystem<_,_>) =
@@ -41,50 +41,50 @@ module ScopeSystem =
         }
 
     let addAsRead (varName: 'VarName, getValue) (scopeSystem: ScopeSystem<_,_>) =
-        let result = scopeSystem.Result
+        let vars = scopeSystem.Variables
         let rec f acc (scopes: _ Scopes) =
             match scopes with
             | [m] ->
                 match Map.tryFind varName m with
                 | Some varId ->
-                    let result =
-                        let x = mapSnd getValue result.[varId]
-                        Map.add varId x result
+                    let vars =
+                        let x = mapSnd getValue vars.[varId]
+                        Map.add varId x vars
                     let scopes =
                         List.fold (fun xs x -> x::xs) scopes acc
                     let x =
                         {
                             Scopes = scopes
                             NewVarId = scopeSystem.NewVarId
-                            Result = result
+                            Variables = vars
                         }
                     varId, x
                 | None ->
                     let m = Map.add varName scopeSystem.NewVarId m
-                    let result =
-                        Map.add scopeSystem.NewVarId (varName, getValue []) result
+                    let vars =
+                        Map.add scopeSystem.NewVarId (varName, getValue []) vars
                     let scopes =
                         List.fold (fun xs x -> x::xs) [m] acc
                     let x =
                         {
                             Scopes = scopes
                             NewVarId = scopeSystem.NewVarId + 1
-                            Result = result
+                            Variables = vars
                         }
                     scopeSystem.NewVarId, x
             | m::ms ->
                 match Map.tryFind varName m with
                 | Some varId ->
-                    let result =
-                        let x = mapSnd getValue result.[varId]
-                        Map.add varId x result
+                    let vars =
+                        let x = mapSnd getValue vars.[varId]
+                        Map.add varId x vars
                     let scopes =
                         List.fold (fun xs x -> x::xs) scopes acc
                     let x =
                         {
                             Scopes = scopes
                             NewVarId = scopeSystem.NewVarId
-                            Result = result
+                            Variables = vars
                         }
                     varId, x
                 | None ->
@@ -99,28 +99,28 @@ module ScopeSystem =
             | None ->
                 let newVarId = scopeSystem.NewVarId
                 let m = Map.add varName newVarId m
-                let result =
-                    Map.add newVarId (varName, getValue []) scopeSystem.Result
+                let vars =
+                    Map.add newVarId (varName, getValue []) scopeSystem.Variables
                 let scopes = m::ms
                 let x =
                     {
                         NewVarId = newVarId + 1
                         Scopes = scopes
-                        Result = result
+                        Variables = vars
                     }
                 newVarId, x
             | Some varId ->
                 let m = Map.add varName varId m
-                let result = scopeSystem.Result
-                let result =
-                    let x = mapSnd getValue result.[varId]
-                    Map.add varId x result
+                let vars = scopeSystem.Variables
+                let vars =
+                    let x = mapSnd getValue vars.[varId]
+                    Map.add varId x vars
                 let scopes = m::ms
                 let x =
                     {
                         NewVarId = scopeSystem.NewVarId
                         Scopes = scopes
-                        Result = result
+                        Variables = vars
                     }
                 varId, x
         | [] -> failwith "the scope cannot be empty"

@@ -262,7 +262,7 @@ type BackgroundServiceServer(state: State, client: FsacClient) =
                 false
         )
         |> Option.map (fun (_, varId) ->
-            Map.find varId highlights.VarHighlights.VarScopeSystem.Result // находить должно всегда
+            Map.find varId highlights.VarHighlights.VarScopeSystem.Variables // находить должно всегда
             |> snd
         )
     let getLocHighlight (pos:Position) =

@@ -12,7 +12,7 @@ let ``Scope.ScopeSystem.addAsRead`` =
                 (0, {
                     Scopes = [Map [("x", 0)]]
                     NewVarId = 1
-                    Result = Map [(0, ("x", [(0, 0); (0, 0)]))]
+                    Variables = Map [(0, ("x", [(0, 0); (0, 0)]))]
                 }),
                 (
                     let (_, scopeSystem) =

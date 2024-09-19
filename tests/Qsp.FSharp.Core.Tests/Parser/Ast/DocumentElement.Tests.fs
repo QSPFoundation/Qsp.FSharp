@@ -111,7 +111,7 @@ let ``DocumentElement.Parser.pLocationElement`` =
                             Map [ "foo", 2 ]
                         ]
                         NewVarId = 6
-                        Result =
+                        Variables =
                             Map [
                                 0, ("args", [])
                                 1, ("result", [])
