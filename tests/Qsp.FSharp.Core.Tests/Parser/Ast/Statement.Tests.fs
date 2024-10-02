@@ -8,6 +8,7 @@ open Qsp
 open Qsp.Ast
 open Qsp.Parser.Generic
 open Qsp.Parser.Ast
+open Qsp.Parser.Ast.Statements.Parser
 
 [<Tests>]
 let assignTest =
@@ -150,6 +151,60 @@ let assignTest =
                     Val (Int 1)
                 )
             Assert.Equal("", Right exp, runExpr input)
+        testCase "$code = { foo = 42 }" <| fun () ->
+            Assert.Equal(
+                "",
+                Right (
+                    AssignCode (
+                        AssignVar (StringType, "code"), [
+                            (
+                                NoEqualityPosition (
+                                    { StreamName = ""; Index = 10L; Line = 1L; Column = 11L }
+                                ),
+                                Assign (false, [AssignVar (NumericType, "foo")], Val (Int 42))
+                            )
+                        ]
+                    )
+                ),
+                snd (
+                    runStateEither
+                        (Parser.pAssign pstmts)
+                        State.empty
+                        "$code = { foo = 42 }"
+                )
+            )
+        testCase """$code = {\n    itemsCounts = 10\n    $name = "foo"\n}""" <| fun () ->
+            Assert.Equal(
+                "",
+                Right (
+                    AssignCode (
+                        AssignVar (StringType, "code"), [
+                            (
+                                NoEqualityPosition(
+                                    { StreamName = ""; Index = 14L; Line = 2L; Column = 5L }
+                                ),
+                                Assign (false, [AssignVar (NumericType, "itemsCounts")], Val (Int 10))
+                            )
+                            (
+                                NoEqualityPosition(
+                                    { StreamName = ""; Index = 35L; Line = 3L; Column = 5L }
+                                ),
+                                Assign (false, [AssignVar (StringType, "name")], Val (String [[StringKind "foo"]]))
+                            )
+                    ])
+                ),
+                snd (
+                    runStateEither
+                        (Parser.pAssign pstmts)
+                        State.empty
+                        (String.concat System.Environment.NewLine [
+                            "$code = {"
+                            "    itemsCounts = 10"
+                            "    $name = \"foo\""
+                            "}"
+                        ])
+                )
+            )
         // ложные случаи:
         testCase "attempt assign function" <| fun () ->
             let input = "f(expr) = 42" // поскольку `=` — это одновременно и оператор присваивания и оператор равности, так что сойдет за выражение

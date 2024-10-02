@@ -14,7 +14,7 @@ let showAssignTest =
             (IndentsOption.UsingSpaces 4)
             FormatConfig.Default
             (emptyPos, str)
-        |> ShowList.joinEmpty "\n"
+        |> ShowList.joinEmpty System.Environment.NewLine
         |> ShowList.show
 
     testList "showAssignTest" [
@@ -58,6 +58,50 @@ let showAssignTest =
             let exp =
                 "x[firstKeyExpr, secondKeyExpr, $threeKeyExpr] = 42"
             Assert.Equal("", exp, act)
+
+        testCase """$code = {\n    foo = 42\n}""" <| fun () ->
+            Assert.Equal(
+                "",
+                String.concat System.Environment.NewLine [
+                    "$code = {"
+                    "    foo = 42"
+                    "}"
+                ],
+                showAssign (
+                    AssignCode (
+                        AssignVar (StringType, "code"), [
+                            (
+                                NoEqualityPosition Position.empty,
+                                Assign (false, [AssignVar (NumericType, "foo")], Val (Int 42))
+                            )
+                        ]
+                    )
+                )
+            )
+
+        testCase """$code = {\n    itemsCounts = 10\n    $name = "foo"\n}""" <| fun () ->
+            Assert.Equal(
+                "",
+                String.concat System.Environment.NewLine [
+                    "$code = {"
+                    "    itemsCounts = 10"
+                    "    $name = 'foo'"
+                    "}"
+                ],
+                showAssign (
+                    AssignCode (
+                        AssignVar (StringType, "code"), [
+                            (
+                                NoEqualityPosition Position.empty,
+                                Assign (false, [AssignVar (NumericType, "itemsCounts")], Val (Int 10))
+                            )
+                            (
+                                NoEqualityPosition Position.empty,
+                                Assign (false, [AssignVar (StringType, "name")], Val (String [[StringKind "foo"]]))
+                            )
+                    ])
+                )
+            )
 
         testCase "num, $str, arrNum[0], $arrStr['some'] = $tuple" <| fun () ->
             Assert.Equal(
