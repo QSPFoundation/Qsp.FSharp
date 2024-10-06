@@ -17,7 +17,7 @@ let pexprTest =
         |> snd
 
     let sprintExpr =
-        Expr.Printer.simpleShowExpr (failwithf "showStmtsInline not implemented %A")
+        Expr.Printer.showExpr (failwithf "showStmtsInline not implemented %A")
         >> FsharpMyExtension.ShowList.show
 
     let equalWithShow (exp:Expr) (act:Either<_, Expr>) =
